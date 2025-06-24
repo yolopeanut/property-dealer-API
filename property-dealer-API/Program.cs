@@ -1,4 +1,6 @@
 using property_dealer_API.Hubs.GameLobby;
+using property_dealer_API.Hubs.GameLobby.Service;
+using property_dealer_API.Hubs.GameWaitingRoom.Service;
 using property_dealer_API.SharedServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IGameLobbyHubService, GameLobbyHubService>();
 builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
+builder.Services.AddSingleton<IWaitingRoomService, WaitingRoomService>();
 
 builder.Services.AddCors((o) =>
 {
@@ -38,5 +41,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GameLobbyHub>("/gamelobby");
+app.MapHub<GameLobbyHub>("/waiting-room");
 
 app.Run();

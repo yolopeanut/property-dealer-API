@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using property_dealer_API.Hubs.GameLobby.Service;
 using property_dealer_API.Models.DTOs;
 using property_dealer_API.Models.Enums;
 using System.Linq.Expressions;
@@ -21,13 +22,13 @@ namespace property_dealer_API.Hubs.GameLobby
             await Clients.Caller.GetAllLobbySummary(summaries);
         }
 
-        public async Task CreateGameRoom(string playerName, string roomName, CreateGameConfigDTO createGameConfig)
+        public async Task CreateGameRoom(string userId, string playerName, string roomName, CreateGameConfigDTO createGameConfig)
         {
             try
             {
                 // Create Room
                 Console.WriteLine("About to call CreateRoom");
-                var roomIdCreated = this._gameLobbyHubService.CreateRoom(Context.ConnectionId, playerName, roomName, createGameConfig);
+                var roomIdCreated = this._gameLobbyHubService.CreateRoom(Context.ConnectionId, userId, playerName, roomName, createGameConfig);
                 await Clients.Caller.CreateGameRoomId(roomIdCreated);
 
                 //TODO add response status for create room status
@@ -51,10 +52,10 @@ namespace property_dealer_API.Hubs.GameLobby
             }
         }
 
-        public async Task JoinGameRoom(string gameRoomId, string playerName)
+        public async Task JoinGameRoom(string userId, string playerName, string gameRoomId)
         {
             // Joining room
-            var response = this._gameLobbyHubService.JoinRoom(gameRoomId, Context.ConnectionId, playerName);
+            var response = this._gameLobbyHubService.JoinRoom(gameRoomId, Context.ConnectionId, userId, playerName);
             await Clients.Caller.JoinGameRoomStatus(new JoinGameResponseDTO(response, gameRoomId));
 
             // Broadcasting to all lobby status
