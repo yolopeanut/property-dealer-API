@@ -8,7 +8,7 @@ namespace property_dealer_API.Hubs.GameLobby
     {
         IEnumerable<GameListSummaryDTO> GetGameListSummary();
 
-        string CreateRoom(string connectionId, string userId, string playerName, string roomName, CreateGameConfigDTO config);
+        string CreateRoom(string userId, string playerName, string roomName, GameConfig config);
         JoinGameResponseEnum JoinRoom(string gameRoomId, string connectionId, string userId, string playerName);
     }
 }

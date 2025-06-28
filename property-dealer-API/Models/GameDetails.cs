@@ -10,18 +10,18 @@ namespace property_dealer_API.Models
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
         public required GameStateEnum GameState { get; set; }
-        public required CreateGameConfigDTO Config { get; set; }
+        public required GameConfig Config { get; set; }
         public ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 
         [SetsRequiredMembers]
-        public GameDetails(string roomId, string roomName, CreateGameConfigDTO config, Player player)
+        public GameDetails(string roomId, string roomName, GameConfig config, Player player)
         {
             this.RoomId = roomId;
             this.RoomName = roomName;
             this.GameState = GameStateEnum.WaitingRoom;
             this.Config = config;
 
-            this.Players.TryAdd(player.ConnectionId, player);
+            this.Players.TryAdd(player.UserId, player);
         }
     }
 }

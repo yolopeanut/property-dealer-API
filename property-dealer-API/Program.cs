@@ -1,5 +1,6 @@
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GameLobby.Service;
+using property_dealer_API.Hubs.GameWaitingRoom;
 using property_dealer_API.Hubs.GameWaitingRoom.Service;
 using property_dealer_API.SharedServices;
 
@@ -41,6 +42,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GameLobbyHub>("/gamelobby");
-app.MapHub<GameLobbyHub>("/waiting-room");
+app.MapHub<WaitingRoomHub>("/waiting-room");
 
 app.Run();

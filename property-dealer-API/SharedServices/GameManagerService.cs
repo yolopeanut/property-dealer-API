@@ -46,7 +46,7 @@ namespace property_dealer_API.SharedServices
                 return JoinGameResponseEnum.GameRoomNotFound;
             }
 
-            if (gameDetails.Players.TryAdd(player.ConnectionId, player))
+            if (gameDetails.Players.TryAdd(player.UserId, player))
             {
                 return JoinGameResponseEnum.JoinedSuccess;
             }
@@ -54,6 +54,27 @@ namespace property_dealer_API.SharedServices
             {
                 //Found a player
                 return JoinGameResponseEnum.AlreadyInGame;
+            }
+        }
+
+        public List<Player> GetAllPlayers(string roomId)
+        {
+            if (_gamesDictConcurrent.TryGetValue(roomId, out GameDetails? gameList))
+            {
+                return [.. gameList.Players.Values];
+            }
+            else return [];
+        }
+
+        public GameConfig? GetGameRoomConfig(string roomId)
+        {
+            if (_gamesDictConcurrent.TryGetValue(roomId, out GameDetails? gameDetails))
+            {
+                return gameDetails.Config;
+            }
+            else
+            {
+                return null;
             }
         }
     }

@@ -22,13 +22,13 @@ namespace property_dealer_API.Hubs.GameLobby
             await Clients.Caller.GetAllLobbySummary(summaries);
         }
 
-        public async Task CreateGameRoom(string userId, string playerName, string roomName, CreateGameConfigDTO createGameConfig)
+        public async Task CreateGameRoom(string userId, string playerName, string roomName, GameConfig createGameConfig)
         {
             try
             {
                 // Create Room
                 Console.WriteLine("About to call CreateRoom");
-                var roomIdCreated = this._gameLobbyHubService.CreateRoom(Context.ConnectionId, userId, playerName, roomName, createGameConfig);
+                var roomIdCreated = this._gameLobbyHubService.CreateRoom(userId, playerName, roomName, createGameConfig);
                 await Clients.Caller.CreateGameRoomId(roomIdCreated);
 
                 //TODO add response status for create room status

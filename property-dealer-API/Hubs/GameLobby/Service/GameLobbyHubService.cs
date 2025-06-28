@@ -21,7 +21,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
         }
 
         // Creating Room
-        public string CreateRoom(string connectionId, string userId, string playerName, string roomName, CreateGameConfigDTO config)
+        public string CreateRoom(string userId, string playerName, string roomName, GameConfig config)
         {
             // Ensure unique id
             var newRoomId = Guid.NewGuid().ToString();
@@ -30,7 +30,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
                 newRoomId = Guid.NewGuid().ToString();
             }
 
-            var newPlayer = new Player { UserId = userId, ConnectionId = connectionId, PlayerName = playerName };
+            var newPlayer = new Player { UserId = userId, PlayerName = playerName };
 
             var newGameDetails = new GameDetails(newRoomId, roomName, config, newPlayer);
             _gameManagerService.AddNewGameToDict(newRoomId, newGameDetails);
@@ -41,7 +41,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
 
         public JoinGameResponseEnum JoinRoom(string gameRoomId, string connectionId, string userId, string playerName)
         {
-            var player = new Player { UserId = userId, ConnectionId = connectionId, PlayerName = playerName };
+            var player = new Player { UserId = userId, PlayerName = playerName };
             return _gameManagerService.AddPlayerToDict(gameRoomId, player);
         }
     }

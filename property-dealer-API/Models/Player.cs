@@ -3,7 +3,7 @@
     public class Player
     {
         public required string UserId { get; set; }
-        public required string? ConnectionId { get; set; }
         public required string PlayerName { get; set; }
+        public List<Cards> Hand { get; set; }
     }
 }

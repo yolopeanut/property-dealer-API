@@ -13,5 +13,9 @@ namespace property_dealer_API.SharedServices
         JoinGameResponseEnum AddPlayerToDict(string roomId, Player player);
 
         Boolean IsGameIdExisting(string roomId);
+
+        List<Player> GetAllPlayers(string roomId);
+        GameConfig? GetGameRoomConfig(string roomId);
+
     }
 }
