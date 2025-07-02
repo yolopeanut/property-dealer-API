@@ -1,12 +1,12 @@
-﻿
-
+﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Hubs.GameWaitingRoom.Service;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom
 {
-    public class WaitingRoomHub : Microsoft.AspNetCore.SignalR.Hub<IWaitingRoomHub>
+    public class WaitingRoomHub : Hub<IWaitingRoomHubClient>, IWaitingRoomHubServer
     {
-        IWaitingRoomService _waitingRoomService;
+        private readonly IWaitingRoomService _waitingRoomService;
+
         public WaitingRoomHub(IWaitingRoomService waitingRoomService)
         {
             this._waitingRoomService = waitingRoomService;
@@ -26,7 +26,8 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
         public async Task GetAllPlayerList(string gameRoomLobbyId)
         {
             var allPlayers = this._waitingRoomService.GetAllPlayers(gameRoomLobbyId);
-            if (allPlayers.Count == 0)
+
+            if (allPlayers == null || allPlayers.Count == 0)
             {
                 await Clients.Caller.ErrorMsg("Error no game found");
                 return;
@@ -49,6 +50,5 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
         }
 
         //public async Task StartGame() { }
-
     }
 }

@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using property_dealer_API.Hubs.GameLobby.Service;
-using property_dealer_API.Models.DTOs;
-using property_dealer_API.Models.Enums;
-using System.Linq.Expressions;
+using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Core.Entities;
 
 namespace property_dealer_API.Hubs.GameLobby
 {
-    public class GameLobbyHub : Hub<IGameLobbyHub>
+
+    public class GameLobbyHub : Hub<IGameLobbyHubClient>, IGameLobbyHubServer
     {
         private readonly IGameLobbyHubService _gameLobbyHubService;
 
@@ -56,7 +55,7 @@ namespace property_dealer_API.Hubs.GameLobby
         {
             // Joining room
             var response = this._gameLobbyHubService.JoinRoom(gameRoomId, Context.ConnectionId, userId, playerName);
-            await Clients.Caller.JoinGameRoomStatus(new JoinGameResponseDTO(response, gameRoomId));
+            await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
 
             // Broadcasting to all lobby status
             var summaries = this._gameLobbyHubService.GetGameListSummary();

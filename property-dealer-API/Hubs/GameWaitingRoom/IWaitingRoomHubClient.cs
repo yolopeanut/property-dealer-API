@@ -1,9 +1,11 @@
-﻿using property_dealer_API.Models;
-using property_dealer_API.Models.DTOs;
+﻿using property_dealer_API.Core.Entities;
+using TypedSignalR.Client;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom
 {
-    public interface IWaitingRoomHub
+
+    [Receiver]
+    public interface IWaitingRoomHubClient
     {
         Task AllGameRoomPlayerList(List<Player> allPlayers);
         Task GameRoomCfg(GameConfig gameConfig);

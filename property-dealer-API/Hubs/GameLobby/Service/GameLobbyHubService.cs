@@ -1,7 +1,9 @@
-﻿using property_dealer_API.Models;
-using property_dealer_API.Models.DTOs;
+﻿
+using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.Services.GameManagement;
+using property_dealer_API.Core;
+using property_dealer_API.Core.Entities;
 using property_dealer_API.Models.Enums;
-using property_dealer_API.SharedServices;
 
 namespace property_dealer_API.Hubs.GameLobby.Service
 {
@@ -15,7 +17,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
         }
 
         // Geting game list summary
-        public IEnumerable<GameListSummaryDTO> GetGameListSummary()
+        public IEnumerable<GameListSummaryResponse> GetGameListSummary()
         {
             return _gameManagerService.GetGameListSummary();
         }
@@ -34,7 +36,6 @@ namespace property_dealer_API.Hubs.GameLobby.Service
 
             var newGameDetails = new GameDetails(newRoomId, roomName, config, newPlayer);
             _gameManagerService.AddNewGameToDict(newRoomId, newGameDetails);
-            _gameManagerService.AddPlayerToDict(newRoomId, newPlayer);
 
             return newRoomId;
         }
@@ -42,7 +43,16 @@ namespace property_dealer_API.Hubs.GameLobby.Service
         public JoinGameResponseEnum JoinRoom(string gameRoomId, string connectionId, string userId, string playerName)
         {
             var player = new Player { UserId = userId, PlayerName = playerName };
-            return _gameManagerService.AddPlayerToDict(gameRoomId, player);
+
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+
+            if (gameInstance == null)
+            {
+                return JoinGameResponseEnum.FailedToJoin;
+            }
+
+            var response = gameInstance.AddPlayer(player);
+            return response;
         }
     }
 }

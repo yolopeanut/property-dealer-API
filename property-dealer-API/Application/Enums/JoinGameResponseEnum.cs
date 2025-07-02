@@ -5,6 +5,7 @@
         JoinedSuccess,
         FailedToJoin,
         GameRoomNotFound,
+        GameFull,
         AlreadyInGame,
     }
 }

@@ -1,0 +1,391 @@
+[
+  {
+    "totalCards": 106,
+    "money": [
+      {
+        "value": 1,
+        "count": 6
+      },
+      {
+        "value": 2,
+        "count": 5
+      },
+      {
+        "value": 3,
+        "count": 3
+      },
+      {
+        "value": 4,
+        "count": 3,
+        "description": "Adds 4M Credits to your bank."
+      },
+      {
+        "value": 5,
+        "count": 2
+      },
+      {
+        "value": 10,
+        "count": 1
+      }
+    ],
+    "systems": [
+      {
+        "name": "Proxima b",
+        "value": 1,
+        "color": "Brown",
+        "count": 1,
+        "description": "A terrestrial world in the Brown Sector."
+      },
+      {
+        "name": "Luyten b",
+        "value": 1,
+        "color": "Brown",
+        "count": 1,
+        "description": "A terrestrial world in the Brown Sector."
+      },
+      {
+        "name": "Gliese 436b",
+        "value": 1,
+        "color": "Cyan",
+        "count": 1,
+        "description": "An ice giant in the Cyan Sector."
+      },
+      {
+        "name": "HD 189733b",
+        "value": 1,
+        "color": "Cyan",
+        "count": 1,
+        "description": "An ice giant in the Cyan Sector."
+      },
+      {
+        "name": "Kepler-22b",
+        "value": 1,
+        "color": "Cyan",
+        "count": 1,
+        "description": "An ice giant in the Cyan Sector."
+      },
+      {
+        "name": "Orion Spire",
+        "value": 2,
+        "color": "Pink",
+        "count": 1,
+        "description": "A stellar nursery in the Pink Sector."
+      },
+      {
+        "name": "Pillars of Creation",
+        "value": 2,
+        "color": "Pink",
+        "count": 1,
+        "description": "A stellar nursery in the Pink Sector."
+      },
+      {
+        "name": "Eagle's Landing",
+        "value": 2,
+        "color": "Pink",
+        "count": 1,
+        "description": "A stellar nursery in the Pink Sector."
+      },
+      {
+        "name": "Helios Prime",
+        "value": 2,
+        "color": "Orange",
+        "count": 1,
+        "description": "A magma world in the Orange Sector."
+      },
+      {
+        "name": "Vulcan's Forge",
+        "value": 2,
+        "color": "Orange",
+        "count": 1,
+        "description": "A magma world in the Orange Sector."
+      },
+      {
+        "name": "Mustafar",
+        "value": 2,
+        "color": "Orange",
+        "count": 1,
+        "description": "A magma world in the Orange Sector."
+      },
+      {
+        "name": "TRAPPIST-1e",
+        "value": 3,
+        "color": "Red",
+        "count": 1,
+        "description": "A contested world in the Red Sector."
+      },
+      {
+        "name": "Mars Terraformed",
+        "value": 3,
+        "color": "Red",
+        "count": 1,
+        "description": "A contested world in the Red Sector."
+      },
+      {
+        "name": "Kronos",
+        "value": 3,
+        "color": "Red",
+        "count": 1,
+        "description": "A contested world in the Red Sector."
+      },
+      {
+        "name": "Xanthu",
+        "value": 3,
+        "color": "Yellow",
+        "count": 1,
+        "description": "A trade hub in the Yellow Sector."
+      },
+      {
+        "name": "Corescant",
+        "value": 3,
+        "color": "Yellow",
+        "count": 1,
+        "description": "A trade hub in the Yellow Sector."
+      },
+      {
+        "name": "Cygnus X-1",
+        "value": 3,
+        "color": "Yellow",
+        "count": 1,
+        "description": "A trade hub in the Yellow Sector."
+      },
+      {
+        "name": "Genesis Planet",
+        "value": 4,
+        "color": "Green",
+        "count": 1,
+        "description": "A lush garden world in the Green Sector."
+      },
+      {
+        "name": "Endor Sanctuary",
+        "value": 4,
+        "color": "Green",
+        "count": 1,
+        "description": "A lush garden world in the Green Sector."
+      },
+      {
+        "name": "Kashyyyk",
+        "value": 4,
+        "color": "Green",
+        "count": 1,
+        "description": "A lush garden world in the Green Sector."
+      },
+      {
+        "name": "Coruscant Core",
+        "value": 4,
+        "color": "DarkBlue",
+        "count": 1,
+        "description": "A core world in the Dark Blue Sector."
+      },
+      {
+        "name": "Alpha Centauri Prime",
+        "value": 4,
+        "color": "DarkBlue",
+        "count": 1,
+        "description": "A core world in the Dark Blue Sector."
+      },
+      {
+        "name": "Sol Hyperlane Gate",
+        "value": 2,
+        "color": "Hyperlane",
+        "count": 1,
+        "description": "A crucial node in the Hyperlane network."
+      },
+      {
+        "name": "Andromeda Hyperlane Gate",
+        "value": 2,
+        "color": "Hyperlane",
+        "count": 1,
+        "description": "A crucial node in the Hyperlane network."
+      },
+      {
+        "name": "Sirius Hyperlane Gate",
+        "value": 2,
+        "color": "Hyperlane",
+        "count": 1,
+        "description": "A crucial node in the Hyperlane network."
+      },
+      {
+        "name": "Triangulum Hyperlane Gate",
+        "value": 2,
+        "color": "Hyperlane",
+        "count": 1,
+        "description": "A crucial node in the Hyperlane network."
+      },
+      {
+        "name": "Asteroid Mining Rig",
+        "value": 2,
+        "color": "ResourceNode",
+        "count": 1,
+        "description": "A valuable Resource Node."
+      },
+      {
+        "name": "Gas Giant Refinery",
+        "value": 2,
+        "color": "ResourceNode",
+        "count": 1,
+        "description": "A valuable Resource Node."
+      }
+    ],
+    "systemWilds": [
+      {
+        "name": "System Wildcard",
+        "value": 4,
+        "colors": [ "Pink", "Orange" ],
+        "count": 2,
+        "description": "Can be played as either a Pink or Orange system."
+      },
+      {
+        "name": "System Wildcard",
+        "value": 4,
+        "colors": [ "Red", "Yellow" ],
+        "count": 2,
+        "description": "Can be played as either a Red or Yellow system."
+      },
+      {
+        "name": "System Wildcard",
+        "value": 1,
+        "colors": [ "Brown", "Cyan" ],
+        "count": 1,
+        "description": "Can be played as either a Brown or Cyan system."
+      },
+      {
+        "name": "System Wildcard",
+        "value": 2,
+        "colors": [ "Cyan", "Hyperlane" ],
+        "count": 1,
+        "description": "Can be played as either a Cyan system or a Hyperlane."
+      },
+      {
+        "name": "System Wildcard",
+        "value": 4,
+        "colors": [ "Green", "DarkBlue" ],
+        "count": 1,
+        "description": "Can be played as either a Green or Dark Blue system."
+      },
+      {
+        "name": "System Wildcard",
+        "value": 2,
+        "colors": [ "ResourceNode", "Hyperlane" ],
+        "count": 2,
+        "description": "Can be played as either a Resource Node or a Hyperlane."
+      },
+      {
+        "name": "Omni-Sector Wildcard",
+        "value": 0,
+        "colors": [ "OmniSector" ],
+        "count": 2,
+        "description": "This card can be part of any system set. It has no monetary value."
+      }
+    ],
+    "commands": [
+      {
+        "type": "HostileTakeover",
+        "name": "Hostile Takeover",
+        "value": 5,
+        "count": 2,
+        "description": "Steal a full set of systems from any player."
+      },
+      {
+        "type": "ShieldsUp",
+        "name": "Shields Up",
+        "value": 4,
+        "count": 3,
+        "description": "Cancel any command card played against you."
+      },
+      {
+        "type": "PirateRaid",
+        "name": "Pirate Raid",
+        "value": 3,
+        "count": 3,
+        "description": "Steal any single system from another player (cannot be from a completed set)."
+      },
+      {
+        "type": "ForcedTrade",
+        "name": "Forced Trade",
+        "value": 3,
+        "count": 3,
+        "description": "Force another player to trade one of their systems for one of yours."
+      },
+      {
+        "type": "BountyHunter",
+        "name": "Bounty Hunter",
+        "value": 3,
+        "count": 3,
+        "description": "Force any one player to pay you 5M Credits."
+      },
+      {
+        "type": "TradeDividend",
+        "name": "Trade Dividend",
+        "value": 2,
+        "count": 3,
+        "description": "All players must pay you 2M Credits."
+      },
+      {
+        "type": "ExploreNewSector",
+        "name": "Explore a New Sector",
+        "value": 1,
+        "count": 10,
+        "description": "Draw 2 extra cards from the deck."
+      },
+      {
+        "type": "SpaceStation",
+        "name": "Space Station",
+        "value": 3,
+        "count": 3,
+        "description": "Add 3M Credits to the tribute value of a completed system set. Can only be played on a full set."
+      },
+      {
+        "type": "Starbase",
+        "name": "Starbase",
+        "value": 4,
+        "count": 2,
+        "description": "Add 4M Credits to the tribute value of a completed system set. Requires a Space Station to be on the set first."
+      },
+      {
+        "type": "TradeEmbargo",
+        "name": "Trade Embargo",
+        "value": 1,
+        "count": 2,
+        "description": "Play with a Tribute card to double the amount owed."
+      }
+    ],
+    "tributes": [
+      {
+        "value": 3,
+        "colors": [ "OmniSector" ],
+        "count": 3,
+        "description": "Force one player to pay you tribute for one of your systems."
+      },
+      {
+        "value": 1,
+        "colors": [ "Brown", "Cyan" ],
+        "count": 2,
+        "description": "Charge tribute for all your Brown and Cyan systems."
+      },
+      {
+        "value": 1,
+        "colors": [ "Pink", "Orange" ],
+        "count": 2,
+        "description": "Charge tribute for all your Pink and Orange systems."
+      },
+      {
+        "value": 1,
+        "colors": [ "Red", "Yellow" ],
+        "count": 2,
+        "description": "Charge tribute for all your Red and Yellow systems."
+      },
+      {
+        "value": 1,
+        "colors": [ "Green", "DarkBlue" ],
+        "count": 2,
+        "description": "Charge tribute for all your Green and Dark Blue systems."
+      },
+      {
+        "value": 1,
+        "colors": [ "ResourceNode", "Hyperlane" ],
+        "count": 2,
+        "description": "Charge tribute for all your Resource Nodes and Hyperlanes."
+      }
+    ]
+  }
+]
