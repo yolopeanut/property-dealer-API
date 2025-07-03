@@ -4,8 +4,12 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 {
     public interface IWaitingRoomService
     {
-        public List<Player>? GetAllPlayers(string gameRoomLobbyId);
-
-        GameConfig? GetRoomConfig(string gameRoomLobbyId);
+        List<Player>? GetAllPlayers(string gameRoomId);
+        Player? GetPlayerByUserId(string gameRoomId, string userId);
+        string RemovePlayerFromGame(string gameRoomId, string userId);
+        GameConfig? GetRoomConfig(string gameRoomId);
+        Boolean DoesRoomExist(string gameRoomId);
+        Boolean DoesPlayerExist(string userId, string gameRoomLobbyId);
+        void StartGame(string gameRoomId);
     }
 }

@@ -4,18 +4,30 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic
 {
+    /// <summary>
+    /// Manages the state for a game with a small number of players.
+    /// </summary>
     public class PlayerManager
     {
-        public ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
+        private ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 
         public PlayerManager(Player initialPlayer)
         {
             this.AddPlayerToDict(initialPlayer);
         }
 
+        public int CountPlayers()
+        {
+            return this.Players.Count;
+        }
+
         public List<Player> GetAllPlayers()
         {
             return this.Players.Values.ToList();
+        }
+        public Player? GetPlayerByUserId(string userId)
+        {
+            return this.Players.Values.FirstOrDefault(player => player.UserId == userId);
         }
         public JoinGameResponseEnum AddPlayerToDict(Player player)
         {
@@ -28,6 +40,13 @@ namespace property_dealer_API.Core.Logic
                 //Found a player
                 return JoinGameResponseEnum.AlreadyInGame;
             }
+        }
+
+        public string? RemovePlayerFromDictByUserId(string userId)
+        {
+            this.Players.TryRemove(userId, out Player? player);
+
+            return player?.PlayerName;
         }
     }
 }

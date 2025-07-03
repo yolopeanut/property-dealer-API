@@ -46,5 +46,10 @@ namespace property_dealer_API.Application.Services.GameManagement
                 return null;
             }
         }
+
+        public void RemoveGame(string roomId)
+        {
+            _gamesDictConcurrent.TryRemove(roomId, out GameDetails? _);
+        }
     }
 }

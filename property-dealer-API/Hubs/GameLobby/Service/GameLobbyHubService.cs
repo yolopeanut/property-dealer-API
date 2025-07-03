@@ -40,7 +40,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
             return newRoomId;
         }
 
-        public JoinGameResponseEnum JoinRoom(string gameRoomId, string connectionId, string userId, string playerName)
+        public JoinGameResponseEnum JoinRoom(string gameRoomId, string userId, string playerName)
         {
             var player = new Player { UserId = userId, PlayerName = playerName };
 

@@ -9,7 +9,9 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
     {
         Task AllGameRoomPlayerList(List<Player> allPlayers);
         Task GameRoomCfg(GameConfig gameConfig);
-
+        Task GameStarted();
         Task ErrorMsg(string message);
+        Task PlayerJoined(string name);
+        Task PlayerLeft(string name);
     }
 }

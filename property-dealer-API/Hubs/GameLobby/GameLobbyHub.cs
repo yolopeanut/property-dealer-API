@@ -54,7 +54,7 @@ namespace property_dealer_API.Hubs.GameLobby
         public async Task JoinGameRoom(string userId, string playerName, string gameRoomId)
         {
             // Joining room
-            var response = this._gameLobbyHubService.JoinRoom(gameRoomId, Context.ConnectionId, userId, playerName);
+            var response = this._gameLobbyHubService.JoinRoom(gameRoomId, userId, playerName);
             await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
 
             // Broadcasting to all lobby status

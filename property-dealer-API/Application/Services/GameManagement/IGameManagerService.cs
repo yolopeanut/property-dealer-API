@@ -15,7 +15,6 @@ namespace property_dealer_API.Application.Services.GameManagement
         Boolean IsGameIdExisting(string roomId);
 
         GameDetails? GetGameDetails(string roomId);
-
-
+        void RemoveGame(string roomId);
     }
 }

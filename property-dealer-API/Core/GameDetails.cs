@@ -1,8 +1,10 @@
-﻿using property_dealer_API.Core.Entities;
+﻿using property_dealer_API.Application.MethodReturns;
+using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using System.Diagnostics.CodeAnalysis;
+using property_dealer_API.Application.Enums;
 
 namespace property_dealer_API.Core
 {
@@ -30,6 +32,7 @@ namespace property_dealer_API.Core
         public void StartGame(List<Card> initialDeck)
         {
             this._deckManager.PopulateInitialDeck(initialDeck);
+            this.GameState = GameStateEnum.GameStarted;
         }
 
         public GameConfig? GetGameRoomConfig()
@@ -64,6 +67,38 @@ namespace property_dealer_API.Core
         public List<Player> GetPlayers()
         {
             return this._playerManager.GetAllPlayers();
+        }
+
+        public Player? GetPlayerByUserId(string userId)
+        {
+            return this._playerManager.GetPlayerByUserId(userId);
+        }
+
+        public RemovePlayerReturn RemovePlayerByUserId(string userId)
+        {
+            var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);
+
+            // Cannot find player
+            if (playerName == null)
+            {
+                return new RemovePlayerReturn(null, RemovePlayerResponse.CannotFindPlayer);
+
+            }
+
+            // Successful removal with no players remaining
+            else if (this._playerManager.CountPlayers() < 1)
+            {
+                return new RemovePlayerReturn(playerName, RemovePlayerResponse.NoPlayersRemaining);
+            }
+
+            // Successful removal with players remaining
+            else
+            {
+                return new RemovePlayerReturn(playerName, RemovePlayerResponse.SuccessfulPlayerRemovalWithPlayersRemaining);
+            }
+
+
+;
         }
 
         // ============================================== END PLAYERS WRAPPERS ============================================== //
