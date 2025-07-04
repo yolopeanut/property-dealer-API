@@ -39,8 +39,23 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             }
 
             // Further validation to see if the room and player actually exists
-            if (!_waitingRoomService.DoesRoomExist(gameRoomId))
+            Console.WriteLine($"=== WAITING ROOM CONNECTION ===");
+            Console.WriteLine($"Room ID from query: '{gameRoomId}'");
+            Console.WriteLine($"User ID from query: '{userId}'");
+
+            // Further validation to see if the room and player actually exists
+            var roomExists = _waitingRoomService.DoesRoomExist(gameRoomId);
+            Console.WriteLine($"Room exists check: {roomExists}");
+
+            if (!roomExists)
             {
+                Console.WriteLine($"=== ROOM NOT FOUND ===");
+                Console.WriteLine($"Looking for room ID: '{gameRoomId}'");
+
+                // Let's also check what rooms DO exist
+                var allRooms = _waitingRoomService.GetAllExistingRoomIds(); // We'll need to add this method
+                Console.WriteLine($"Existing rooms: {string.Join(", ", allRooms)}");
+
                 await Clients.Caller.ErrorMsg("The game room you are trying to join does not exist.");
                 Context.Abort();
                 await base.OnConnectedAsync();
@@ -123,8 +138,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             this._waitingRoomService.StartGame(gameRoomId);
 
             //Send a message to all those who are in the group 
-            await Clients.Group(gameRoomId).GameStarted();
-
+            await Clients.Group(gameRoomId).GameStarted(gameRoomId);
         }
 
         public async Task LeaveWaitingRoom(string gameRoomId, string userId)

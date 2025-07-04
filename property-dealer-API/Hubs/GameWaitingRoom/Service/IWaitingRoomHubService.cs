@@ -1,4 +1,5 @@
-﻿using property_dealer_API.Core.Entities;
+﻿using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Core.Entities;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 {
@@ -11,5 +12,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         Boolean DoesRoomExist(string gameRoomId);
         Boolean DoesPlayerExist(string userId, string gameRoomLobbyId);
         void StartGame(string gameRoomId);
+
+        IEnumerable<GameListSummaryResponse> GetAllExistingRoomIds();
     }
 }

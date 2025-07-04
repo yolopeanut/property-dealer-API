@@ -2,6 +2,7 @@
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Application.Enums;
+using property_dealer_API.Application.DTOs.Responses;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 {
@@ -34,8 +35,9 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
                 return "Server: Game not found";
             }
 
-
             var removalStatus = gameInstance?.RemovePlayerByUserId(userId);
+
+            // If no players are left (response by game instance), remove the game from game manager.
             if (removalStatus?.Response == RemovePlayerResponse.NoPlayersRemaining)
             {
                 this._gameManagerService.RemoveGame(gameRoomId);
@@ -68,6 +70,11 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
             // Call game instance to start game and pass over the initial deck
             var initialDeck = this._cardFactoryService.StartCardFactory();
             gameInstance.StartGame(initialDeck);
+        }
+
+        public IEnumerable<GameListSummaryResponse> GetAllExistingRoomIds()
+        {
+            return _gameManagerService.GetGameListSummary(); // We'll need to add this to GameManagerService too
         }
 
 

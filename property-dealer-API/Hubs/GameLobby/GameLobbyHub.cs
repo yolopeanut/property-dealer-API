@@ -28,9 +28,14 @@ namespace property_dealer_API.Hubs.GameLobby
                 // Create Room
                 Console.WriteLine("About to call CreateRoom");
                 var roomIdCreated = this._gameLobbyHubService.CreateRoom(userId, playerName, roomName, createGameConfig);
+
+                Console.WriteLine($"=== ROOM CREATED ===");
+                Console.WriteLine($"Room ID: '{roomIdCreated}'");
+                Console.WriteLine($"User ID: '{userId}'");
+                Console.WriteLine($"Player Name: '{playerName}'");
+
                 await Clients.Caller.CreateGameRoomId(roomIdCreated);
 
-                //TODO add response status for create room status
                 Console.WriteLine("CreateRoom completed");
 
                 // Broadcast summaries
