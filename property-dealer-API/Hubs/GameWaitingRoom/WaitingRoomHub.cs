@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Hubs.GameWaitingRoom.Service;
 
@@ -77,8 +78,23 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             await Groups.AddToGroupAsync(Context.ConnectionId, gameRoomId);
 
             // 5. Notify the group that a player has joined
-            var player = this._waitingRoomService.GetPlayerByUserId(gameRoomId, userId);
-            await Clients.Group(gameRoomId).PlayerJoined(player?.PlayerName ?? "ERROR: USERNAME NOT FOUND");
+            try
+            {
+                var player = this._waitingRoomService.GetPlayerByUserId(gameRoomId, userId);
+                await Clients.Group(gameRoomId).PlayerJoined(player.PlayerName);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Game room not found.");
+                Context.Abort();
+                return;
+            }
+            catch (PlayerNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Player not found in game.");
+                Context.Abort();
+                return;
+            }
 
             // Send the full player list to the newly connected client or the whole group
             await this.GetAllPlayerList(gameRoomId);
@@ -103,29 +119,36 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
 
         public async Task GetAllPlayerList(string gameRoomId)
         {
-            var allPlayers = this._waitingRoomService.GetAllPlayers(gameRoomId);
-
-            if (allPlayers == null || allPlayers.Count == 0)
+            try
             {
-                await Clients.Caller.ErrorMsg("Error no game found");
-                return;
-            }
+                var allPlayers = this._waitingRoomService.GetAllPlayers(gameRoomId);
 
-            Console.WriteLine(gameRoomId, allPlayers);
-            await Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
+                if (allPlayers.Count == 0)
+                {
+                    await Clients.Caller.ErrorMsg("No players found in game room");
+                    return;
+                }
+
+                Console.WriteLine(gameRoomId, allPlayers);
+                await Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Game room not found");
+            }
         }
 
         public async Task GetGameRoomCfg(string gameRoomId)
         {
-            var gameRoomCfg = this._waitingRoomService.GetRoomConfig(gameRoomId);
-
-            if (gameRoomCfg == null)
+            try
             {
-                await Clients.Caller.ErrorMsg("Error no game found");
-                return;
+                var gameRoomCfg = this._waitingRoomService.GetRoomConfig(gameRoomId);
+                await Clients.Group(gameRoomId).GameRoomCfg(gameRoomCfg);
             }
-
-            await Clients.Group(gameRoomId).GameRoomCfg(gameRoomCfg);
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Game room not found");
+            }
         }
 
         public Task UpdateCfg(string gameRoomId, GameConfig newConfig)
@@ -135,22 +158,36 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
 
         public async Task StartGame(string gameRoomId)
         {
-            this._waitingRoomService.StartGame(gameRoomId);
-
-            //Send a message to all those who are in the group 
-            await Clients.Group(gameRoomId).GameStarted(gameRoomId);
+            try
+            {
+                this._waitingRoomService.StartGame(gameRoomId);
+                //Send a message to all those who are in the group 
+                await Clients.Group(gameRoomId).GameStarted(gameRoomId);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Game room not found");
+            }
         }
 
         public async Task LeaveWaitingRoom(string gameRoomId, string userId)
         {
-            var playerName = _waitingRoomService.RemovePlayerFromGame(gameRoomId, userId);
-
-            if (!string.IsNullOrEmpty(playerName))
+            try
             {
+                var playerName = _waitingRoomService.RemovePlayerFromGame(gameRoomId, userId);
+
                 await Clients.Group(gameRoomId).PlayerLeft(playerName);
 
                 // Send the full player list to the whole group
                 await this.GetAllPlayerList(gameRoomId);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Game room not found");
+            }
+            catch (PlayerNotFoundException)
+            {
+                await Clients.Caller.ErrorMsg("Player not found in game");
             }
         }
     }

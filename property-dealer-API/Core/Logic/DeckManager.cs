@@ -21,21 +21,27 @@ namespace property_dealer_API.Core.Logic
             }
         }
 
-        public Card? DrawCard()
+        public List<Card> DrawCard(int numToDraw)
         {
-            if (this._drawPile.TryPop(out Card? result))
+            var cardList = new List<Card>();
+            for (int i = 0; i < numToDraw; i++)
             {
-                return result;
+                if (this._drawPile.TryPop(out Card? result))
+                {
+                    cardList.Add(result);
+                    continue;
+                }
+
+                this.ReshuffleIfNeeded();
+
+                if (this._drawPile.TryPop(out Card? afterReshuffle))
+                {
+                    cardList.Add(afterReshuffle);
+                }
+
             }
 
-            this.ReshuffleIfNeeded();
-
-            if (this._drawPile.TryPop(out Card? afterReshuffle))
-            {
-                return afterReshuffle;
-            }
-
-            return null;
+            return cardList;
         }
 
         public void Discard(Card card)

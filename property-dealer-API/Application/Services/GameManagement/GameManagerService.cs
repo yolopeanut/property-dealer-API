@@ -1,4 +1,5 @@
 ﻿using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core;
 using System.Collections.Concurrent;
 
@@ -35,7 +36,7 @@ namespace property_dealer_API.Application.Services.GameManagement
             return _gamesDictConcurrent.TryGetValue(roomId, out GameDetails? _value);
         }
 
-        public GameDetails? GetGameDetails(string roomId)
+        public GameDetails GetGameDetails(string roomId)
         {
             if (_gamesDictConcurrent.TryGetValue(roomId, out GameDetails? gameInstance))
             {
@@ -43,7 +44,7 @@ namespace property_dealer_API.Application.Services.GameManagement
             }
             else
             {
-                return null;
+                throw new GameNotFoundException(roomId);
             }
         }
 

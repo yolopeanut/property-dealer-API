@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Models.Enums;
 
 namespace property_dealer_API.Hubs.GameLobby
 {
@@ -58,13 +60,20 @@ namespace property_dealer_API.Hubs.GameLobby
 
         public async Task JoinGameRoom(string userId, string playerName, string gameRoomId)
         {
-            // Joining room
-            var response = this._gameLobbyHubService.JoinRoom(gameRoomId, userId, playerName);
-            await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
+            try
+            {
+                // Joining room
+                var response = this._gameLobbyHubService.JoinRoom(gameRoomId, userId, playerName);
+                await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
 
-            // Broadcasting to all lobby status
-            var summaries = this._gameLobbyHubService.GetGameListSummary();
-            await Clients.All.GetAllLobbySummary(summaries);
+                // Broadcasting to all lobby status
+                var summaries = this._gameLobbyHubService.GetGameListSummary();
+                await Clients.All.GetAllLobbySummary(summaries);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(JoinGameResponseEnum.FailedToJoin, gameRoomId));
+            }
         }
 
 

@@ -32,6 +32,7 @@ namespace property_dealer_API.Core
         public void StartGame(List<Card> initialDeck)
         {
             this._deckManager.PopulateInitialDeck(initialDeck);
+            this.InitializeHands();
             this.GameState = GameStateEnum.GameStarted;
         }
 
@@ -69,7 +70,7 @@ namespace property_dealer_API.Core
             return this._playerManager.GetAllPlayers();
         }
 
-        public Player? GetPlayerByUserId(string userId)
+        public Player GetPlayerByUserId(string userId)
         {
             return this._playerManager.GetPlayerByUserId(userId);
         }
@@ -78,34 +79,35 @@ namespace property_dealer_API.Core
         {
             var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);
 
-            // Cannot find player
-            if (playerName == null)
-            {
-                return new RemovePlayerReturn(null, RemovePlayerResponse.CannotFindPlayer);
-
-            }
-
             // Successful removal with no players remaining
-            else if (this._playerManager.CountPlayers() < 1)
+            if (this._playerManager.CountPlayers() < 1)
             {
                 return new RemovePlayerReturn(playerName, RemovePlayerResponse.NoPlayersRemaining);
             }
 
             // Successful removal with players remaining
-            else
-            {
-                return new RemovePlayerReturn(playerName, RemovePlayerResponse.SuccessfulPlayerRemovalWithPlayersRemaining);
-            }
+            return new RemovePlayerReturn(playerName, RemovePlayerResponse.SuccessfulPlayerRemovalWithPlayersRemaining);
 
 
-;
+            ;
         }
 
         // ============================================== END PLAYERS WRAPPERS ============================================== //
 
 
-        // ================================================= CARD WRAPPERS ================================================== //
+        // ================================================= CARD WRAPPERS & LOGICS ================================================== //
 
-        // =============================================== END CARD WRAPPERS ================================================ //
+        // =============================================== END CARD WRAPPERS & LOGICS ================================================ //
+
+        // This method gets the players list and initializes the hands from the draw cards function in deck manager.
+        private void InitializeHands()
+        {
+            var playerList = this._playerManager.GetAllPlayers();
+
+            foreach (var player in playerList)
+            {
+                player.Hand = this._deckManager.DrawCard(7);
+            }
+        }
     }
 }

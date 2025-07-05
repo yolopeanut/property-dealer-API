@@ -1,5 +1,6 @@
 ﻿using property_dealer_API.Core.Entities;
 using property_dealer_API.Models.Enums;
+using property_dealer_API.Application.Exceptions;
 using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic
@@ -25,9 +26,18 @@ namespace property_dealer_API.Core.Logic
         {
             return this.Players.Values.ToList();
         }
-        public Player? GetPlayerByUserId(string userId)
+        public Player GetPlayerByUserId(string userId)
         {
-            return this.Players.Values.FirstOrDefault(player => player.UserId == userId);
+            var player = this.Players.Values.FirstOrDefault(player => player.UserId == userId);
+
+            if (player != null)
+            {
+                return player;
+            }
+            else
+            {
+                throw new PlayerNotFoundException(userId);
+            }
         }
         public JoinGameResponseEnum AddPlayerToDict(Player player)
         {
@@ -42,11 +52,16 @@ namespace property_dealer_API.Core.Logic
             }
         }
 
-        public string? RemovePlayerFromDictByUserId(string userId)
+        public string RemovePlayerFromDictByUserId(string userId)
         {
-            this.Players.TryRemove(userId, out Player? player);
-
-            return player?.PlayerName;
+            if (this.Players.TryRemove(userId, out Player? player))
+            {
+                return player.PlayerName;
+            }
+            else
+            {
+                throw new PlayerNotFoundException(userId);
+            }
         }
     }
 }

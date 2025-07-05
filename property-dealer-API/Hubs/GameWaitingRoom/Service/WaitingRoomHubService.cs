@@ -3,6 +3,7 @@ using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.Exceptions;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 {
@@ -19,21 +20,17 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public List<Player>? GetAllPlayers(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId)?.GetPlayers();
+            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayers();
         }
 
         public Player? GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId)?.GetPlayerByUserId(userId);
+            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
-            if (gameInstance == null)
-            {
-                return "Server: Game not found";
-            }
 
             var removalStatus = gameInstance?.RemovePlayerByUserId(userId);
 
@@ -48,24 +45,42 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public GameConfig? GetRoomConfig(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId)?.Config;
+            return _gameManagerService.GetGameDetails(gameRoomId).Config;
         }
 
-        public bool DoesRoomExist(string gameRoomLobbyId)
+        public bool DoesRoomExist(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomLobbyId) != null;
+            try
+            {
+                _gameManagerService.GetGameDetails(gameRoomId);
+                return true;
+            }
+            catch (GameNotFoundException)
+            {
+                return false;
+            }
         }
 
-        public bool DoesPlayerExist(string userId, string gameRoomLobbyId)
+        public bool DoesPlayerExist(string userId, string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomLobbyId)?.GetPlayerByUserId(userId) != null;
+            try
+            {
+                _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
+                return true;
+            }
+            catch (GameNotFoundException)
+            {
+                return false;
+            }
+            catch (PlayerNotFoundException)
+            {
+                return false;
+            }
         }
 
         public void StartGame(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
-
-            if (gameInstance == null) { return; }
 
             // Call game instance to start game and pass over the initial deck
             var initialDeck = this._cardFactoryService.StartCardFactory();

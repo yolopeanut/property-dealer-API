@@ -43,13 +43,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
         public JoinGameResponseEnum JoinRoom(string gameRoomId, string userId, string playerName)
         {
             var player = new Player { UserId = userId, PlayerName = playerName };
-
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
-
-            if (gameInstance == null)
-            {
-                return JoinGameResponseEnum.FailedToJoin;
-            }
 
             var response = gameInstance.AddPlayer(player);
             return response;
