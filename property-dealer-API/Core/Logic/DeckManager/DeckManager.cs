@@ -1,9 +1,9 @@
 ﻿using property_dealer_API.Models.Cards;
 using System.Collections.Concurrent;
 
-namespace property_dealer_API.Core.Logic
+namespace property_dealer_API.Core.Logic.DeckManager
 {
-    public class DeckManager
+    public class DeckManager : IReadOnlyDeckManager
     {
         private readonly ConcurrentStack<Card> _drawPile = new ConcurrentStack<Card>();
         private ConcurrentBag<Card> _discardPile = new ConcurrentBag<Card>();
@@ -13,11 +13,13 @@ namespace property_dealer_API.Core.Logic
         }
         public void PopulateInitialDeck(List<Card> initialDeck)
         {
+            Console.WriteLine("POPULATING INITIAL DECK");
+
             initialDeck.Shuffle();
 
             foreach (var card in initialDeck)
             {
-                this._drawPile.Push(card);
+                _drawPile.Push(card);
             }
         }
 
@@ -26,15 +28,15 @@ namespace property_dealer_API.Core.Logic
             var cardList = new List<Card>();
             for (int i = 0; i < numToDraw; i++)
             {
-                if (this._drawPile.TryPop(out Card? result))
+                if (_drawPile.TryPop(out Card? result))
                 {
                     cardList.Add(result);
                     continue;
                 }
 
-                this.ReshuffleIfNeeded();
+                ReshuffleIfNeeded();
 
-                if (this._drawPile.TryPop(out Card? afterReshuffle))
+                if (_drawPile.TryPop(out Card? afterReshuffle))
                 {
                     cardList.Add(afterReshuffle);
                 }
@@ -56,7 +58,7 @@ namespace property_dealer_API.Core.Logic
             lock (_reshuffleLock)
             {
                 // Double-check: Another thread might have already done this while we waited.
-                if (this._drawPile.IsEmpty && !_discardPile.IsEmpty)
+                if (_drawPile.IsEmpty && !_discardPile.IsEmpty)
                 {
                     // Atomically swap the current discard pile with a new empty one.
                     // This prevents the "lost card" race condition.

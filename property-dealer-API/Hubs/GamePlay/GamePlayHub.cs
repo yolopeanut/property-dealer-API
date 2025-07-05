@@ -112,7 +112,6 @@ namespace property_dealer_API.Hubs.GamePlay
             {
                 await Clients.Group(gameRoomId).ErrorMsg(string.Concat("Player trying to leave was not found, report this bug if found.", e));
             }
-
         }
 
         public async Task GetAllPlayerList(string gameRoomId)
@@ -130,6 +129,46 @@ namespace property_dealer_API.Hubs.GamePlay
             }
 
 
+        }
+
+        public async Task GetPlayerHand(string gameRoomId, string userId)
+        {
+            try
+            {
+                var playerHand = this._gamePlayService.GetPlayerHand(gameRoomId, userId);
+                await Clients.Caller.PlayerHand(playerHand);
+            }
+            catch (PlayerNotFoundException e)
+            {
+                await Clients.Caller.ErrorMsg(e.Message);
+            }
+            catch (GameNotFoundException e)
+            {
+                await Clients.Caller.ErrorMsg(e.Message);
+            }
+        }
+
+        public async Task GetAllTableCard(string gameRoomId, string userId)
+        {
+            try
+            {
+                var allTableHands = this._gamePlayService.GetAllOtherPlayerTableHands(gameRoomId);
+                await Clients.Group(gameRoomId).AllTableHands(allTableHands);
+            }
+            catch (GameNotFoundException e)
+            {
+                await Clients.Caller.ErrorMsg(e.Message);
+            }
+        }
+
+        public async Task PlayCard(string gameRoomId, string userId)
+        {
+            await GetAllTableCard(gameRoomId, userId);
+        }
+
+        public Task DrawCard(string gameRoomId, string userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

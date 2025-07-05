@@ -3,32 +3,33 @@ using property_dealer_API.Models.Enums;
 using property_dealer_API.Application.Exceptions;
 using System.Collections.Concurrent;
 
-namespace property_dealer_API.Core.Logic
+namespace property_dealer_API.Core.Logic.PlayerManager
 {
     /// <summary>
     /// Manages the state for a game with a small number of players.
     /// </summary>
-    public class PlayerManager
+    public class PlayerManager : IReadOnlyPlayerManager
     {
         private ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 
         public PlayerManager(Player initialPlayer)
         {
-            this.AddPlayerToDict(initialPlayer);
+            AddPlayerToDict(initialPlayer);
         }
 
+        // Interface methods (read-only)
         public int CountPlayers()
         {
-            return this.Players.Count;
+            return Players.Count;
         }
 
         public List<Player> GetAllPlayers()
         {
-            return this.Players.Values.ToList();
+            return Players.Values.ToList();
         }
         public Player GetPlayerByUserId(string userId)
         {
-            var player = this.Players.Values.FirstOrDefault(player => player.UserId == userId);
+            var player = Players.Values.FirstOrDefault(player => player.UserId == userId);
 
             if (player != null)
             {
@@ -39,9 +40,11 @@ namespace property_dealer_API.Core.Logic
                 throw new PlayerNotFoundException(userId);
             }
         }
+
+        // Mutation methods (public, but external code can't access them)
         public JoinGameResponseEnum AddPlayerToDict(Player player)
         {
-            if (this.Players.TryAdd(player.UserId, player))
+            if (Players.TryAdd(player.UserId, player))
             {
                 return JoinGameResponseEnum.JoinedSuccess;
             }
@@ -54,7 +57,7 @@ namespace property_dealer_API.Core.Logic
 
         public string RemovePlayerFromDictByUserId(string userId)
         {
-            if (this.Players.TryRemove(userId, out Player? player))
+            if (Players.TryRemove(userId, out Player? player))
             {
                 return player.PlayerName;
             }

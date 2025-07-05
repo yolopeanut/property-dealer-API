@@ -1,27 +1,27 @@
 ﻿
+using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Models.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay.Service
 {
     public class GameplayService : IGameplayService
     {
         private readonly IGameManagerService _gameManagerService;
-        private readonly ICardFactoryService _cardManagerService;
         public GameplayService(IGameManagerService gameManagerService, ICardFactoryService cardManagerService)
         {
             this._gameManagerService = gameManagerService;
-            this._cardManagerService = cardManagerService;
         }
 
         public bool DoesPlayerExist(string userId, string gameRoomId)
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
+                _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -49,12 +49,12 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
         public List<Player> GetAllPlayers(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayers();
+            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
         }
 
         public Player GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
+            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
@@ -70,6 +70,16 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             }
 
             return removalStatus?.PlayerName ?? "Server: Cannot find player";
+        }
+
+        public List<Card> GetPlayerHand(string gameRoomId, string userId)
+        {
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerHandManager.GetPlayerHand(userId);
+        }
+
+        public List<TableHands> GetAllOtherPlayerTableHands(string gameRoomId)
+        {
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerHandManager.GetAllTableHands();
         }
     }
 }

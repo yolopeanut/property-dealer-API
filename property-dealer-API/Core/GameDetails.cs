@@ -1,17 +1,29 @@
 ﻿using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
-using property_dealer_API.Core.Logic;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using System.Diagnostics.CodeAnalysis;
 using property_dealer_API.Application.Enums;
+using property_dealer_API.Core.Logic.DeckManager;
+using property_dealer_API.Core.Logic.PlayerManager;
+using property_dealer_API.Core.Logic.PlayerHandsManager;
 
 namespace property_dealer_API.Core
 {
     public class GameDetails
     {
+        // Deck manager and it's readonly counterpart (for public access to gets, etc)
         private readonly DeckManager _deckManager;
+        public IReadOnlyDeckManager PublicDeckManager => _deckManager;
+
+        // Player manager and it's readonly counterpart (for public access to gets, etc)
         private readonly PlayerManager _playerManager;
+        public IReadOnlyPlayerManager PublicPlayerManager => _playerManager;
+
+        // Player hand manager and it's readonly counterpart (for public access to gets, etc)
+        private readonly PlayersHandManager _playerHandManager;
+        public IReadOnlyPlayerHandManager PublicPlayerHandManager => _playerHandManager;
+
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -27,22 +39,8 @@ namespace property_dealer_API.Core
             Config = config;
             this._deckManager = new DeckManager();
             this._playerManager = new PlayerManager(initialPlayer);
+            this._playerHandManager = new PlayersHandManager();
         }
-
-        public void StartGame(List<Card> initialDeck)
-        {
-            this._deckManager.PopulateInitialDeck(initialDeck);
-            this.InitializeHands();
-            this.GameState = GameStateEnum.GameStarted;
-        }
-
-        public GameConfig? GetGameRoomConfig()
-        {
-            return this.Config;
-        }
-
-
-        // ================================================ PLAYERS WRAPPERS ================================================ //
 
         // Adding players, validating game rules for player to join will be done here
         public JoinGameResponseEnum AddPlayer(Player player)
@@ -63,21 +61,10 @@ namespace property_dealer_API.Core
 
             return result;
         }
-
-        // Getting all players
-        public List<Player> GetPlayers()
-        {
-            return this._playerManager.GetAllPlayers();
-        }
-
-        public Player GetPlayerByUserId(string userId)
-        {
-            return this._playerManager.GetPlayerByUserId(userId);
-        }
-
         public RemovePlayerReturn RemovePlayerByUserId(string userId)
         {
-            var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);
+            var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);   // Removal from player list
+            _playerHandManager.RemovePlayerByUserId(userId);                        // Removal from player hand lists
 
             // Successful removal with no players remaining
             if (this._playerManager.CountPlayers() < 1)
@@ -87,26 +74,44 @@ namespace property_dealer_API.Core
 
             // Successful removal with players remaining
             return new RemovePlayerReturn(playerName, RemovePlayerResponse.SuccessfulPlayerRemovalWithPlayersRemaining);
-
-
-            ;
         }
 
-        // ============================================== END PLAYERS WRAPPERS ============================================== //
+        public void StartGame(List<Card> initialDeck)
+        {
+            Console.WriteLine("CALLING START GAME");
+            this._deckManager.PopulateInitialDeck(initialDeck);     // Populating initial decks
+            this.InitializePlayerHands();                           // Instantiate blank hand and table hand
+            this.AssignHands();                                     // Assigning hand to blank hands
 
+            this.GameState = GameStateEnum.GameStarted;
+        }
 
-        // ================================================= CARD WRAPPERS & LOGICS ================================================== //
-
-        // =============================================== END CARD WRAPPERS & LOGICS ================================================ //
+        public GameConfig? GetGameRoomConfig()
+        {
+            return this.Config;
+        }
 
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.
-        private void InitializeHands()
+        private void InitializePlayerHands()
         {
-            var playerList = this._playerManager.GetAllPlayers();
+            Console.WriteLine("INITIALIZING ALL PLAYERS HANDS");
 
+            var playerList = this._playerManager.GetAllPlayers();
             foreach (var player in playerList)
             {
-                player.Hand = this._deckManager.DrawCard(7);
+                this._playerHandManager.AddPlayerHand(player.UserId);
+            }
+        }
+
+        private void AssignHands()
+        {
+            Console.WriteLine("ASSIGNING CARDS TO ALL PLAYERS");
+
+            var playerList = this._playerManager.GetAllPlayers();
+            foreach (var player in playerList)
+            {
+                var freshCards = this._deckManager.DrawCard(5);
+                this._playerHandManager.AssignPlayerHand(player.UserId, freshCards);
             }
         }
     }

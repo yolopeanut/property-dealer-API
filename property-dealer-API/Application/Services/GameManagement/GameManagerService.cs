@@ -7,7 +7,7 @@ namespace property_dealer_API.Application.Services.GameManagement
 {
     public class GameManagerService : IGameManagerService
     {
-        private static readonly ConcurrentDictionary<string, GameDetails> _gamesDictConcurrent = new ConcurrentDictionary<string, GameDetails>();
+        private readonly ConcurrentDictionary<string, GameDetails> _gamesDictConcurrent = new();
 
         // Geting game list summary
         public IEnumerable<GameListSummaryResponse> GetGameListSummary()
@@ -16,7 +16,7 @@ namespace property_dealer_API.Application.Services.GameManagement
                 item => new GameListSummaryResponse(
                     item.Key,
                     item.Value.RoomName,
-                    item.Value.GetPlayers().Count,
+                    item.Value.PublicPlayerManager.CountPlayers(),
                     Convert.ToInt16(item.Value.Config.MaxNumPlayers),
                     item.Value.GameState
                 )

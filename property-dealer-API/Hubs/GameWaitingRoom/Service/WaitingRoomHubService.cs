@@ -18,32 +18,32 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
             this._cardFactoryService = cardFactoryService;
         }
 
-        public List<Player>? GetAllPlayers(string gameRoomId)
+        public List<Player> GetAllPlayers(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayers();
+            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
         }
 
-        public Player? GetPlayerByUserId(string gameRoomId, string userId)
+        public Player GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
+            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
-            var removalStatus = gameInstance?.RemovePlayerByUserId(userId);
+            var removalStatus = gameInstance.RemovePlayerByUserId(userId);
 
             // If no players are left (response by game instance), remove the game from game manager.
-            if (removalStatus?.Response == RemovePlayerResponse.NoPlayersRemaining)
+            if (removalStatus.Response == RemovePlayerResponse.NoPlayersRemaining)
             {
                 this._gameManagerService.RemoveGame(gameRoomId);
             }
 
-            return removalStatus?.PlayerName ?? "Server: Cannot find player";
+            return removalStatus.PlayerName;
         }
 
-        public GameConfig? GetRoomConfig(string gameRoomId)
+        public GameConfig GetRoomConfig(string gameRoomId)
         {
             return _gameManagerService.GetGameDetails(gameRoomId).Config;
         }
@@ -65,7 +65,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId).GetPlayerByUserId(userId);
+                _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
                 return true;
             }
             catch (GameNotFoundException)
