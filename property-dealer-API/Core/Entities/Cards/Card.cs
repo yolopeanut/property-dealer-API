@@ -1,9 +1,11 @@
-﻿using property_dealer_API.Models.Enums.Cards;
+﻿using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Models.Cards
 {
     public abstract class Card
     {
+        public Guid CardGuid { get; set; }
         public CardTypesEnum CardType { get; set; }
         public string Name { get; set; }
         public int? BankValue { get; set; }
@@ -11,6 +13,7 @@ namespace property_dealer_API.Models.Cards
 
         public Card(CardTypesEnum cardType, string? name, int? bankValue, string? description)
         {
+            this.CardGuid = Guid.NewGuid();
             this.CardType = cardType;
             this.Name = name ?? "No Name";
             this.BankValue = bankValue;
@@ -18,6 +21,25 @@ namespace property_dealer_API.Models.Cards
         }
 
         public override string ToString() => $"{Name} (Bank Value: {BankValue}M Credits)";
+
+        public virtual CardDto ToDto()
+        {
+            return new CardDto
+            {
+                // Map all the properties that EVERY card has
+                CardGuid = this.CardGuid,
+                CardType = this.CardType,
+                Name = this.Name,
+                BankValue = this.BankValue,
+                Description = this.Description,
+
+                // Set defaults for properties that are not common
+                Command = null,
+                CardColoursList = null,
+                TargetColorsToApplyRent = null,
+                CardColoursEnum = null
+            };
+        }
 
     }
 }

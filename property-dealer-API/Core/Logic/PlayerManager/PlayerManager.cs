@@ -27,6 +27,7 @@ namespace property_dealer_API.Core.Logic.PlayerManager
         {
             return Players.Values.ToList();
         }
+
         public Player GetPlayerByUserId(string userId)
         {
             var player = Players.Values.FirstOrDefault(player => player.UserId == userId);

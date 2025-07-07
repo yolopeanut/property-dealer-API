@@ -13,6 +13,6 @@ namespace property_dealer_API.Hubs.GamePlay
         Task ErrorMsg(string message);
         Task PlayerLeft(string playerName);
         Task AllTableHands(List<TableHands> AllTableHands);
-        Task PlayerHand(List<Card> playerHand);
+        Task PlayerHand(List<CardDto> playerHand);
     }
 }

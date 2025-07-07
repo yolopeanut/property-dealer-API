@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
+using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
@@ -72,9 +74,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
             // 5. Notify the group that a player has joined
             var player = this._gamePlayService.GetPlayerByUserId(gameRoomId, userId);
-
-            // Send the full player list to the newly connected client or the whole group
-            await this.GetAllPlayerList(gameRoomId);
+            await this.GetAllTableCard(gameRoomId);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -86,12 +86,12 @@ namespace property_dealer_API.Hubs.GamePlay
             var userId = userIdObj as string;
 
 
-            if (!String.IsNullOrEmpty(gameRoomId) && !String.IsNullOrEmpty(userId))
-            {
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameRoomId);
+            //if (!String.IsNullOrEmpty(gameRoomId) && !String.IsNullOrEmpty(userId))
+            //{
+            //    await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameRoomId);
 
-                await this.LeaveGameRoom(gameRoomId, userId);
-            }
+            //    await this.LeaveGameRoom(gameRoomId, userId);
+            //}
         }
 
         public async Task LeaveGameRoom(string gameRoomId, string userId)
@@ -108,9 +108,9 @@ namespace property_dealer_API.Hubs.GamePlay
                     await this.GetAllPlayerList(gameRoomId);
                 }
             }
-            catch (PlayerNotFoundException e)
+            catch (Exception e)
             {
-                await Clients.Group(gameRoomId).ErrorMsg(string.Concat("Player trying to leave was not found, report this bug if found.", e));
+                await this.ExceptionHandler(e);
             }
         }
 
@@ -123,9 +123,9 @@ namespace property_dealer_API.Hubs.GamePlay
                 Console.WriteLine(gameRoomId, allPlayers);
                 await Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
             }
-            catch (GameNotFoundException e)
+            catch (Exception e)
             {
-                await Clients.Group(gameRoomId).ErrorMsg(string.Concat("Getting all player list was not found, report this bug if found.", e));
+                await this.ExceptionHandler(e);
             }
 
 
@@ -138,37 +138,43 @@ namespace property_dealer_API.Hubs.GamePlay
                 var playerHand = this._gamePlayService.GetPlayerHand(gameRoomId, userId);
                 await Clients.Caller.PlayerHand(playerHand);
             }
-            catch (PlayerNotFoundException e)
+            catch (Exception e)
             {
-                await Clients.Caller.ErrorMsg(e.Message);
-            }
-            catch (GameNotFoundException e)
-            {
-                await Clients.Caller.ErrorMsg(e.Message);
+                await this.ExceptionHandler(e);
             }
         }
 
-        public async Task GetAllTableCard(string gameRoomId, string userId)
+        public async Task GetAllTableCard(string gameRoomId)
         {
             try
             {
-                var allTableHands = this._gamePlayService.GetAllOtherPlayerTableHands(gameRoomId);
+                var allTableHands = this._gamePlayService.GetAllPlayerTableHands(gameRoomId);
                 await Clients.Group(gameRoomId).AllTableHands(allTableHands);
             }
-            catch (GameNotFoundException e)
+            catch (Exception e)
             {
-                await Clients.Caller.ErrorMsg(e.Message);
+                await this.ExceptionHandler(e);
             }
         }
 
-        public async Task PlayCard(string gameRoomId, string userId)
+        public async Task PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
-            await GetAllTableCard(gameRoomId, userId);
+            //Play user card (send to discard pile, show up on all players screen, remove from user hand, draw card)
+            try
+            {
+                this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+                await GetAllTableCard(gameRoomId);
+                await GetPlayerHand(gameRoomId, userId);
+            }
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
         }
 
-        public Task DrawCard(string gameRoomId, string userId)
+        private async Task ExceptionHandler(Exception e)
         {
-            throw new NotImplementedException();
+            await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message);
         }
     }
 }

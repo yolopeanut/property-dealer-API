@@ -7,6 +7,10 @@ using property_dealer_API.Application.Enums;
 using property_dealer_API.Core.Logic.DeckManager;
 using property_dealer_API.Core.Logic.PlayerManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
+using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Models.Enums.Cards;
+using property_dealer_API.Core.Logic.GameStateMapper;
 
 namespace property_dealer_API.Core
 {
@@ -24,6 +28,8 @@ namespace property_dealer_API.Core
         private readonly PlayersHandManager _playerHandManager;
         public IReadOnlyPlayerHandManager PublicPlayerHandManager => _playerHandManager;
 
+        private readonly GameStateMapper _mapper;
+
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -40,6 +46,7 @@ namespace property_dealer_API.Core
             this._deckManager = new DeckManager();
             this._playerManager = new PlayerManager(initialPlayer);
             this._playerHandManager = new PlayersHandManager();
+            this._mapper = new GameStateMapper(PublicPlayerHandManager, PublicPlayerManager);
         }
 
         // Adding players, validating game rules for player to join will be done here
@@ -89,6 +96,71 @@ namespace property_dealer_API.Core
         public GameConfig? GetGameRoomConfig()
         {
             return this.Config;
+        }
+
+        public void PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
+        {
+            //TODO validate rules here
+            var cardRemoved = this._playerHandManager.RemoveFromPlayerHand(userId, cardId);
+            try
+            {
+                switch (cardDestination)
+                {
+                    case CardDestinationEnum.ActionPile:
+                        Console.WriteLine("Adding to discard pile");
+                        this._deckManager.Discard(cardRemoved);
+                        break;
+                    case CardDestinationEnum.MoneyPile:
+                        this._playerHandManager.AddCardToPlayerMoneyHand(userId, cardRemoved);
+                        break;
+                    case CardDestinationEnum.PropertyPile:
+                        if (cardRemoved is not (StandardSystemCard or SystemWildCard))
+                        {
+                            throw new InvalidOperationException($"Cannot play a non property card on the property section");
+                        }
+                        if (cardColoursDestinationEnum == null)
+                        {
+                            throw new InvalidOperationException($"Card destination color cannot be null");
+                        }
+
+                        this._playerHandManager.AddCardToPlayerTableHand(userId, cardRemoved, cardColoursDestinationEnum.Value);
+
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(cardDestination), "An invalid card destination was specified.");
+                }
+
+                // Drawing card and assigning
+                var drawnCards = this._deckManager.DrawCard(1);
+
+                if (drawnCards.Any())
+                {
+                    var cardDrawn = drawnCards.Single();
+                    this._playerHandManager.AddCardToPlayerHand(userId, cardDrawn);
+                }
+                else
+                {
+                    Console.WriteLine($"Deck is empty. Player {userId} did not draw a card.");
+                }
+            }
+
+            catch (Exception)
+            {
+                // If ANY part of the turn fails (e.g., invalid card, empty deck error),
+                // we give the card back to the player. This prevents the card from
+                // disappearing from the game and keeps the state consistent.
+                this._playerHandManager.AddCardToPlayerHand(userId, cardRemoved);
+
+                // Re-throw the original exception so the calling layer knows what went wrong
+                // and can handle it (e.g., display an error message to the user).
+                throw;
+            }
+        }
+
+        public List<TableHands> GetAllPlayerHands()
+        {
+            var allPlayerHands = this._mapper.GetAllTableHandsDto();
+            return allPlayerHands;
         }
 
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.

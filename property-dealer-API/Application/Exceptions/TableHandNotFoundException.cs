@@ -1,7 +1,7 @@
 ﻿namespace property_dealer_API.Application.Exceptions
 {
-    public class HandNotFoundException : Exception
+    public class TableHandNotFoundException : Exception
     {
-        public HandNotFoundException(string userId) : base($"{userId}'s hand was not found") { }
+        public TableHandNotFoundException(string userId) : base($"{userId}'s Table hand was not found") { }
     }
 }

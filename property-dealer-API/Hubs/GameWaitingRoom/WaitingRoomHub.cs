@@ -113,7 +113,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameRoomId);
 
-                await this.LeaveWaitingRoom(gameRoomId, userId);
+                // await this.LeaveWaitingRoom(gameRoomId, userId);
             }
         }
 
