@@ -34,6 +34,15 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             }
         }
 
+        public Card GetCardFromPlayerHandById(string userId, string cardId)
+        {
+            var card = this.GetPlayerHand(userId).Find(card => card.CardGuid.ToString() == cardId);
+
+            if (card == null) { throw new CardNotFoundException(cardId, userId); }
+
+            return card;
+        }
+
         public void ProcessAllTableHandsSafely(Action<string, IReadOnlyDictionary<PropertyCardColoursEnum, IReadOnlyList<Card>>, IReadOnlyList<Card>> processAction)
         {
             foreach (var playerTableHand in _playerTableHands)
@@ -143,12 +152,12 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             {
                 lock (playerTableHand)
                 {
-
                     if (!playerTableHand.TryGetValue(cardColorDestinationGroup, out List<Card>? cardList))
                     {
-                        var cardListToAdd = new List<Card>();
-                        playerTableHand.TryAdd(cardColorDestinationGroup, cardListToAdd);
+                        cardList = new List<Card>();
+                        playerTableHand.TryAdd(cardColorDestinationGroup, cardList);
                     }
+                    // Cardlist is null here even though we add it above
                     cardList!.Add(cardToAdd);
                 }
             }
@@ -159,7 +168,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         }
         public void AddCardToPlayerMoneyHand(string userId, Card cardToAdd)
         {
-            if (cardToAdd is not CommandCard or MoneyCard or TributeCard)
+            if (cardToAdd is not (CommandCard or MoneyCard or TributeCard))
             {
                 throw new CardMismatchException(userId, cardToAdd.CardGuid.ToString());
             }

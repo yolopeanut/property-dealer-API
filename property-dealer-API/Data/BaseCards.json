@@ -230,51 +230,8 @@
       {
         "name": "System Wildcard",
         "value": 4,
-        "colors": [ "Pink", "Orange" ],
-        "count": 2,
-        "description": "Can be played as either a Pink or Orange system."
-      },
-      {
-        "name": "System Wildcard",
-        "value": 4,
-        "colors": [ "Red", "Yellow" ],
-        "count": 2,
-        "description": "Can be played as either a Red or Yellow system."
-      },
-      {
-        "name": "System Wildcard",
-        "value": 1,
-        "colors": [ "Brown", "Cyan" ],
-        "count": 1,
-        "description": "Can be played as either a Brown or Cyan system."
-      },
-      {
-        "name": "System Wildcard",
-        "value": 2,
-        "colors": [ "Cyan", "Hyperlane" ],
-        "count": 1,
-        "description": "Can be played as either a Cyan system or a Hyperlane."
-      },
-      {
-        "name": "System Wildcard",
-        "value": 4,
-        "colors": [ "Green", "DarkBlue" ],
-        "count": 1,
-        "description": "Can be played as either a Green or Dark Blue system."
-      },
-      {
-        "name": "System Wildcard",
-        "value": 2,
-        "colors": [ "ResourceNode", "Hyperlane" ],
-        "count": 2,
-        "description": "Can be played as either a Resource Node or a Hyperlane."
-      },
-      {
-        "name": "Omni-Sector Wildcard",
-        "value": 0,
-        "colors": [ "OmniSector" ],
-        "count": 2,
-        "description": "This card can be part of any system set. It has no monetary value."
+        "count": 10,
+        "description": "This card can be placed on any set!"
       }
     ],
     "commands": [

@@ -66,7 +66,7 @@ namespace property_dealer_API.Application.Services.CardManagement
                 {
                     for (int i = 0; i < cardsDef.Count; i++)
                     {
-                        var card = new StandardSystemCard(CardTypesEnum.SystemCard, cardsDef.Name, cardsDef.Value, colorEnum);
+                        var card = new StandardSystemCard(CardTypesEnum.SystemCard, cardsDef.Name, cardsDef.Value, colorEnum, cardsDef.Description);
                         deck.Add(card);
                     }
                 }
@@ -81,26 +81,9 @@ namespace property_dealer_API.Application.Services.CardManagement
         {
             foreach (var cardsDef in systemWildCardsToGen)
             {
-                var colorsList = cardsDef.Colors;
-                var colorsEnumAsList = new List<PropertyCardColoursEnum>();
-
-                // Validating each color
-                foreach (var colors in colorsList)
-                {
-                    if (Enum.TryParse<PropertyCardColoursEnum>(colors, true, out PropertyCardColoursEnum colorsEnum))
-                    {
-                        colorsEnumAsList.Add(colorsEnum);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Warning: Invalid color '{colors}' found for card '{cardsDef.Name}'. This card will not be generated.");
-                        continue;
-                    }
-                }
-
                 for (int i = 0; i < cardsDef.Count; i++)
                 {
-                    var card = new SystemWildCard(CardTypesEnum.SystemWildCard, cardsDef.Name, cardsDef.Value, colorsEnumAsList);
+                    var card = new SystemWildCard(CardTypesEnum.SystemWildCard, cardsDef.Name, cardsDef.Value, cardsDef.Description);
                     deck.Add(card);
                 }
             }

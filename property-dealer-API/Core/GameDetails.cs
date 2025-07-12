@@ -1,16 +1,19 @@
-﻿using property_dealer_API.Application.MethodReturns;
+﻿using property_dealer_API.Application.Consts;
+using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.Enums;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.DeckManager;
+using property_dealer_API.Core.Logic.GameRuleManager;
+using property_dealer_API.Core.Logic.GameStateMapper;
+using property_dealer_API.Core.Logic.PendingActionManager;
+using property_dealer_API.Core.Logic.PlayerHandsManager;
+using property_dealer_API.Core.Logic.PlayerManager;
+using property_dealer_API.Core.Logic.TurnManager;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
-using System.Diagnostics.CodeAnalysis;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Core.Logic.DeckManager;
-using property_dealer_API.Core.Logic.PlayerManager;
-using property_dealer_API.Core.Logic.PlayerHandsManager;
-using property_dealer_API.Application.Exceptions;
-using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Models.Enums.Cards;
-using property_dealer_API.Core.Logic.GameStateMapper;
+using System.Diagnostics.CodeAnalysis;
 
 namespace property_dealer_API.Core
 {
@@ -29,6 +32,9 @@ namespace property_dealer_API.Core
         public IReadOnlyPlayerHandManager PublicPlayerHandManager => _playerHandManager;
 
         private readonly GameStateMapper _mapper;
+        private readonly GameRuleManager _rulesManager;
+        private readonly TurnManager _turnManager;
+        private readonly PendingActionManager _pendingActionManager;
 
 
         public required string RoomId { get; set; }
@@ -37,37 +43,36 @@ namespace property_dealer_API.Core
         public required GameConfig Config { get; set; }
 
         [SetsRequiredMembers]
-        public GameDetails(string roomId, string roomName, GameConfig config, Player initialPlayer)
+        public GameDetails(string roomId, string roomName, GameConfig config)
         {
             RoomId = roomId;
             RoomName = roomName;
             GameState = GameStateEnum.WaitingRoom;
             Config = config;
             this._deckManager = new DeckManager();
-            this._playerManager = new PlayerManager(initialPlayer);
+            this._playerManager = new PlayerManager();
             this._playerHandManager = new PlayersHandManager();
             this._mapper = new GameStateMapper(PublicPlayerHandManager, PublicPlayerManager);
+            this._rulesManager = new GameRuleManager();
+            this._turnManager = new TurnManager(roomId);
+            this._pendingActionManager = new PendingActionManager();
         }
 
         // Adding players, validating game rules for player to join will be done here
         public JoinGameResponseEnum AddPlayer(Player player)
         {
-            // Game started
-            if (GameState != GameStateEnum.WaitingRoom)
-            {
-                return JoinGameResponseEnum.AlreadyInGame;
-            }
+            var hasIssue = this._rulesManager.ValidatePlayerJoining(this.GameState, this._playerManager.GetAllPlayers(), this.Config.MaxNumPlayers);
 
-            // Game full
-            if (this._playerManager.GetAllPlayers().Count + 1 > Convert.ToInt32(this.Config.MaxNumPlayers))
+            if (hasIssue.HasValue)
             {
-                return JoinGameResponseEnum.GameFull;
+                return hasIssue.Value;
             }
 
             var result = this._playerManager.AddPlayerToDict(player);
-
+            this._turnManager.AddPlayer(player.UserId);
             return result;
         }
+
         public RemovePlayerReturn RemovePlayerByUserId(string userId)
         {
             var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);   // Removal from player list
@@ -98,49 +103,85 @@ namespace property_dealer_API.Core
             return this.Config;
         }
 
-        public void PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
+        // Return a tuple for flexibility of adjusting later.
+        // Currently the only return type would be a dialog. If the rules manager gives a dialog we return that
+        // Otherwise return null.
+        public (List<Player> dialogTargetList, DialogTypeEnum dialogToOpen)? PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
         {
-            //TODO validate rules here
+            DialogTypeEnum? dialogToOpen = null;
+            List<Player>? dialogTargetList = null;
+
+            //Getting players and current user to be used in rules validation
+            var players = this._playerManager.GetAllPlayers();
+            var currentUser = this._playerManager.GetPlayerByUserId(userId);
+
+            // Validating player turn and if they exceed their turn amount
+            this._rulesManager.ValidateTurn(userId, this._turnManager.GetCurrentUserTurn());
+            this._rulesManager.ValidateActionLimit(userId, this._turnManager.GetCurrentUserActionCount());
+
             var cardRemoved = this._playerHandManager.RemoveFromPlayerHand(userId, cardId);
             try
             {
                 switch (cardDestination)
                 {
-                    case CardDestinationEnum.ActionPile:
+                    case CardDestinationEnum.CommandPile:
+                        // Get dialog to open
+                        var newPendingAction = new PendingAction { InitiatorUserId = userId };
+                        dialogToOpen = this._rulesManager.IdentifyDialogToOpen(cardRemoved, newPendingAction);
+
+                        // If dialog is not null
+                        if (dialogToOpen.HasValue)
+                        {
+                            dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, null, players, dialogToOpen.Value);
+                            newPendingAction.StoredData[StoredDataKeys.TargetPlayers] = dialogTargetList;
+                        }
+
                         Console.WriteLine("Adding to discard pile");
                         this._deckManager.Discard(cardRemoved);
                         break;
+
                     case CardDestinationEnum.MoneyPile:
                         this._playerHandManager.AddCardToPlayerMoneyHand(userId, cardRemoved);
                         break;
+
                     case CardDestinationEnum.PropertyPile:
-                        if (cardRemoved is not (StandardSystemCard or SystemWildCard))
+                        this._rulesManager.ValidatePropertyPileCardType(cardRemoved);
+
+                        if (cardRemoved is SystemWildCard)
                         {
-                            throw new InvalidOperationException($"Cannot play a non property card on the property section");
-                        }
-                        if (cardColoursDestinationEnum == null)
-                        {
-                            throw new InvalidOperationException($"Card destination color cannot be null");
+                            dialogToOpen = DialogTypeEnum.WildcardColor;
+                            dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, null, players, dialogToOpen.Value);
                         }
 
-                        this._playerHandManager.AddCardToPlayerTableHand(userId, cardRemoved, cardColoursDestinationEnum.Value);
-
+                        // If we're still here, it must be a standard property card.
+                        var validatedColor = this._rulesManager.ValidateStandardPropertyCardDestination(cardColoursDestinationEnum);
+                        this._playerHandManager.AddCardToPlayerTableHand(userId, cardRemoved, validatedColor);
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException(nameof(cardDestination), "An invalid card destination was specified.");
                 }
 
-                // Drawing card and assigning
-                var drawnCards = this._deckManager.DrawCard(1);
-
-                if (drawnCards.Any())
+                // If there is a dialog to open, dont change player turns yet.
+                // They need to do the action before changing player turn.
+                if (dialogToOpen == null)
                 {
-                    var cardDrawn = drawnCards.Single();
-                    this._playerHandManager.AddCardToPlayerHand(userId, cardDrawn);
+                    Console.WriteLine("INCREMENTING USER ACTION COUNT");
+                    var nullOrNextUserTurn = this._turnManager.IncrementUserActionCount();
+                    if (nullOrNextUserTurn != null)
+                    {
+                        this.NextPlayerTurn(nullOrNextUserTurn);
+                    }
+                    return null;
                 }
                 else
                 {
-                    Console.WriteLine($"Deck is empty. Player {userId} did not draw a card.");
+                    if (dialogTargetList == null)
+                    {
+                        throw new InvalidOperationException("Target list in null but dialog to open has a value!");
+                    }
+
+                    return (dialogTargetList, dialogToOpen.Value);
                 }
             }
 
@@ -157,10 +198,26 @@ namespace property_dealer_API.Core
             }
         }
 
+        public void NextPlayerTurn(string userId)
+        {
+            // Draw Cards for new user
+            this.AssignCardToPlayer(userId, 2);
+        }
+
         public List<TableHands> GetAllPlayerHands()
         {
             var allPlayerHands = this._mapper.GetAllTableHandsDto();
             return allPlayerHands;
+        }
+
+        public CardDto GetPlayerHandByCardId(string userId, string cardId)
+        {
+            return this._playerHandManager.GetCardFromPlayerHandById(userId, cardId).ToDto();
+        }
+
+        public CardDto GetMostRecentDiscardedCard()
+        {
+            return this._deckManager.GetMostRecentDiscardedCard().ToDto();
         }
 
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.
@@ -175,16 +232,31 @@ namespace property_dealer_API.Core
             }
         }
 
+        // Adding cards to all player hands.
         private void AssignHands()
         {
             Console.WriteLine("ASSIGNING CARDS TO ALL PLAYERS");
 
             var playerList = this._playerManager.GetAllPlayers();
-            foreach (var player in playerList)
+
+            for (int i = 0; i < playerList.Count; i++)
             {
-                var freshCards = this._deckManager.DrawCard(5);
-                this._playerHandManager.AssignPlayerHand(player.UserId, freshCards);
+                if (i == 0)
+                {
+                    this.AssignCardToPlayer(playerList[i].UserId, 7);
+                }
+                else
+                {
+                    this.AssignCardToPlayer(playerList[i].UserId, 5);
+                }
             }
+        }
+
+        // Method to assign cards to specific players (next turn or pass go, etc)
+        private void AssignCardToPlayer(string userId, int numCardsToDraw)
+        {
+            var freshCards = this._deckManager.DrawCard(numCardsToDraw);
+            this._playerHandManager.AssignPlayerHand(userId, freshCards);
         }
     }
 }

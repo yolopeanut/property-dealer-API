@@ -1,6 +1,4 @@
-﻿using property_dealer_API.Models.Cards;
-
-namespace property_dealer_API.Core.Entities
+﻿namespace property_dealer_API.Core.Entities
 {
     public class Player
     {

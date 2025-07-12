@@ -10,9 +10,6 @@ namespace property_dealer_API.Models.Cards.BaseJsonDeckDefinitions
         [JsonPropertyName("value")]
         public int Value { get; set; }
 
-        [JsonPropertyName("colors")]
-        public List<string> Colors { get; set; } = [];
-
         [JsonPropertyName("count")]
         public int Count { get; set; }
 

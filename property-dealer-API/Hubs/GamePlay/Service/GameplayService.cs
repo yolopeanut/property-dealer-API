@@ -4,6 +4,7 @@ using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
+using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
@@ -85,10 +86,25 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return this._gameManagerService.GetGameDetails(gameRoomId).GetAllPlayerHands();
         }
 
-        public void PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
+        public (List<Player> dialogTargetList, DialogTypeEnum dialogToOpen)? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
-            gameInstance.PlayTurn(userId, cardId, cardDestination, cardColorDestinationEnum);
+            return gameInstance.PlayTurn(userId, cardId, cardDestination, cardColorDestinationEnum);
+        }
+
+        public CardDto GetCardByIdFromPlayerHand(string gameRoomId, string userId, string cardId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            var card = gameInstance.GetPlayerHandByCardId(userId, cardId);
+
+            return card;
+        }
+        public CardDto GetMostRecentDiscardedCard(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            var card = gameInstance.GetMostRecentDiscardedCard();
+
+            return card;
         }
     }
 }

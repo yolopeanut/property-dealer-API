@@ -1,7 +1,7 @@
 ﻿namespace property_dealer_API.Application.Exceptions
 {
-    public class PlayerNotFoundException : Exception
+    public class NoPlayersFoundException : Exception
     {
-        public PlayerNotFoundException(string userId) : base($"Player with {userId} was not found in the game") { }
+        public NoPlayersFoundException(string roomId) : base($"Turn manager cannot find any players in room {roomId}") { }
     }
 }

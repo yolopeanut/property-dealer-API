@@ -12,9 +12,8 @@ namespace property_dealer_API.Core.Logic.PlayerManager
     {
         private ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 
-        public PlayerManager(Player initialPlayer)
+        public PlayerManager()
         {
-            AddPlayerToDict(initialPlayer);
         }
 
         // Interface methods (read-only)
@@ -42,7 +41,6 @@ namespace property_dealer_API.Core.Logic.PlayerManager
             }
         }
 
-        // Mutation methods (public, but external code can't access them)
         public JoinGameResponseEnum AddPlayerToDict(Player player)
         {
             if (Players.TryAdd(player.UserId, player))

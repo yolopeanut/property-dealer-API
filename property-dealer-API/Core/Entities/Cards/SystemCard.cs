@@ -4,7 +4,7 @@ namespace property_dealer_API.Models.Cards
 {
     public abstract class SystemCard : Card
     {
-        public SystemCard(CardTypesEnum cardType, string name, int value) : base(cardType, name, value, null)
+        public SystemCard(CardTypesEnum cardType, string name, int value, string description) : base(cardType, name, value, description)
         {
         }
     }

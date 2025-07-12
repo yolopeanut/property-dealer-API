@@ -1,4 +1,5 @@
-﻿using property_dealer_API.Models.Cards;
+﻿using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Models.Cards;
 using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.DeckManager
@@ -6,7 +7,7 @@ namespace property_dealer_API.Core.Logic.DeckManager
     public class DeckManager : IReadOnlyDeckManager
     {
         private readonly ConcurrentStack<Card> _drawPile = new ConcurrentStack<Card>();
-        private ConcurrentBag<Card> _discardPile = new ConcurrentBag<Card>();
+        private ConcurrentStack<Card> _discardPile = new ConcurrentStack<Card>();
 
         public DeckManager()
         {
@@ -19,7 +20,7 @@ namespace property_dealer_API.Core.Logic.DeckManager
 
             foreach (var card in initialDeck)
             {
-                _drawPile.Push(card);
+                this._drawPile.Push(card);
             }
         }
 
@@ -28,15 +29,16 @@ namespace property_dealer_API.Core.Logic.DeckManager
             var cardList = new List<Card>();
             for (int i = 0; i < numToDraw; i++)
             {
-                if (_drawPile.TryPop(out Card? result))
+                if (this._drawPile.TryPop(out Card? result))
                 {
                     cardList.Add(result);
                     continue;
                 }
 
+                Console.WriteLine("RESHUFFLING DECK");
                 ReshuffleIfNeeded();
 
-                if (_drawPile.TryPop(out Card? afterReshuffle))
+                if (this._drawPile.TryPop(out Card? afterReshuffle))
                 {
                     cardList.Add(afterReshuffle);
                 }
@@ -48,7 +50,7 @@ namespace property_dealer_API.Core.Logic.DeckManager
 
         public void Discard(Card card)
         {
-            _discardPile.Add(card);
+            this._discardPile.Push(card);
         }
 
         private readonly object _reshuffleLock = new object();
@@ -58,21 +60,32 @@ namespace property_dealer_API.Core.Logic.DeckManager
             lock (_reshuffleLock)
             {
                 // Double-check: Another thread might have already done this while we waited.
-                if (_drawPile.IsEmpty && !_discardPile.IsEmpty)
+                if (!this._drawPile.IsEmpty || this._discardPile.IsEmpty)
                 {
-                    // Atomically swap the current discard pile with a new empty one.
-                    // This prevents the "lost card" race condition.
-                    var cardsToReshuffle = Interlocked.Exchange(ref _discardPile, new ConcurrentBag<Card>());
-
-                    var shuffledDiscards = cardsToReshuffle.ToList();
-                    shuffledDiscards.Shuffle();
-
-                    // PushRange is a thread-safe way to add multiple items.
-                    _drawPile.PushRange(shuffledDiscards.ToArray());
+                    return;
                 }
+
+                // Atomically swap the current discard pile with a new empty one.
+                // This prevents the "lost card" race condition.
+                var cardsToReshuffle = Interlocked.Exchange(ref this._discardPile, new ConcurrentStack<Card>());
+
+                var shuffledDiscards = cardsToReshuffle.ToList();
+                shuffledDiscards.Shuffle();
+
+                // PushRange is a thread-safe way to add multiple items.
+                this._drawPile.PushRange(shuffledDiscards.ToArray());
+
             }
         }
 
+        public Card GetMostRecentDiscardedCard()
+        {
+            if (this._discardPile.TryPeek(out Card? card))
+            {
+                return card;
+            }
 
+            throw new CardNotFoundException("Cannot retrieve most recent discarded card, there are no cards in the discard pile");
+        }
     }
 }

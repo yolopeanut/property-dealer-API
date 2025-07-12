@@ -34,7 +34,8 @@ namespace property_dealer_API.Hubs.GameLobby.Service
 
             var newPlayer = new Player { UserId = userId, PlayerName = playerName };
 
-            var newGameDetails = new GameDetails(newRoomId, roomName, config, newPlayer);
+            var newGameDetails = new GameDetails(newRoomId, roomName, config);
+            newGameDetails.AddPlayer(newPlayer);
             _gameManagerService.AddNewGameToDict(newRoomId, newGameDetails);
 
             return newRoomId;

@@ -35,7 +35,6 @@ namespace property_dealer_API.Models.Cards
 
                 // Set defaults for properties that are not common
                 Command = null,
-                CardColoursList = null,
                 TargetColorsToApplyRent = null,
                 CardColoursEnum = null
             };

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.DTOs.Requests;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
 using property_dealer_API.Models.Enums.Cards;
+using property_dealer_API.Core;
+using property_dealer_API.Application.DTOs.Responses;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
@@ -11,13 +13,15 @@ namespace property_dealer_API.Hubs.GamePlay
     public class GamePlayHub : Hub<IGamePlayHubClient>, IGamePlayHubServer
     {
         private readonly IGameplayService _gamePlayService;
+        private readonly ILogger<GamePlayHub> _logger;
 
         private const string GameRoomIdKey = "GameRoomId";
         private const string UserIdKey = "UserId";
 
-        public GamePlayHub(IGameplayService gameplayService)
+        public GamePlayHub(IGameplayService gameplayService, ILogger<GamePlayHub> logger)
         {
             this._gamePlayService = gameplayService;
+            this._logger = logger;
         }
 
         public override async Task OnConnectedAsync()
@@ -75,6 +79,7 @@ namespace property_dealer_API.Hubs.GamePlay
             // 5. Notify the group that a player has joined
             var player = this._gamePlayService.GetPlayerByUserId(gameRoomId, userId);
             await this.GetAllTableCard(gameRoomId);
+            await this.GetLatestDiscardPileCard(gameRoomId);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -157,14 +162,43 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
+        public async Task GetLatestDiscardPileCard(string gameRoomId)
+        {
+            try
+            {
+                var discardedCard = this._gamePlayService.GetMostRecentDiscardedCard(gameRoomId);
+                await Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
+            }
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
+        }
+
         public async Task PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
+            _logger.LogInformation(
+                   "--> PlayCard called with params: GameRoomId={GameRoomId}, UserId={UserId}, CardId={CardId}, Destination={Destination}, ColorDestination={ColorDestination}",
+                   gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
             //Play user card (send to discard pile, show up on all players screen, remove from user hand, draw card)
             try
             {
-                this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+                var commandCardResponse = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+
+                if (commandCardResponse != null)
+                {
+                    var dialogDto = new OpenDialogDto { PlayerTargetList = commandCardResponse.Value.dialogTargetList, DialogType = commandCardResponse.Value.dialogToOpen };
+                    await Clients.Group(gameRoomId).OpenCommandDialog(dialogDto);
+                }
+
                 await GetAllTableCard(gameRoomId);
                 await GetPlayerHand(gameRoomId, userId);
+
+                if (cardDestination == CardDestinationEnum.CommandPile)
+                {
+                    await this.GetLatestDiscardPileCard(gameRoomId);
+                }
+
             }
             catch (Exception e)
             {
@@ -174,7 +208,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
         private async Task ExceptionHandler(Exception e)
         {
-            await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message);
+            await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
         }
     }
 }

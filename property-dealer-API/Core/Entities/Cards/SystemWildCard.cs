@@ -5,20 +5,8 @@ namespace property_dealer_API.Models.Cards
 {
     public class SystemWildCard : SystemCard
     {
-        public List<PropertyCardColoursEnum> CardColoursList;
-
-        public SystemWildCard(CardTypesEnum cardType, string name, int value, List<PropertyCardColoursEnum> cardColoursList) : base(cardType, name, value)
+        public SystemWildCard(CardTypesEnum cardType, string name, int value, string description) : base(cardType, name, value, description)
         {
-            this.CardColoursList = [.. cardColoursList];
-        }
-
-        public override CardDto ToDto()
-        {
-            var dto = base.ToDto();
-
-            dto.CardColoursList = this.CardColoursList;
-
-            return dto;
         }
     }
 }

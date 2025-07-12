@@ -2,7 +2,7 @@
 {
     public enum CardDestinationEnum
     {
-        ActionPile,
+        CommandPile,
         PropertyPile,
         MoneyPile
     }

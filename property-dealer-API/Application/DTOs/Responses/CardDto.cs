@@ -14,9 +14,6 @@ namespace property_dealer_API.Application.DTOs.Responses
         // CommandCard properties
         public ActionTypes? Command { get; set; }
 
-        // SystemWildCard properties
-        public List<PropertyCardColoursEnum>? CardColoursList { get; set; }
-
         // TributeCard properties
         public List<PropertyCardColoursEnum>? TargetColorsToApplyRent { get; set; }
 
