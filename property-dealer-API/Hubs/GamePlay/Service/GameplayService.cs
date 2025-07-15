@@ -86,7 +86,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return this._gameManagerService.GetGameDetails(gameRoomId).GetAllPlayerHands();
         }
 
-        public (List<Player> dialogTargetList, DialogTypeEnum dialogToOpen)? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
+        public ActionContext? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             return gameInstance.PlayTurn(userId, cardId, cardDestination, cardColorDestinationEnum);
@@ -105,6 +105,20 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             var card = gameInstance.GetMostRecentDiscardedCard();
 
             return card;
+        }
+
+        public Player GetCurrentPlayerTurn(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            return gameInstance.GetCurrentPlayerTurn();
+        }
+
+        public ActionContext? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+
+            return gameInstance.RegisterActionResponse(userId, actionContext);
+
         }
     }
 }

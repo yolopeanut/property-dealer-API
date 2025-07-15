@@ -1,8 +1,7 @@
 ﻿
 using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Application.Enums;
+using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
-using property_dealer_API.Models.Cards;
 using TypedSignalR.Client;
 
 namespace property_dealer_API.Hubs.GamePlay
@@ -17,6 +16,7 @@ namespace property_dealer_API.Hubs.GamePlay
         Task AllTableHands(List<TableHands> allTableHands);
         Task PlayerHand(List<CardDto> playerHand);
         Task LatestDiscardPileCard(CardDto discardedCard);
-        Task OpenCommandDialog(OpenDialogDto dialogDto);
+        Task OpenCommandDialog(ActionContext actionContext);
+        Task CurrentPlayerTurn(Player player);
     }
 }

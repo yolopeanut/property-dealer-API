@@ -16,6 +16,8 @@
 
         // Modifiers & Responses
         TradeEmbargo,     // Replaces DoubleTheRent
-        ShieldsUp         // Replaces JustSayNo
+        ShieldsUp,         // Replaces JustSayNo
+        SystemWildCard,
+        Tribute
     }
 }

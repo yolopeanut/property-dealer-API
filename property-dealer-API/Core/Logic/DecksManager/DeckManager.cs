@@ -2,7 +2,7 @@
 using property_dealer_API.Models.Cards;
 using System.Collections.Concurrent;
 
-namespace property_dealer_API.Core.Logic.DeckManager
+namespace property_dealer_API.Core.Logic.DecksManager
 {
     public class DeckManager : IReadOnlyDeckManager
     {

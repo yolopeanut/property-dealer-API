@@ -189,6 +189,10 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             {
                 await Clients.Caller.ErrorMsg("Player not found in game");
             }
+            catch (PlayerRemovalFailedException e)
+            {
+                await Clients.Caller.ErrorMsg("Could not remove player table hand: " + $"{e.Message}");
+            }
         }
     }
 }

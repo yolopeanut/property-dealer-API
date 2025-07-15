@@ -2,7 +2,7 @@
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
-using property_dealer_API.Core.Logic.PlayerManager;
+using property_dealer_API.Core.Logic.PlayersManager;
 
 namespace property_dealer_API.Core.Logic.GameStateMapper
 {

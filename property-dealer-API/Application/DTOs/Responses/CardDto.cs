@@ -19,5 +19,7 @@ namespace property_dealer_API.Application.DTOs.Responses
 
         // StandardSystemCard properties
         public PropertyCardColoursEnum? CardColoursEnum { get; set; }
+        public List<int>? RentalValues { get; set; }
+        public int? MaxCards { get; set; }
     }
 }

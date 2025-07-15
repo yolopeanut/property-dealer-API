@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.DTOs.Requests;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
 using property_dealer_API.Models.Enums.Cards;
-using property_dealer_API.Core;
 using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Core;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
@@ -52,7 +51,7 @@ namespace property_dealer_API.Hubs.GamePlay
             Console.WriteLine($"User ID from query: '{userId}'");
 
             // Further validation to see if the room and player actually exists
-            var roomExists = _gamePlayService.DoesRoomExist(gameRoomId);
+            var roomExists = this._gamePlayService.DoesRoomExist(gameRoomId);
 
             if (!roomExists)
             {
@@ -80,6 +79,7 @@ namespace property_dealer_API.Hubs.GamePlay
             var player = this._gamePlayService.GetPlayerByUserId(gameRoomId, userId);
             await this.GetAllTableCard(gameRoomId);
             await this.GetLatestDiscardPileCard(gameRoomId);
+
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -183,22 +183,47 @@ namespace property_dealer_API.Hubs.GamePlay
             //Play user card (send to discard pile, show up on all players screen, remove from user hand, draw card)
             try
             {
-                var commandCardResponse = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+                var actionContext = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
 
-                if (commandCardResponse != null)
+                if (actionContext != null)
                 {
-                    var dialogDto = new OpenDialogDto { PlayerTargetList = commandCardResponse.Value.dialogTargetList, DialogType = commandCardResponse.Value.dialogToOpen };
-                    await Clients.Group(gameRoomId).OpenCommandDialog(dialogDto);
+                    await Clients.Group(gameRoomId).OpenCommandDialog(actionContext);
                 }
 
-                await GetAllTableCard(gameRoomId);
-                await GetPlayerHand(gameRoomId, userId);
+                await this.GetAllTableCard(gameRoomId);
+                await this.GetPlayerHand(gameRoomId, userId);
 
                 if (cardDestination == CardDestinationEnum.CommandPile)
                 {
                     await this.GetLatestDiscardPileCard(gameRoomId);
                 }
 
+                await this.GetCurrentPlayerTurn(gameRoomId);
+
+            }
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
+        }
+
+        public async Task GetCurrentPlayerTurn(string gameRoomId)
+        {
+            try
+            {
+                await Clients.Group(gameRoomId).CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
+            }
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
+        }
+
+        public async Task SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
+        {
+            try
+            {
+                this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
             }
             catch (Exception e)
             {

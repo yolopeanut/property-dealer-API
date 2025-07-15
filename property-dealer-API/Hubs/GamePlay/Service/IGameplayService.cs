@@ -14,9 +14,11 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         List<Player> GetAllPlayers(string gameRoomId);
         Player GetPlayerByUserId(string gameRoomId, string userId);
         List<CardDto> GetPlayerHand(string gameRoomId, string userId);
-        (List<Player> dialogTargetList, DialogTypeEnum dialogToOpen)? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum);
+        ActionContext? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum);
         string RemovePlayerFromGame(string gameRoomId, string userId);
         CardDto GetCardByIdFromPlayerHand(string gameRoomId, string userId, string cardId);
         CardDto GetMostRecentDiscardedCard(string gameRoomId);
+        Player GetCurrentPlayerTurn(string gameRoomId);
+        ActionContext? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
     }
 }

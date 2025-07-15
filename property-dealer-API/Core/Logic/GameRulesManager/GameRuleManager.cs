@@ -6,7 +6,7 @@ using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 
-namespace property_dealer_API.Core.Logic.GameRuleManager
+namespace property_dealer_API.Core.Logic.GameRulesManager
 {
     // Stateless class which only has the job of validating rules.
     public class GameRuleManager
@@ -134,6 +134,40 @@ namespace property_dealer_API.Core.Logic.GameRuleManager
             throw new InvalidOperationException("No dialog chosen!");
         }
 
+        public Boolean DoesPlayerHaveShieldsUp(Player player, List<Card> playerHand)
+        {
+            return playerHand.Any(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
+        }
 
+        public bool IsPlayerHandEmpty(List<Card> cards)
+        {
+            if (cards.Count == 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public int CalculateRentAmount(string actionInitiatingPlayerId, TributeCard tributeCard, PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards)
+        {
+            int cardCount = playerPropertyCards.Count(card =>
+                card is StandardSystemCard systemCard && systemCard.CardColoursEnum == targetColor);
+
+            // Find a system card of the target color to get rental values
+            var systemCard = playerPropertyCards.FirstOrDefault(card =>
+                card is StandardSystemCard sc && sc.CardColoursEnum == targetColor) as StandardSystemCard;
+
+            if (systemCard == null || cardCount == 0)
+            {
+                return 0; // No cards of this color
+            }
+
+            // Get the rental value based on the number of cards owned
+            // Array is 0-indexed, so subtract 1 from card count
+            int rentalIndex = Math.Min(cardCount - 1, systemCard.RentalValues.Count - 1);
+
+            return systemCard.RentalValues[rentalIndex];
+        }
     }
 }

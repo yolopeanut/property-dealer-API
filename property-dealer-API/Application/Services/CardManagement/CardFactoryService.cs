@@ -66,7 +66,7 @@ namespace property_dealer_API.Application.Services.CardManagement
                 {
                     for (int i = 0; i < cardsDef.Count; i++)
                     {
-                        var card = new StandardSystemCard(CardTypesEnum.SystemCard, cardsDef.Name, cardsDef.Value, colorEnum, cardsDef.Description);
+                        var card = new StandardSystemCard(CardTypesEnum.SystemCard, cardsDef.Name, cardsDef.Value, colorEnum, cardsDef.Description, cardsDef.MaxCards, cardsDef.RentalValues);
                         deck.Add(card);
                     }
                 }

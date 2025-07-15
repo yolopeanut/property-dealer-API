@@ -3,7 +3,7 @@ using property_dealer_API.Models.Enums;
 using property_dealer_API.Application.Exceptions;
 using System.Collections.Concurrent;
 
-namespace property_dealer_API.Core.Logic.PlayerManager
+namespace property_dealer_API.Core.Logic.PlayersManager
 {
     /// <summary>
     /// Manages the state for a game with a small number of players.

@@ -16,6 +16,12 @@ namespace property_dealer_API.Models.Cards.BaseJsonDeckDefinitions
         [JsonPropertyName("count")]
         public int Count { get; set; }
 
+        [JsonPropertyName("maxCards")]
+        public int MaxCards { get; set; }
+
+        [JsonPropertyName("rentalValues")]
+        public List<int> RentalValues { get; set; } = [];
+
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
     }
