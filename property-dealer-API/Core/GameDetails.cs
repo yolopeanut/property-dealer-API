@@ -190,11 +190,7 @@ namespace property_dealer_API.Core
 
                 // Complete the turn for non-dialog actions (MoneyPile and standard PropertyPile)
                 this.HandleRemoveFromHand(userId, cardId);
-                var nextUserTurn = this._turnManager.IncrementUserActionCount();
-                if (nextUserTurn != null)
-                {
-                    this.NextPlayerTurn(nextUserTurn);
-                }
+                this.CompleteTurn();
                 return null;
             }
 
@@ -227,6 +223,15 @@ namespace property_dealer_API.Core
         {
             // Draw Cards for new user
             this.AssignCardToPlayer(userId, 2);
+        }
+
+        private void CompleteTurn()
+        {
+            var nextUserTurn = this._turnManager.IncrementUserActionCount();
+            if (nextUserTurn != null)
+            {
+                this.NextPlayerTurn(nextUserTurn);
+            }
         }
 
         public Player GetCurrentPlayerTurn()
@@ -310,6 +315,7 @@ namespace property_dealer_API.Core
             var pendingAction = this._pendingActionManager.CurrPendingAction;
             var allResponses = new List<(Player Player, ActionContext Context)>();
             var newActionContexts = new List<ActionContext>();
+            var cardWasRemoved = false;
 
             try
             {
@@ -368,18 +374,27 @@ namespace property_dealer_API.Core
                 if (this._pendingActionManager.CanClearPendingAction)
                 {
                     this._pendingActionManager.ClearPendingAction();
-                    this._turnManager.IncrementUserActionCount();
                     this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
+                    this.CompleteTurn();
+                    cardWasRemoved = true;
                 }
                 return newActionContexts;
             }
             catch (Exception)
             {
-                // Handling any exceptions by giving player their card back 
-                // NOTE: not very comprehensive, if the last player being processed has an issue, the initiating player will 
-                // reap all the benefits without losing the card.
-                var cardFound = this._deckManager.GetDiscardedCardById(actionContext.CardId);
-                this._playerHandManager.AddCardToPlayerHand(actionContext.ActionInitiatingPlayerId, cardFound);
+                // Only try to recover if we actually removed the card
+                if (cardWasRemoved)
+                {
+                    try
+                    {
+                        var cardFound = this._deckManager.GetDiscardedCardById(actionContext.CardId);
+                        this._playerHandManager.AddCardToPlayerHand(actionContext.ActionInitiatingPlayerId, cardFound);
+                    }
+                    catch (CardNotFoundException)
+                    {
+                        // Card wasn't discarded yet, that's fine - it's still in player's hand
+                    }
+                }
                 throw;
             }
         }

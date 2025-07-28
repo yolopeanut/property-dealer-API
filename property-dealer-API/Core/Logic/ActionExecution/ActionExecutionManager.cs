@@ -345,14 +345,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         public void HandleWildCardResponse(Player player, ActionContext context)
         {
             var targetSetColor = context.TargetSetColor;
-            var foundCard = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, context.CardId);
 
             if (!targetSetColor.HasValue)
             {
                 throw new InvalidOperationException("Wildcard operation tried accessing target color with it being null!");
             }
 
+            var foundCard = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, context.CardId);
             this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, foundCard, targetSetColor.Value);
+
             this._pendingActionManager.CanClearPendingAction = true;
             return;
         }
