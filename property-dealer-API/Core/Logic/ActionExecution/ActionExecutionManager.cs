@@ -353,7 +353,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
 
             this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, foundCard, targetSetColor.Value);
-
             this._pendingActionManager.CanClearPendingAction = true;
             return;
         }

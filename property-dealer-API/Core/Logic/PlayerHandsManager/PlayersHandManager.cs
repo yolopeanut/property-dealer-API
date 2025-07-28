@@ -41,19 +41,29 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
         public (int handGroup, PropertyCardColoursEnum? propertyGroup) FindCardInWhichHand(string userId, string cardId)
         {
-            var tableResult = this.GetCardInTableHand(userId, cardId);
-            var moneyHandResult = this.GetCardInMoneyHand(userId, cardId);
-
-            if (moneyHandResult != null)
+            // Try money hand first
+            try
             {
-                return (0, null);
+                var moneyCard = this.GetCardInMoneyHand(userId, cardId);
+                return (0, null); // Found in money hand
+            }
+            catch (CardNotFoundException)
+            {
+                // Not in money hand, continue to table hand
             }
 
-            else if (tableResult != null)
+            // Try table hand
+            try
             {
-                return (1, tableResult.Value.propertyGroup);
+                var tableResult = this.GetCardInTableHand(userId, cardId);
+                return (1, tableResult.propertyGroup); // Found in table hand
+            }
+            catch (CardNotFoundException)
+            {
+                // Not in table hand either
             }
 
+            // Not found in either hand
             throw new CardNotFoundException(cardId, userId);
         }
 
@@ -294,7 +304,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             }
         }
 
-        private (Card card, PropertyCardColoursEnum propertyGroup)? GetCardInTableHand(string userId, string cardId)
+        private (Card card, PropertyCardColoursEnum propertyGroup) GetCardInTableHand(string userId, string cardId)
         {
             if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict))
             {
@@ -318,9 +328,9 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 }
 
             }
-            return null;
+            throw new CardNotFoundException(cardId, userId);
         }
-        private Card? GetCardInMoneyHand(string userId, string cardId)
+        private Card GetCardInMoneyHand(string userId, string cardId)
         {
             if (!this._playerMoneyHands.TryGetValue(userId, out List<Card>? cards))
             {
@@ -332,7 +342,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 var cardToFind = cards.Find(card => card.CardGuid.ToString() == cardId);
                 if (cardToFind == null)
                 {
-                    return null;
+                    throw new CardNotFoundException(cardId, userId);
                 }
 
                 return cardToFind;
