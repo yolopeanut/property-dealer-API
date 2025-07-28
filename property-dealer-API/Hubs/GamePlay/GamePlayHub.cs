@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.Enums;
+using property_dealer_API.Core;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
 using property_dealer_API.Models.Enums.Cards;
-using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Core;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
@@ -192,6 +191,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
                 await this.GetAllTableCard(gameRoomId);
                 await this.GetPlayerHand(gameRoomId, userId);
+                await this.GetCurrentPlayerTurn(gameRoomId);
 
                 if (cardDestination == CardDestinationEnum.CommandPile)
                 {
@@ -223,7 +223,33 @@ namespace property_dealer_API.Hubs.GamePlay
         {
             try
             {
-                this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
+                var newActionContexts = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
+
+                // Always refresh the game state
+                await this.GetAllTableCard(gameRoomId);
+                await this.GetPlayerHand(gameRoomId, userId);
+                await this.GetCurrentPlayerTurn(gameRoomId);
+
+                // If there's a new dialog to open, send it to clients
+                if (newActionContexts != null)
+                {
+                    foreach (var newActionContext in newActionContexts)
+                    {
+                        await Clients.Group(gameRoomId).OpenCommandDialog(newActionContext);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
+        }
+
+        public async Task DebugManager(string gameRoomId, string userId, DebugOptionsEnum debugOption)
+        {
+            try
+            {
+                this._gamePlayService.SendDebugCommand(gameRoomId, userId, debugOption);
             }
             catch (Exception e)
             {

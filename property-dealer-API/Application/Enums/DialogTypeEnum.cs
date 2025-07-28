@@ -39,6 +39,10 @@
         /// Prompts the player to select a color for a wildcard.
         /// <br/>Used By: Wildcard cards
         /// </summary>
-        WildcardColor
+        WildcardColor,
+
+        // Debug enums
+        SpawnCard
+
     }
 }

@@ -2,7 +2,6 @@
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 
 namespace property_dealer_API.Core.Logic.PlayerHandsManager
 {
@@ -186,13 +185,18 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                         if (cardToRemove != null)
                         {
                             cardList.Remove(cardToRemove);
+
+                            if (cardList.Count <= 0)
+                            {
+                                propertyGroupDict.Remove(propertyGroup.Key);
+                            }
+
                             return cardToRemove;
                         }
                     }
                 }
-
+                throw new CardNotFoundException(cardId, userId);
             }
-            throw new CardNotFoundException(cardId, userId);
         }
 
         public (PropertyCardColoursEnum propertyGroup, List<Card> cardsInPropertyGroup) RemovePropertyGroupFromPlayerTableHand(string userId, PropertyCardColoursEnum propertyCardColoursEnum)
@@ -314,7 +318,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 }
 
             }
-            throw new CardNotFoundException(cardId, userId);
+            return null;
         }
         private Card? GetCardInMoneyHand(string userId, string cardId)
         {

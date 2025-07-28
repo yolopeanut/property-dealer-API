@@ -61,40 +61,6 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return cardColoursDestinationEnum.Value;
         }
 
-        public DialogTypeEnum? IdentifyDialogToOpen(Card cardPlayed, PendingAction pendingAction)
-        {
-            if (cardPlayed is CommandCard commandCard)
-            {
-                pendingAction.ActionType = commandCard.Command;
-                switch (commandCard.Command)
-                {
-                    case ActionTypes.HostileTakeover:
-                    case ActionTypes.PirateRaid:
-                    case ActionTypes.ForcedTrade:
-                    case ActionTypes.BountyHunter:
-                        return DialogTypeEnum.PlayerSelection;
-
-                    // Cannot use shields up without any attack
-                    case ActionTypes.ExploreNewSector:
-                    case ActionTypes.ShieldsUp:
-                        return null;
-
-                    case ActionTypes.TradeDividend:
-                        return DialogTypeEnum.PayValue;
-
-                    case ActionTypes.TradeEmbargo:
-                    case ActionTypes.SpaceStation:
-                    case ActionTypes.Starbase:
-                        return DialogTypeEnum.PropertySetSelection;
-                }
-            }
-            else if (cardPlayed is TributeCard)
-            {
-                return DialogTypeEnum.PropertySetSelection;
-            }
-            return null;
-        }
-
         // Method to identify who will receive the dialog on the ui to open.
         // Targeted can be == null/playerid.
         // If null, means everyone targeted, otherwise only one person

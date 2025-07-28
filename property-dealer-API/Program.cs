@@ -43,7 +43,7 @@ builder.Services.AddCors((o) =>
 {
     o.AddPolicy("property-dealer-policy",
         policy => policy
-            .WithOrigins("http://localhost:4200", "https://localhost:4200")
+            .WithOrigins("http://localhost:4200", "https://localhost:4200", "http://192.168.192.19:4200")
             .AllowAnyHeader()
             .AllowCredentials()
     );
@@ -68,5 +68,8 @@ app.MapControllers();
 app.MapHub<GameLobbyHub>("/gamelobby");
 app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
+
+app.Urls.Add("http://*:5200");
+app.Urls.Add("https://*:7200");
 
 app.Run();

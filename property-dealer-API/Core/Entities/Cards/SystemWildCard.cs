@@ -1,5 +1,4 @@
-﻿using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Models.Enums.Cards;
+﻿using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Models.Cards
 {

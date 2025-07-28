@@ -1,9 +1,10 @@
-﻿using System.Collections.Concurrent;
-using property_dealer_API.Application.DTOs.Responses;
+﻿using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution;
+using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.GameStateMapper;
@@ -15,7 +16,6 @@ using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 using System.Diagnostics.CodeAnalysis;
-using property_dealer_API.Core.Logic.ActionExecution;
 
 namespace property_dealer_API.Core
 {
@@ -38,6 +38,7 @@ namespace property_dealer_API.Core
         private readonly TurnManager _turnManager;
         private readonly PendingActionManager _pendingActionManager;
         private readonly ActionExecutionManager _actionExecutionManager;
+        private readonly DebugManager _debugManager;
 
 
         public required string RoomId { get; set; }
@@ -48,10 +49,10 @@ namespace property_dealer_API.Core
         [SetsRequiredMembers]
         public GameDetails(string roomId, string roomName, GameConfig config)
         {
-            RoomId = roomId;
-            RoomName = roomName;
-            GameState = GameStateEnum.WaitingRoom;
-            Config = config;
+            this.RoomId = roomId;
+            this.RoomName = roomName;
+            this.GameState = GameStateEnum.WaitingRoom;
+            this.Config = config;
             this._deckManager = new DeckManager();
             this._playerManager = new PlayerManager();
             this._playerHandManager = new PlayersHandManager();
@@ -59,6 +60,12 @@ namespace property_dealer_API.Core
             this._rulesManager = new GameRuleManager();
             this._turnManager = new TurnManager(roomId);
             this._pendingActionManager = new PendingActionManager();
+            this._debugManager = new DebugManager(
+                           _playerHandManager,
+                           _playerManager,
+                           _rulesManager,
+                           _pendingActionManager,
+                           _deckManager);
             this._actionExecutionManager = new ActionExecutionManager(
                            _playerHandManager,
                            _playerManager,
@@ -122,10 +129,6 @@ namespace property_dealer_API.Core
         // Otherwise return null.
         public ActionContext? PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
         {
-            DialogTypeEnum? dialogToOpen = null;
-            List<Player>? dialogTargetList = null;
-            PendingAction? newPendingAction = null;
-
             //Getting players and current user to be used in rules validation
             var players = this._playerManager.GetAllPlayers();
             var currentUser = this._playerManager.GetPlayerByUserId(userId);
@@ -142,32 +145,25 @@ namespace property_dealer_API.Core
                 {
                     case CardDestinationEnum.CommandPile:
                         // Get dialog to open
-                        newPendingAction = new PendingAction { InitiatorUserId = userId };
-                        dialogToOpen = this._rulesManager.IdentifyDialogToOpen(foundCardId, newPendingAction); // Sets pending action type
+                        var actionContext = this._actionExecutionManager.ExecuteAction(userId, cardId, foundCardId, currentUser, players);
 
                         // If dialog is not null
-                        if (dialogToOpen.HasValue)
+                        if (actionContext != null)
                         {
-                            dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, null, players, dialogToOpen.Value);
-
-                            var playerHand = this._playerHandManager.GetPlayerHand(userId);
-                            newPendingAction.RequiredResponders = [.. dialogTargetList]; // Setting the target list as a concurrent bag
+                            // Action needs dialog - return context
+                            return actionContext;
                         }
                         else
                         {
-                            if(foundCardId is CommandCard commandCard)
+                            // Immediate action completed - continue with turn flow
+                            this.HandleRemoveFromHand(userId, cardId);
+                            var nullOrNextUserTurn = this._turnManager.IncrementUserActionCount();
+                            if (nullOrNextUserTurn != null)
                             {
-                                switch (commandCard.Command)
-                                {
-                                    case ActionTypes.ExploreNewSector:
-                                        this.AssignCardToPlayer(userId, 2);
-                                        break;
-                                }
+                                this.NextPlayerTurn(nullOrNextUserTurn);
                             }
+                            return null;
                         }
-
-                            this._deckManager.Discard(foundCardId);
-                        break;
 
                     case CardDestinationEnum.MoneyPile:
                         this._playerHandManager.AddCardToPlayerMoneyHand(userId, foundCardId);
@@ -178,10 +174,7 @@ namespace property_dealer_API.Core
 
                         if (foundCardId is SystemWildCard)
                         {
-                            newPendingAction = new PendingAction { InitiatorUserId = userId };
-                            dialogToOpen = DialogTypeEnum.WildcardColor;
-                            dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, null, players, dialogToOpen.Value);
-                            newPendingAction.RequiredResponders = [.. dialogTargetList]; // Setting the target list as a concurrent bag
+                            return this._actionExecutionManager.ExecuteAction(userId, cardId, foundCardId, currentUser, players);
                         }
                         else
                         {
@@ -195,43 +188,14 @@ namespace property_dealer_API.Core
                         throw new ArgumentOutOfRangeException(nameof(cardDestination), "An invalid card destination was specified.");
                 }
 
-                // If there is a dialog to open, dont change player turns yet.
-                // They need to do the action before changing player turn.
-                if (dialogToOpen == null)
+                // Complete the turn for non-dialog actions (MoneyPile and standard PropertyPile)
+                this.HandleRemoveFromHand(userId, cardId);
+                var nextUserTurn = this._turnManager.IncrementUserActionCount();
+                if (nextUserTurn != null)
                 {
-                    this.HandleRemoveFromHand(userId, cardId);
-
-                    Console.WriteLine("INCREMENTING USER ACTION COUNT");
-                    var nullOrNextUserTurn = this._turnManager.IncrementUserActionCount();
-                    if (nullOrNextUserTurn != null)
-                    {
-                        this.NextPlayerTurn(nullOrNextUserTurn);
-                    }
-                    return null;
+                    this.NextPlayerTurn(nextUserTurn);
                 }
-                else
-                {
-                    if (dialogTargetList == null)
-                    {
-                        throw new InvalidOperationException("Target list in null but dialog to open has a value!");
-                    }
-
-                    var actionContext = new ActionContext
-                    {
-                        CardId = cardId,
-                        ActionInitiatingPlayerId = userId,
-                        DialogTargetList = dialogTargetList,
-                        DialogToOpen = dialogToOpen.Value,
-                    };
-
-                    if (newPendingAction == null)
-                    {
-                        throw new PendingActionNotFoundException(actionContext);
-                    }
-                    this._pendingActionManager.CurrPendingAction = newPendingAction;
-
-                    return actionContext;
-                }
+                return null;
             }
 
             catch (Exception)
@@ -247,39 +211,17 @@ namespace property_dealer_API.Core
             }
         }
 
-        public ActionContext? RegisterActionResponse(string userId, ActionContext actionContext)
+        public List<ActionContext>? RegisterActionResponse(string userId, ActionContext actionContext)
         {
             var player = this._playerManager.GetPlayerByUserId(userId);
             var shouldProcess = this._pendingActionManager.AddResponseToQueue(player, actionContext);
 
             if (shouldProcess)
             {
-                this.ProcessPendingAction(actionContext);
+                return this.ProcessPendingAction(actionContext);
             }
             return null;
         }
-
-        //public ActionContext? RegisterActionResponse(string userId, ActionContext actionContext)
-        //{
-        //    // 1. ammend new dialog for them to see if certain condition
-        //    // Select Player -> Table hand selector/pay value/property set selector -> shields up
-
-
-        //    // 2. if no new dialog, process and reflect. 
-        //    // Wildcard
-        //    if (actionContext.DialogToOpen == DialogTypeEnum.WildcardColor)
-        //    {
-        //        if (actionContext.TargetSetColor == null)
-        //        {
-        //            throw new InvalidOperationException("Wildcard target color is not found in response!");
-        //        }
-
-        //        var cardRemoved = this.HandleRemoveFromHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
-        //        this._playerHandManager.AddCardToPlayerTableHand(userId, cardRemoved, actionContext.TargetSetColor.Value);
-        //    }
-
-        //    return null;
-        //}
 
         public void NextPlayerTurn(string userId)
         {
@@ -363,59 +305,93 @@ namespace property_dealer_API.Core
         }
 
         // Only responses from dialogs to navigate to next dialog or handle logic
-        private void ProcessPendingAction(ActionContext actionContext)
+        private List<ActionContext>? ProcessPendingAction(ActionContext actionContext)
         {
             var pendingAction = this._pendingActionManager.CurrPendingAction;
             var allResponses = new List<(Player Player, ActionContext Context)>();
+            var newActionContexts = new List<ActionContext>();
 
-            // Drain the entire queue first
-            while (pendingAction.ResponseQueue.TryDequeue(out var response))
+            try
             {
-                allResponses.Add(response);
-            }
-
-            foreach (var (player, context) in allResponses)
-            {
-                // For the scenario that the user does shields up (can come from pays value-button or shields up dialog)
-                if (context.DialogResponse == CommandResponseEnum.ShieldsUp)
+                // Drain the entire queue first
+                while (pendingAction.ResponseQueue.TryDequeue(out var response))
                 {
-                    this._actionExecutionManager.HandleShieldsUpResponse(player, context);
-                    continue;
+                    allResponses.Add(response);
                 }
 
-                // Handle all the responses
-                switch (context.DialogToOpen)
+                foreach (var (player, context) in allResponses)
                 {
-                    case DialogTypeEnum.PayValue:
-                        //This can only have ok or shields up, no further dialog
-                        this._actionExecutionManager.HandlePayValueResponse(player, context);
-                        break;
-                    case DialogTypeEnum.PlayerSelection:
-                        this._actionExecutionManager.HandlePlayerSelectionResponse(player, context);
-                        break;
-                    case DialogTypeEnum.PropertySetSelection:
-                        this._actionExecutionManager.HandlePropertySetSelectionResponse(player, context);
-                        break;
-                    case DialogTypeEnum.TableHandSelector:
-                        this._actionExecutionManager.HandleTableHandSelectorResponse(player, context);
-                        // prompt shields up next dialog
-                        break;
-                    case DialogTypeEnum.WildcardColor:
-                        // just do processing on wildcard color
-                        this._actionExecutionManager.HandleWildCardResponse(player, context);
-                        break;
-                }
-            }
+                    var newActionContext = actionContext.Clone();
+                    // For the scenario that the user does shields up (can come from pays value-button or shields up dialog)
+                    if (context.DialogResponse == CommandResponseEnum.ShieldsUp)
+                    {
+                        this._actionExecutionManager.HandleShieldsUpResponse(player, context);
+                        continue;
+                    }
 
-            // Clear pending action after finishing processing all responses
-            if (this._pendingActionManager.CanClearPendingAction)
+                    // Handle all the responses
+                    switch (context.DialogToOpen)
+                    {
+                        #region No new dialogs
+                        case DialogTypeEnum.PayValue:
+                            //This can only have ok or shields up, since shields up handled, no further dialog.
+                            this._actionExecutionManager.HandlePayValueResponse(player, newActionContext);
+                            break;
+                        case DialogTypeEnum.WildcardColor:
+                            // just do processing on wildcard color
+                            this._actionExecutionManager.HandleWildCardResponse(player, newActionContext);
+                            break;
+                        #endregion
+
+                        #region Might have new dialog
+                        case DialogTypeEnum.PropertySetSelection:
+                            this._actionExecutionManager.HandlePropertySetSelectionResponse(player, newActionContext);
+                            newActionContexts.Add(newActionContext);
+                            break;
+                        case DialogTypeEnum.TableHandSelector:
+                            this._actionExecutionManager.HandleTableHandSelectorResponse(player, newActionContext);
+                            newActionContexts.Add(newActionContext);
+                            // prompt shields up next dialog
+                            break;
+                        #endregion
+
+                        #region Only new target dialogs
+                        case DialogTypeEnum.PlayerSelection:
+                            this._actionExecutionManager.HandlePlayerSelectionResponse(player, newActionContext);
+                            newActionContexts.Add(newActionContext);
+                            break;
+                            #endregion
+                    }
+                }
+
+                // Clear pending action after finishing processing all responses
+                if (this._pendingActionManager.CanClearPendingAction)
+                {
+                    this._pendingActionManager.ClearPendingAction();
+                    this._turnManager.IncrementUserActionCount();
+                    this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
+                }
+                return newActionContexts;
+            }
+            catch (Exception)
             {
-                this._pendingActionManager.ClearPendingAction();
-                this._turnManager.IncrementUserActionCount();
-                this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
+                // Handling any exceptions by giving player their card back 
+                // NOTE: not very comprehensive, if the last player being processed has an issue, the initiating player will 
+                // reap all the benefits without losing the card.
+                var cardFound = this._deckManager.GetDiscardedCardById(actionContext.CardId);
+                this._playerHandManager.AddCardToPlayerHand(actionContext.ActionInitiatingPlayerId, cardFound);
+                throw;
             }
         }
 
-
+        public void ExecuteDebugCommand(string userId, DebugOptionsEnum debugOption)
+        {
+            switch (debugOption)
+            {
+                case DebugOptionsEnum.SpawnCard:
+                    this._debugManager.GiveAllCardsInDeck();
+                    break;
+            }
+        }
     }
 }

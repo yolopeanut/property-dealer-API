@@ -1,6 +1,6 @@
-﻿using property_dealer_API.Core.Entities;
+﻿using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Core.Entities;
 using property_dealer_API.Models.Enums;
-using property_dealer_API.Application.Exceptions;
 using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.PlayersManager

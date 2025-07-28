@@ -8,10 +8,12 @@ namespace property_dealer_API.Core.Logic.DecksManager
     {
         private readonly ConcurrentStack<Card> _drawPile = new ConcurrentStack<Card>();
         private ConcurrentStack<Card> _discardPile = new ConcurrentStack<Card>();
+        private readonly object _discardPileLock = new object();
 
         public DeckManager()
         {
         }
+
         public void PopulateInitialDeck(List<Card> initialDeck)
         {
             Console.WriteLine("POPULATING INITIAL DECK");
@@ -22,6 +24,17 @@ namespace property_dealer_API.Core.Logic.DecksManager
             {
                 this._drawPile.Push(card);
             }
+        }
+
+        // All card in deck excluding player hands
+        public List<Card> ViewAllCardsInDeck()
+        {
+            if (this._drawPile == null || this._discardPile == null)
+            {
+                throw new InvalidOperationException("The draw pile or discard pile has not been initialized.");
+            }
+
+            return this._drawPile.Concat(this._discardPile).ToList();
         }
 
         public List<Card> DrawCard(int numToDraw)
@@ -86,6 +99,41 @@ namespace property_dealer_API.Core.Logic.DecksManager
             }
 
             throw new CardNotFoundException("Cannot retrieve most recent discarded card, there are no cards in the discard pile");
+        }
+
+        public Card GetDiscardedCardById(string cardId)
+        {
+            lock (_discardPileLock)
+            {
+                var allCards = new List<Card>();
+                Card? foundCard = null;
+
+                // Pop all cards
+                while (_discardPile.TryPop(out Card? card))
+                {
+                    if (card.CardGuid.ToString() == cardId)
+                    {
+                        foundCard = card;
+                    }
+                    else
+                    {
+                        allCards.Add(card);
+                    }
+                }
+
+                // Put back all cards except the found one
+                if (allCards.Count > 0)
+                {
+                    _discardPile.PushRange(allCards.ToArray());
+                }
+
+                if (foundCard == null)
+                {
+                    throw new CardNotFoundException("Card not found in discard pile", cardId);
+                }
+
+                return foundCard;
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         CardDto GetCardByIdFromPlayerHand(string gameRoomId, string userId, string cardId);
         CardDto GetMostRecentDiscardedCard(string gameRoomId);
         Player GetCurrentPlayerTurn(string gameRoomId);
-        ActionContext? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
+        List<ActionContext>? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
+        void SendDebugCommand(string gameRoomId, string userId, DebugOptionsEnum debugOption);
     }
 }

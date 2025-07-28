@@ -22,12 +22,17 @@ namespace property_dealer_API.Core
         public string? TargetPlayerId { get; set; }
         public CommandResponseEnum? DialogResponse { get; set; }
         public PropertyCardColoursEnum? TargetSetColor { get; set; }
-        public int? RentalAmount { get; set; }
+        public int? PaymentAmount { get; set; }
 
         // Used in forced trade
         public string? TargetCardId { get; set; }
 
         // Used in forced trade, also in pay rent (selecting multiple rent cards)
         public List<string>? OwnTargetCardId { get; set; }
+
+        public ActionContext Clone()
+        {
+            return (ActionContext)this.MemberwiseClone();
+        }
     }
 }

@@ -6,7 +6,6 @@ using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
-using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay.Service
@@ -113,12 +112,19 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return gameInstance.GetCurrentPlayerTurn();
         }
 
-        public ActionContext? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
+        public List<ActionContext>? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
             return gameInstance.RegisterActionResponse(userId, actionContext);
 
+        }
+
+        public void SendDebugCommand(string gameRoomId, string userId, DebugOptionsEnum debugOption)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+
+            gameInstance.ExecuteDebugCommand(userId, debugOption);
         }
     }
 }

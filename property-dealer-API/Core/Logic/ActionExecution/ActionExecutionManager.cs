@@ -30,13 +30,107 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             PendingActionManager pendingActionManager,
             DeckManager deckManager)
         {
-            _playerHandManager = playerHandManager;
-            _playerManager = playerManager;
-            _rulesManager = rulesManager;
-            _pendingActionManager = pendingActionManager;
-            _deckManager = deckManager;
+            this._playerHandManager = playerHandManager;
+            this._playerManager = playerManager;
+            this._rulesManager = rulesManager;
+            this._pendingActionManager = pendingActionManager;
+            this._deckManager = deckManager;
         }
 
+        //=================== Action context building ===========================//
+        #region Action context building
+        public ActionContext? ExecuteAction(string userId, string cardId, Card card, Player currentUser, List<Player> allPlayers)
+        {
+            // Handle all action types in one place
+            switch (card)
+            {
+                case CommandCard commandCard:
+                    return this.HandleCommandCard(commandCard, userId, cardId, currentUser, allPlayers);
+
+                case TributeCard tributeCard:
+                    return this.HandleTributeCard(tributeCard, userId, cardId, currentUser, allPlayers);
+
+                case SystemWildCard wildCard:
+                    return this.HandleSystemWildCard(wildCard, userId, cardId, currentUser, allPlayers);
+
+                default:
+                    throw new InvalidOperationException($"Unsupported card type: {card.GetType().Name}");
+            }
+        }
+
+        private ActionContext? HandleCommandCard(CommandCard commandCard, string userId, string cardId, Player currentUser, List<Player> allPlayers)
+        {
+            var pendingAction = new PendingAction { InitiatorUserId = userId, ActionType = commandCard.Command };
+
+            switch (commandCard.Command)
+            {
+                // Immediate actions - no dialog needed
+                case ActionTypes.ExploreNewSector:
+                    this.AssignCardToPlayer(userId, 2);
+                    return null;
+
+                case ActionTypes.ShieldsUp:
+                    // Cannot use shields up without any attack
+                    return null;
+
+                // Player selection actions
+                case ActionTypes.HostileTakeover:
+                case ActionTypes.PirateRaid:
+                case ActionTypes.ForcedTrade:
+                case ActionTypes.BountyHunter:
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PlayerSelection, currentUser, null, allPlayers, pendingAction);
+
+                // Direct payment actions
+                case ActionTypes.TradeDividend:
+                    {
+                        var actionContext = this.CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
+                        actionContext.PaymentAmount = 2;
+                        return actionContext;
+                    }
+
+                // Property set selection actions
+                case ActionTypes.TradeEmbargo:
+                case ActionTypes.SpaceStation:
+                case ActionTypes.Starbase:
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+
+                default:
+                    throw new InvalidOperationException($"Unsupported command action: {commandCard.Command}");
+            }
+        }
+
+        private ActionContext HandleTributeCard(TributeCard tributeCard, string userId, string cardId, Player currentUser, List<Player> allPlayers)
+        {
+            var pendingAction = new PendingAction { InitiatorUserId = userId, ActionType = ActionTypes.Tribute };
+            return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+        }
+
+        private ActionContext HandleSystemWildCard(SystemWildCard wildCard, string userId, string cardId, Player currentUser, List<Player> allPlayers)
+        {
+            var pendingAction = new PendingAction { InitiatorUserId = userId, ActionType = ActionTypes.SystemWildCard };
+            return this.CreateActionContext(userId, cardId, DialogTypeEnum.WildcardColor, currentUser, null, allPlayers, pendingAction);
+        }
+        private ActionContext CreateActionContext(string userId, string cardId, DialogTypeEnum dialogType, Player currentUser, Player? targetUser, List<Player> allPlayers, PendingAction pendingAction)
+        {
+            var dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, targetUser, allPlayers, dialogType);
+            pendingAction.RequiredResponders = new ConcurrentBag<Player>(dialogTargetList);
+
+            // Set the pending action
+            this._pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CanClearPendingAction = false;
+
+            return new ActionContext
+            {
+                CardId = cardId,
+                ActionInitiatingPlayerId = userId,
+                DialogTargetList = dialogTargetList,
+                DialogToOpen = dialogType,
+            };
+        }
+
+        #endregion
+
+        #region Dialog Response Handling
 
         public void HandlePayValueResponse(Player player, ActionContext context)
         {
@@ -92,9 +186,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, targetPlayer, allPlayers, DialogTypeEnum.PropertySetSelection);
                     break;
                 case ActionTypes.BountyHunter:
-                    actionContext.DialogToOpen = DialogTypeEnum.PayValue;
-                    actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PayValue);
-                    break;
                 case ActionTypes.TradeEmbargo:
                     actionContext.DialogToOpen = DialogTypeEnum.PayValue;
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, targetPlayer, allPlayers, DialogTypeEnum.PayValue);
@@ -140,7 +231,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     if (tributeCard != null && actionContext.TargetSetColor.HasValue)
                     {
                         var playerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(actionContext.ActionInitiatingPlayerId, actionContext.TargetSetColor.Value);
-                        actionContext.RentalAmount = this._rulesManager.CalculateRentAmount(actionContext.ActionInitiatingPlayerId, tributeCard, actionContext.TargetSetColor.Value, playerTableHand);
+                        actionContext.PaymentAmount = this._rulesManager.CalculateRentAmount(actionContext.ActionInitiatingPlayerId, tributeCard, actionContext.TargetSetColor.Value, playerTableHand);
                     }
 
                     // Create PayValue dialog for all other players
@@ -254,14 +345,16 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         public void HandleWildCardResponse(Player player, ActionContext context)
         {
             var targetSetColor = context.TargetSetColor;
-            var removedCard = this.HandleRemoveFromHand(context.ActionInitiatingPlayerId, context.CardId);
+            var foundCard = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, context.CardId);
 
             if (!targetSetColor.HasValue)
             {
                 throw new InvalidOperationException("Wildcard operation tried accessing target color with it being null!");
             }
 
-            this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, removedCard, targetSetColor.Value);
+            this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, foundCard, targetSetColor.Value);
+
+            this._pendingActionManager.CanClearPendingAction = true;
             return;
         }
 
@@ -277,6 +370,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
         }
 
+        #endregion
+
+        #region Helper methods
         private Card HandleRemoveFromHand(string userId, string cardId)
         {
             // Remove card and check if hand is empty, if it is, regerate all 5 cards for them.
@@ -348,5 +444,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 throw new StandardSystemCardException(targetCardId);
             }
         }
+
+        #endregion
     }
 }
