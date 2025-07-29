@@ -378,6 +378,7 @@ namespace property_dealer_API.Core
                     this.CompleteTurn();
 
                     this._pendingActionManager.ClearPendingAction();
+                    return null;
                 }
                 return newActionContexts;
             }
