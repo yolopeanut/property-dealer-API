@@ -373,9 +373,9 @@ namespace property_dealer_API.Core
                 // Clear pending action after finishing processing all responses
                 if (this._pendingActionManager.CanClearPendingAction)
                 {
+                    cardWasRemoved = true;
                     this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
                     this.CompleteTurn();
-                    cardWasRemoved = true;
 
                     this._pendingActionManager.ClearPendingAction();
                 }
