@@ -10,6 +10,7 @@ namespace property_dealer_API.Core
         // Variables the initiator sets
         public required string CardId { get; set; }
         public required string ActionInitiatingPlayerId { get; set; }
+        public required ActionTypes ActionType { get; set; }
 
         // Variable responses 
         // E.g P1 sends Hostile Takeover, dialog target will be P1 (select player)
