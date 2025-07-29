@@ -33,6 +33,7 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
         public void ClearPendingAction()
         {
             this._currPendingAction = null;
+            this.CanClearPendingAction = false;
         }
 
         public Boolean AddResponseToQueue(Player player, ActionContext actionContext)

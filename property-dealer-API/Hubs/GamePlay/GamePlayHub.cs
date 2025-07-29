@@ -189,17 +189,8 @@ namespace property_dealer_API.Hubs.GamePlay
                     await Clients.Group(gameRoomId).OpenCommandDialog(actionContext);
                 }
 
-                await this.GetAllTableCard(gameRoomId);
-                await this.GetPlayerHand(gameRoomId, userId);
-                await this.GetCurrentPlayerTurn(gameRoomId);
-
-                if (cardDestination == CardDestinationEnum.CommandPile)
-                {
-                    await this.GetLatestDiscardPileCard(gameRoomId);
-                }
-
-                await this.GetCurrentPlayerTurn(gameRoomId);
-
+                bool includeDiscardPile = cardDestination == CardDestinationEnum.CommandPile;
+                await RefreshFullGameState(gameRoomId, includeDiscardPile, userId);
             }
             catch (Exception e)
             {
@@ -225,10 +216,7 @@ namespace property_dealer_API.Hubs.GamePlay
             {
                 var newActionContexts = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
 
-                // Always refresh the game state
-                await this.GetAllTableCard(gameRoomId);
-                await this.GetPlayerHand(gameRoomId, userId);
-                await this.GetCurrentPlayerTurn(gameRoomId);
+                await RefreshGameState(gameRoomId, actionContext.ActionInitiatingPlayerId, userId);
 
                 // If there's a new dialog to open, send it to clients
                 if (newActionContexts != null)
@@ -260,6 +248,32 @@ namespace property_dealer_API.Hubs.GamePlay
         private async Task ExceptionHandler(Exception e)
         {
             await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
+        }
+
+        private async Task RefreshGameState(string gameRoomId, params string[] userIds)
+        {
+            // Always refresh shared state
+            await this.GetAllTableCard(gameRoomId);
+            await this.GetCurrentPlayerTurn(gameRoomId);
+
+            // Refresh specific player hands if provided
+            foreach (var userId in userIds)
+            {
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    await this.GetPlayerHand(gameRoomId, userId);
+                }
+            }
+        }
+
+        private async Task RefreshFullGameState(string gameRoomId, bool includeDiscardPile = false, params string[] userIds)
+        {
+            await RefreshGameState(gameRoomId, userIds);
+
+            if (includeDiscardPile)
+            {
+                await this.GetLatestDiscardPileCard(gameRoomId);
+            }
         }
     }
 }
