@@ -135,5 +135,18 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
             return systemCard.RentalValues[rentalIndex];
         }
+
+        public int? GetPaymentAmount(ActionTypes actionType)
+        {
+            switch (actionType)
+            {
+                case ActionTypes.BountyHunter:
+                    return 5;
+                case ActionTypes.TradeDividend:
+                    return 2;
+                default:
+                    return null;
+            }
+        }
     }
 }

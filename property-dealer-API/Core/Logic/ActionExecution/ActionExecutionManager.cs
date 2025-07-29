@@ -82,11 +82,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
                 // Direct payment actions
                 case ActionTypes.TradeDividend:
-                    {
-                        var actionContext = this.CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
-                        actionContext.PaymentAmount = 2;
-                        return actionContext;
-                    }
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
 
                 // Property set selection actions
                 case ActionTypes.TradeEmbargo:
@@ -113,6 +109,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         private ActionContext CreateActionContext(string userId, string cardId, DialogTypeEnum dialogType, Player currentUser, Player? targetUser, List<Player> allPlayers, PendingAction pendingAction)
         {
             var dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, targetUser, allPlayers, dialogType);
+            var amountToPay = this._rulesManager.GetPaymentAmount(pendingAction.ActionType);
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(dialogTargetList);
 
             // Set the pending action
@@ -126,6 +123,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 ActionType = pendingAction.ActionType,
                 DialogTargetList = dialogTargetList,
                 DialogToOpen = dialogType,
+                PaymentAmount = amountToPay
             };
         }
 
