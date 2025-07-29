@@ -123,6 +123,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             {
                 CardId = cardId,
                 ActionInitiatingPlayerId = userId,
+                ActionType = pendingAction.ActionType,
                 DialogTargetList = dialogTargetList,
                 DialogToOpen = dialogType,
             };
