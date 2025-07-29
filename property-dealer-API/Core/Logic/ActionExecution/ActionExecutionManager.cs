@@ -315,8 +315,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     }
                     else
                     {
+                        if (actionContext.TargetCardId == null || actionContext.OwnTargetCardId == null)
+                        {
+                            throw new ActionContextParameterNullException(actionContext, "TargetCardId and OwnTargetCardId was found null in forced trade!");
+                        }
+
                         // Execute forced trade
-                        this.ExecuteForcedTrade(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId!, actionContext.OwnTargetCardId!.First());
+                        this.ExecuteForcedTrade(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId, actionContext.OwnTargetCardId.First());
                         this._pendingActionManager.CanClearPendingAction = true;
                     }
                     break;
@@ -332,8 +337,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     }
                     else
                     {
+                        if (actionContext.TargetCardId == null)
+                        {
+                            throw new ActionContextParameterNullException(actionContext, "TargetCardId was found null in PirateRaid!");
+                        }
+
                         // Execute pirate raid - steal the selected property
-                        this.ExecutePirateRaid(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId!);
+                        this.ExecutePirateRaid(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId);
                         this._pendingActionManager.CanClearPendingAction = true;
                     }
                     break;
