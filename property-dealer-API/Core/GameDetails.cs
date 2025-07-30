@@ -255,6 +255,35 @@ namespace property_dealer_API.Core
         {
             return this._deckManager.GetMostRecentDiscardedCard().ToDto();
         }
+        public void ExecuteDebugCommand(string userId, DebugOptionsEnum debugOption)
+        {
+            switch (debugOption)
+            {
+                case DebugOptionsEnum.SpawnCard:
+                    this._debugManager.GiveAllCardsInDeck();
+                    break;
+            }
+        }
+
+        public Player? CheckIfAnyPlayersWon()
+        {
+            var playerTableHands = this.GetAllPlayerHands();
+
+            foreach (var player in playerTableHands)
+            {
+                if (this._rulesManager.CheckIfPlayerWon(player.TableHand))
+                {
+                    if (player.Player == null)
+                    {
+                        throw new InvalidOperationException("Player was not found when checking if player won!");
+                    }
+
+                    this.GameState = GameStateEnum.GameOver;
+                    return player.Player;
+                }
+            }
+            return null;
+        }
 
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.
         private void InitializePlayerHands()

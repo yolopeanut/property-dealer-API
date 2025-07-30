@@ -10,18 +10,24 @@ namespace property_dealer_API.Hubs.GamePlay
 
     public class GamePlayHub : Hub<IGamePlayHubClient>, IGamePlayHubServer
     {
+
+        #region States
         private readonly IGameplayService _gamePlayService;
         private readonly ILogger<GamePlayHub> _logger;
 
         private const string GameRoomIdKey = "GameRoomId";
         private const string UserIdKey = "UserId";
+        #endregion
 
+        #region Constructor
         public GamePlayHub(IGameplayService gameplayService, ILogger<GamePlayHub> logger)
         {
             this._gamePlayService = gameplayService;
             this._logger = logger;
         }
+        #endregion
 
+        #region Hub Connection Management
         public override async Task OnConnectedAsync()
         {
             // 1. Get IDs from the query string
@@ -97,7 +103,9 @@ namespace property_dealer_API.Hubs.GamePlay
             //    await this.LeaveGameRoom(gameRoomId, userId);
             //}
         }
+        #endregion
 
+        #region Public Server hub functions
         public async Task LeaveGameRoom(string gameRoomId, string userId)
         {
             try
@@ -245,6 +253,16 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
+        public async Task CheckIfAnyPlayersWon(string gameRoomId)
+        {
+            var player = this._gamePlayService.CheckIfAnyPlayersWon(gameRoomId);
+            await Clients.Group(gameRoomId).PlayerWon(player);
+        }
+
+        #endregion
+
+        #region Helper methods
+
         private async Task ExceptionHandler(Exception e)
         {
             await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
@@ -275,5 +293,6 @@ namespace property_dealer_API.Hubs.GamePlay
                 await this.GetLatestDiscardPileCard(gameRoomId);
             }
         }
+        #endregion
     }
 }

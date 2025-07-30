@@ -21,5 +21,6 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         Player GetCurrentPlayerTurn(string gameRoomId);
         List<ActionContext>? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
         void SendDebugCommand(string gameRoomId, string userId, DebugOptionsEnum debugOption);
+        Player? CheckIfAnyPlayersWon(string gameRoomId);
     }
 }

@@ -2,6 +2,7 @@
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
@@ -148,5 +149,36 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                     return null;
             }
         }
+
+        public Boolean CheckIfPlayerWon(List<PropertyCardGroup> tableHand)
+        {
+            var countCompleteSets = 0;
+            foreach (var propertyGroup in tableHand)
+            {
+                // The card dto given here contains the maxcards for each group.
+                // Only need to take the first of them to know the max card for the group.
+                var groupedPropertyCards = propertyGroup.groupedPropertyCards;
+                var maxCardsForPropertyGroup = groupedPropertyCards.First().MaxCards;
+
+                if (groupedPropertyCards.Count >= maxCardsForPropertyGroup)
+                {
+                    countCompleteSets += 1;
+                }
+            }
+
+            if (countCompleteSets >= 3)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
+        public Boolean CanPlayCard(GameStateEnum currentGameState, string turnKeeperCurrUserTurn, string currentPlayer)
+        {
+
+        }
+
     }
 }

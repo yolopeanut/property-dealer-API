@@ -126,5 +126,11 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
             gameInstance.ExecuteDebugCommand(userId, debugOption);
         }
+
+        public Player? CheckIfAnyPlayersWon(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            return gameInstance.CheckIfAnyPlayersWon();
+        }
     }
 }

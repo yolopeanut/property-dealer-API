@@ -16,5 +16,6 @@ namespace property_dealer_API.Hubs.GameLobby
         Task GetLatestDiscardPileCard(string gameRoomId);
         Task GetCurrentPlayerTurn(string gameRoomId);
         Task SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
+        Task CheckIfAnyPlayersWon(string gameRoomId);
     }
 }
