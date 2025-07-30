@@ -12,6 +12,7 @@ namespace property_dealer_API.Hubs.GameLobby.Service
     {
         private readonly IGameManagerService _gameManagerService;
         private readonly IGameDetailsFactory _gameDetailsFactory;
+
         public GameLobbyHubService(IGameManagerService gameManagerService, IGameDetailsFactory gameDetailsFactory)
         {
             _gameManagerService = gameManagerService;
