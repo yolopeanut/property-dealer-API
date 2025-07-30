@@ -9,16 +9,41 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 {
     public interface IGameRuleManager
     {
+        // ===== JOINING & GAME STATE VALIDATION =====
         JoinGameResponseEnum? ValidatePlayerJoining(GameStateEnum gameState, List<Player> players, string? maxNumPlayers);
+        void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId);
+
+        // ===== TURN & ACTION VALIDATION =====  
         void ValidateTurn(string userId, string currentUserIdTurn);
         void ValidateActionLimit(string userId, int noOfActionsPlayed);
+
+        // ===== CARD PLACEMENT VALIDATION =====
         void ValidatePropertyPileCardType(Card cardRemoved);
         PropertyCardColoursEnum ValidateStandardPropertyCardDestination(PropertyCardColoursEnum? cardColoursDestinationEnum);
-        List<Player> IdentifyWhoSeesDialog(Player callerUser, Player? targetUser, List<Player> playerList, DialogTypeEnum dialogToOpen);
-        Boolean DoesPlayerHaveShieldsUp(Player player, List<Card> playerHand);
+
+        // ===== CARD-SPECIFIC RULE VALIDATION =====
+        void ValidateHostileTakeoverTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidatePirateRaidTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateForcedTradeTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateSpaceStationPlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateStarbasePlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateRentTarget(PropertyCardColoursEnum targetColor, List<Card> targetPlayerProperties);
+        void ValidateEndOfTurnCardLimit(List<Card> playerHand);
+        void ValidateTradeEmbargoTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateRentCardColors(PropertyCardColoursEnum rentCardColor, PropertyCardColoursEnum targetColor);
+        void ValidateWildcardRentTarget(List<PropertyCardColoursEnum> availableColors, PropertyCardColoursEnum selectedColor);
+
+        // ===== QUERIES =====
+        bool DoesPlayerHaveShieldsUp(Player player, List<Card> playerHand);
         bool IsPlayerHandEmpty(List<Card> cards);
+        bool CheckIfPlayerWon(List<PropertyCardGroup> tableHand);
+        bool IsPropertySetComplete(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color);
+
+        // ===== CALCULATIONS =====
         int CalculateRentAmount(string actionInitiatingPlayerId, TributeCard tributeCard, PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards);
         int? GetPaymentAmount(ActionTypes actionType);
-        Boolean CheckIfPlayerWon(List<PropertyCardGroup> tableHand);
+
+        // ===== UI LOGIC =====
+        List<Player> IdentifyWhoSeesDialog(Player callerUser, Player? targetUser, List<Player> playerList, DialogTypeEnum dialogToOpen);
     }
 }
