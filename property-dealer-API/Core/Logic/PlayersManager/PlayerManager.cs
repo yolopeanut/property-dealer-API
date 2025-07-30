@@ -8,7 +8,7 @@ namespace property_dealer_API.Core.Logic.PlayersManager
     /// <summary>
     /// Manages the state for a game with a small number of players.
     /// </summary>
-    public class PlayerManager : IReadOnlyPlayerManager
+    public class PlayerManager : IPlayerManager
     {
         private ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 

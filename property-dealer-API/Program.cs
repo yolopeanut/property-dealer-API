@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
+using property_dealer_API.Core.Factories;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GameLobby.Service;
 using property_dealer_API.Hubs.GamePlay;
@@ -38,6 +39,7 @@ builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
 
 //Manager services which are stateless
 builder.Services.AddSingleton<ICardFactoryService, CardFactoryService>();
+builder.Services.AddSingleton<IGameDetailsFactory, GameDetailsFactory>();
 
 builder.Services.AddCors((o) =>
 {

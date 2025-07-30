@@ -6,7 +6,7 @@ using property_dealer_API.Core.Logic.PlayersManager;
 
 namespace property_dealer_API.Core.Logic.GameStateMapper
 {
-    public class GameStateMapper
+    public class GameStateMapper : IGameStateMapper
     {
         private readonly IReadOnlyPlayerHandManager _handManager;
         private readonly IReadOnlyPlayerManager _playermanager;

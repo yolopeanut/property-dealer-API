@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.ActionExecution
 {
-    public class ActionExecutionManager
+    public class ActionExecutionManager : IActionExecutionManager
     {
 
         private readonly PlayersHandManager _playerHandManager;
@@ -85,10 +85,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     return this.CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
 
                 // Property set selection actions
-                case ActionTypes.TradeEmbargo:
                 case ActionTypes.SpaceStation:
                 case ActionTypes.Starbase:
                     return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+
+                // TODO need to handle trade embargo -> hand selection (tribute card) -> property selection
+                case ActionTypes.TradeEmbargo:
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+
 
                 default:
                     throw new InvalidOperationException($"Unsupported command action: {commandCard.Command}");

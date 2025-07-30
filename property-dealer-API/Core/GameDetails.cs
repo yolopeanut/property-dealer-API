@@ -21,25 +21,22 @@ namespace property_dealer_API.Core
 {
     public class GameDetails
     {
-        // Deck manager and it's readonly counterpart (for public access to gets, etc)
-        private readonly DeckManager _deckManager;
+        // Store full write interfaces internally
+        private readonly IDeckManager _deckManager;
+        private readonly IPlayerManager _playerManager;
+        private readonly IPlayerHandManager _playerHandManager;
+
+        // But expose readonly versions publicly
         public IReadOnlyDeckManager PublicDeckManager => _deckManager;
-
-        // Player manager and it's readonly counterpart (for public access to gets, etc)
-        private readonly PlayerManager _playerManager;
         public IReadOnlyPlayerManager PublicPlayerManager => _playerManager;
-
-        // Player hand manager and it's readonly counterpart (for public access to gets, etc)
-        private readonly PlayersHandManager _playerHandManager;
         public IReadOnlyPlayerHandManager PublicPlayerHandManager => _playerHandManager;
 
-        private readonly GameStateMapper _mapper;
-        private readonly GameRuleManager _rulesManager;
-        private readonly TurnManager _turnManager;
-        private readonly PendingActionManager _pendingActionManager;
-        private readonly ActionExecutionManager _actionExecutionManager;
-        private readonly DebugManager _debugManager;
-
+        private readonly IGameStateMapper _mapper;
+        private readonly IGameRuleManager _rulesManager;
+        private readonly ITurnManager _turnManager;
+        private readonly IPendingActionManager _pendingActionManager;
+        private readonly IActionExecutionManager _actionExecutionManager;
+        private readonly IDebugManager _debugManager;
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -47,31 +44,33 @@ namespace property_dealer_API.Core
         public required GameConfig Config { get; set; }
 
         [SetsRequiredMembers]
-        public GameDetails(string roomId, string roomName, GameConfig config)
+        public GameDetails(
+            string roomId,
+            string roomName,
+            GameConfig config,
+            IDeckManager deckManager,
+            IPlayerManager playerManager,
+            IPlayerHandManager playerHandManager,
+            IGameStateMapper mapper,
+            IGameRuleManager rulesManager,
+            ITurnManager turnManager,
+            IPendingActionManager pendingActionManager,
+            IActionExecutionManager actionExecutionManager,
+            IDebugManager debugManager)
         {
             this.RoomId = roomId;
             this.RoomName = roomName;
             this.GameState = GameStateEnum.WaitingRoom;
             this.Config = config;
-            this._deckManager = new DeckManager();
-            this._playerManager = new PlayerManager();
-            this._playerHandManager = new PlayersHandManager();
-            this._mapper = new GameStateMapper(PublicPlayerHandManager, PublicPlayerManager);
-            this._rulesManager = new GameRuleManager();
-            this._turnManager = new TurnManager(roomId);
-            this._pendingActionManager = new PendingActionManager();
-            this._debugManager = new DebugManager(
-                           _playerHandManager,
-                           _playerManager,
-                           _rulesManager,
-                           _pendingActionManager,
-                           _deckManager);
-            this._actionExecutionManager = new ActionExecutionManager(
-                           _playerHandManager,
-                           _playerManager,
-                           _rulesManager,
-                           _pendingActionManager,
-                           _deckManager);
+            this._deckManager = deckManager;
+            this._playerManager = playerManager;
+            this._playerHandManager = playerHandManager;
+            this._mapper = mapper;
+            this._rulesManager = rulesManager;
+            this._turnManager = turnManager;
+            this._pendingActionManager = pendingActionManager;
+            this._actionExecutionManager = actionExecutionManager;
+            this._debugManager = debugManager;
         }
 
         // Adding players, validating game rules for player to join will be done here
@@ -430,14 +429,5 @@ namespace property_dealer_API.Core
             }
         }
 
-        public void ExecuteDebugCommand(string userId, DebugOptionsEnum debugOption)
-        {
-            switch (debugOption)
-            {
-                case DebugOptionsEnum.SpawnCard:
-                    this._debugManager.GiveAllCardsInDeck();
-                    break;
-            }
-        }
     }
 }

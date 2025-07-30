@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.TurnManager
 {
-    public class TurnManager
+    public class TurnManager : ITurnManager
     {
         private ConcurrentQueue<string> _turnKeeper = new();
         private int CurrUserActionCount = 0;

@@ -1,6 +1,8 @@
 ﻿using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core;
+using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Factories;
 using System.Collections.Concurrent;
 
 namespace property_dealer_API.Application.Services.GameManagement
@@ -8,6 +10,12 @@ namespace property_dealer_API.Application.Services.GameManagement
     public class GameManagerService : IGameManagerService
     {
         private readonly ConcurrentDictionary<string, GameDetails> _gamesDictConcurrent = new();
+        private readonly IGameDetailsFactory _gameDetailsFactory;
+
+        public GameManagerService(IGameDetailsFactory gameDetailsFactory)
+        {
+            _gameDetailsFactory = gameDetailsFactory;
+        }
 
         // Geting game list summary
         public IEnumerable<GameListSummaryResponse> GetGameListSummary()
@@ -23,6 +31,12 @@ namespace property_dealer_API.Application.Services.GameManagement
             );
 
             return summaries;
+        }
+
+        public void CreateNewGame(string roomId, string roomName, GameConfig config)
+        {
+            var gameDetails = _gameDetailsFactory.CreateGameDetails(roomId, roomName, config);
+            this.AddNewGameToDict(roomId, gameDetails);
         }
 
         // Adding new game to dictionary

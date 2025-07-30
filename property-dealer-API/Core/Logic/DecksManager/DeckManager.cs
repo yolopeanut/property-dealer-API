@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.DecksManager
 {
-    public class DeckManager : IReadOnlyDeckManager
+    public class DeckManager : IDeckManager
     {
         private readonly ConcurrentStack<Card> _drawPile = new ConcurrentStack<Card>();
         private ConcurrentStack<Card> _discardPile = new ConcurrentStack<Card>();

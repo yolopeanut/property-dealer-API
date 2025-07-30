@@ -10,7 +10,7 @@ using property_dealer_API.Models.Enums.Cards;
 namespace property_dealer_API.Core.Logic.GameRulesManager
 {
     // Stateless class which only has the job of validating rules.
-    public class GameRuleManager
+    public class GameRuleManager : IGameRuleManager
     {
         public JoinGameResponseEnum? ValidatePlayerJoining(GameStateEnum gameState, List<Player> players, string? maxNumPlayers)
         {
@@ -175,10 +175,10 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         }
 
 
-        public Boolean CanPlayCard(GameStateEnum currentGameState, string turnKeeperCurrUserTurn, string currentPlayer)
-        {
+        //public Boolean CanPlayCard(GameStateEnum currentGameState, string turnKeeperCurrUserTurn, string currentPlayer)
+        //{
 
-        }
+        //}
 
     }
 }
