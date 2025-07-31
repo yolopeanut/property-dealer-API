@@ -15,17 +15,19 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         // ===== CARD PLACEMENT VALIDATION =====
         void ValidatePropertyPileCardType(Card cardRemoved);
+        void ValidateCommandPileCardType(Card cardRemoved);
+        void ValidateMoneyPileCardType(Card cardRemoved);
         PropertyCardColoursEnum ValidateStandardPropertyCardDestination(PropertyCardColoursEnum? cardColoursDestinationEnum);
 
         // ===== CARD-SPECIFIC RULE VALIDATION =====
-        void ValidateHostileTakeoverTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
-        void ValidatePirateRaidTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
-        void ValidateForcedTradeTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
-        void ValidateSpaceStationPlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor);
-        void ValidateStarbasePlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateHostileTakeoverTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidatePirateRaidTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateForcedTradeTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateSpaceStationPlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateStarbasePlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor);
         void ValidateRentTarget(PropertyCardColoursEnum targetColor, List<Card> targetPlayerProperties);
         void ValidateEndOfTurnCardLimit(List<Card> playerHand);
-        void ValidateTradeEmbargoTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
+        void ValidateTradeEmbargoTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
         void ValidateRentCardColors(PropertyCardColoursEnum rentCardColor, PropertyCardColoursEnum targetColor);
         void ValidateWildcardRentTarget(List<PropertyCardColoursEnum> availableColors, PropertyCardColoursEnum selectedColor);
 

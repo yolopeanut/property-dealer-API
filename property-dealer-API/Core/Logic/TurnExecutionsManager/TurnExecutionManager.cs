@@ -29,22 +29,22 @@ namespace property_dealer_API.Core.Logic.TurnExecutionsManager
             var players = this._playerManager.GetAllPlayers();
             var currentUser = this._playerManager.GetPlayerByUserId(userId);
 
-
             switch (cardDestination)
             {
                 case CardDestinationEnum.CommandPile:
                     // Get dialog to open
+                    this._rulesManager.ValidateCommandPileCardType(playerHandCard);
                     var actionContext = this._actionExecutionManager.ExecuteAction(userId, playerHandCard, currentUser, players);
                     return actionContext;
 
                 case CardDestinationEnum.MoneyPile:
+                    this._rulesManager.ValidateMoneyPileCardType(playerHandCard);
                     this._playerHandManager.AddCardToPlayerMoneyHand(userId, playerHandCard);
                     break;
 
                 case CardDestinationEnum.PropertyPile:
                     // Validate rules for property pile
                     this._rulesManager.ValidatePropertyPileCardType(playerHandCard);
-
                     var validatedColor = this._rulesManager.ValidateStandardPropertyCardDestination(colorDestination);
                     this._playerHandManager.AddCardToPlayerTableHand(userId, playerHandCard, validatedColor);
                     break;

@@ -1,5 +1,6 @@
 ﻿using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.ActionExecution;
+using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -26,12 +27,11 @@ namespace property_dealer_API.Core.Factories
             var turnManager = new TurnManager(roomId);
             var pendingActionManager = new PendingActionManager();
 
-            var actionExecutionManager = new ActionExecutionManager(
-                playerHandManager,
-                playerManager,
-                rulesManager,
-                pendingActionManager,
-                deckManager);
+            var actionContextBuilder = new ActionContextBuilder(pendingActionManager, rulesManager, deckManager, playerHandManager);
+            var actionExecutor = new ActionExecutor(playerHandManager, deckManager, rulesManager);
+            var dialogProcessor = new DialogResponseProcessor(playerHandManager, playerManager, rulesManager, pendingActionManager, actionExecutor);
+
+            var actionExecutionManager = new ActionExecutionManager(actionContextBuilder, dialogProcessor);
 
             var debugManager = new DebugManager(
                 playerHandManager,
@@ -49,6 +49,7 @@ namespace property_dealer_API.Core.Factories
             var dialogManager = new DialogManager(
                 actionExecutionManager,
                 pendingActionManager);
+
 
             return new GameDetails(
                 roomId,

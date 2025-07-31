@@ -303,8 +303,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 throw new TableHandNotFoundException(userId);
             }
         }
-
-        private (Card card, PropertyCardColoursEnum propertyGroup) GetCardInTableHand(string userId, string cardId)
+        public (Card card, PropertyCardColoursEnum propertyGroup) GetCardInTableHand(string userId, string cardId)
         {
             if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict))
             {
@@ -330,7 +329,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             }
             throw new CardNotFoundException(cardId, userId);
         }
-        private Card GetCardInMoneyHand(string userId, string cardId)
+        public Card GetCardInMoneyHand(string userId, string cardId)
         {
             if (!this._playerMoneyHands.TryGetValue(userId, out List<Card>? cards))
             {

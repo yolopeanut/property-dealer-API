@@ -43,22 +43,6 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             this.ValidateActionLimit(playerId, noOfActionPlayed);
         }
 
-        private void ValidateTurn(string userId, string currentUserIdTurn)
-        {
-            if (userId != currentUserIdTurn)
-            {
-                throw new NotPlayerTurnException(userId, currentUserIdTurn);
-            }
-        }
-
-        private void ValidateActionLimit(string userId, int noOfActionsPlayed)
-        {
-            if (noOfActionsPlayed >= 3)
-            {
-                throw new PlayerExceedingActionLimitException(userId);
-            }
-        }
-
         #endregion
 
         #region Card Placement Validation
@@ -68,6 +52,23 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             if (cardRemoved is not StandardSystemCard)
             {
                 throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the property section. Only property cards are allowed.");
+            }
+        }
+
+        public void ValidateCommandPileCardType(Card cardRemoved)
+        {
+            if (cardRemoved is not CommandCard && cardRemoved is not SystemWildCard && cardRemoved is not TributeCard)
+            {
+                throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the command section. Only comamnd cards are allowed.");
+            }
+
+        }
+
+        public void ValidateMoneyPileCardType(Card cardRemoved)
+        {
+            if (cardRemoved is not CommandCard && cardRemoved is not TributeCard && cardRemoved is not MoneyCard)
+            {
+                throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the money section. Only money cards are allowed.");
             }
         }
 
@@ -83,96 +84,39 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #endregion
 
-        #region Card-Specific Rule Validation
+        #region Card Specific Rule Validation
 
-        public void ValidateHostileTakeoverTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateHostileTakeoverTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
         {
-            var propertyGroup = targetPlayerTableHand.FirstOrDefault(group => group.cardColorEnum == targetColor);
-
-            if (propertyGroup == null)
-            {
-                throw new InvalidTargetException("Hostile Takeover", targetColor, "target", "player doesn't own any properties of this color");
-            }
-
-            var maxCards = propertyGroup.groupedPropertyCards.First().MaxCards ?? 0;
-            var currentCount = propertyGroup.groupedPropertyCards.Count;
-
-            if (currentCount < maxCards)
-            {
-                throw new IncompletePropertySetException(targetColor, currentCount, maxCards);
-            }
+            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: true, ActionTypes.HostileTakeover);
         }
 
-        public void ValidatePirateRaidTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidatePirateRaidTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
         {
-            var propertyGroup = targetPlayerTableHand.FirstOrDefault(group => group.cardColorEnum == targetColor);
-
-            if (propertyGroup == null)
-            {
-                throw new InvalidTargetException("Pirate Raid", targetColor, "target", "player doesn't own any properties of this color");
-            }
-
-            var maxCards = propertyGroup.groupedPropertyCards.First().MaxCards ?? 0;
-            var currentCount = propertyGroup.groupedPropertyCards.Count;
-
-            if (currentCount >= maxCards)
-            {
-                throw new CompletePropertySetException(targetColor);
-            }
+            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: false, ActionTypes.PirateRaid);
         }
 
-        public void ValidateForcedTradeTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateForcedTradeTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
         {
-            if (IsPropertySetComplete(targetPlayerTableHand, targetColor))
-            {
-                throw new InvalidOperationException($"Forced Trade cannot target completed property sets. The {targetColor} set is already complete and protected.");
-            }
-
-            // Also validate that the target actually has properties of this color
-            var propertyGroup = GetPropertyGroup(targetPlayerTableHand, targetColor);
-            if (propertyGroup == null || propertyGroup.groupedPropertyCards.Count == 0)
-            {
-                throw new InvalidOperationException($"Forced Trade cannot target the {targetColor} property set because the target player doesn't own any {targetColor} properties.");
-            }
+            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: false, ActionTypes.ForcedTrade);
         }
 
-        public void ValidateSpaceStationPlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateSpaceStationPlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
         {
-            if (!IsPropertySetComplete(playerTableHand, targetColor))
-            {
-                var propertyGroup = GetPropertyGroup(playerTableHand, targetColor);
-                if (propertyGroup != null)
-                {
-                    var currentCount = propertyGroup.groupedPropertyCards.Count;
-                    var requiredCount = propertyGroup.groupedPropertyCards.First().MaxCards;
-                    throw new InvalidOperationException($"Space Station can only be played on completed property sets. Your {targetColor} set has {currentCount}/{requiredCount} properties.");
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Space Station cannot be played on the {targetColor} property set because you don't own any {targetColor} properties.");
-                }
-            }
+            this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.SpaceStation);
         }
 
-        public void ValidateStarbasePlacement(List<PropertyCardGroup> playerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateStarbasePlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
         {
-            if (!IsPropertySetComplete(playerTableHand, targetColor))
-            {
-                var propertyGroup = GetPropertyGroup(playerTableHand, targetColor);
-                if (propertyGroup != null)
-                {
-                    var currentCount = propertyGroup.groupedPropertyCards.Count;
-                    var requiredCount = propertyGroup.groupedPropertyCards.First().MaxCards;
-                    throw new InvalidOperationException($"Starbase can only be played on completed property sets. Your {targetColor} set has {currentCount}/{requiredCount} properties.");
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Starbase cannot be played on the {targetColor} property set because you don't own any {targetColor} properties.");
-                }
-            }
+            this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.Starbase);
 
-            // Additional rule: Starbase requires Space Station first (if you want this rule)
+            // Additional rule: Starbase requires Space Station first
             // TODO: Add logic to check if Space Station exists on the property set
+        }
+
+        public void ValidateTradeEmbargoTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        {
+            this.ValidatePropertySetExists(targetPlayerTableHand, targetColor, ActionTypes.TradeEmbargo);
         }
 
         public void ValidateRentTarget(PropertyCardColoursEnum targetColor, List<Card> targetPlayerProperties)
@@ -183,16 +127,6 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             if (!hasTargetColorProperties)
             {
                 throw new InvalidOperationException($"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties.");
-            }
-        }
-
-        public void ValidateTradeEmbargoTarget(List<PropertyCardGroup> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
-        {
-            var propertyGroup = GetPropertyGroup(targetPlayerTableHand, targetColor);
-
-            if (propertyGroup == null || propertyGroup.groupedPropertyCards.Count == 0)
-            {
-                throw new InvalidTargetException("Trade Embargo", targetColor, "target", "player doesn't own any properties of this color");
             }
         }
 
@@ -329,6 +263,74 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         {
             return tableHand.FirstOrDefault(group => group.cardColorEnum == color);
         }
+
+        private void ValidateTurn(string userId, string currentUserIdTurn)
+        {
+            if (userId != currentUserIdTurn)
+            {
+                throw new NotPlayerTurnException(userId, currentUserIdTurn);
+            }
+        }
+
+        private void ValidateActionLimit(string userId, int noOfActionsPlayed)
+        {
+            if (noOfActionsPlayed >= 3)
+            {
+                throw new PlayerExceedingActionLimitException(userId);
+            }
+        }
+
+        #endregion
+
+        #region Property Set Validation Helpers
+
+        private void ValidatePropertySetExists(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        {
+            if (propertySet == null || propertySet.Count == 0)
+            {
+                throw new InvalidTargetException(actionType.ToString(), targetColor, "target", "player doesn't own any properties of this color");
+            }
+        }
+
+        private StandardSystemCard GetPropertySetSystemCard(List<Card> propertySet, PropertyCardColoursEnum targetColor)
+        {
+            var systemCard = propertySet.FirstOrDefault(card => card is StandardSystemCard) as StandardSystemCard;
+
+            if (systemCard == null)
+            {
+                throw new InvalidOperationException($"No valid property cards found in the {targetColor} property set.");
+            }
+
+            return systemCard;
+        }
+
+        private void ValidatePropertySetCompletion(List<Card> propertySet, PropertyCardColoursEnum targetColor, bool shouldBeComplete, ActionTypes actionType)
+        {
+            ValidatePropertySetExists(propertySet, targetColor, actionType);
+
+            var systemCard = GetPropertySetSystemCard(propertySet, targetColor);
+            var maxCards = systemCard.MaxCards;
+            var currentCount = propertySet.Count;
+            var isComplete = currentCount >= maxCards;
+
+            if (shouldBeComplete && !isComplete)
+            {
+                throw new InvalidOperationException($"{actionType} can only be used on completed property sets. The {targetColor} set has {currentCount}/{maxCards} properties.");
+            }
+            else if (!shouldBeComplete && isComplete)
+            {
+                switch (actionType)
+                {
+                    case ActionTypes.PirateRaid:
+                        throw new CompletePropertySetException(targetColor);
+                    case ActionTypes.ForcedTrade:
+                        throw new InvalidOperationException($"Forced Trade cannot target completed property sets. The {targetColor} set is already complete and protected.");
+                    default:
+                        throw new InvalidOperationException($"{actionType} cannot target completed property sets. The {targetColor} set is already complete.");
+                }
+            }
+        }
+
         #endregion
     }
 }

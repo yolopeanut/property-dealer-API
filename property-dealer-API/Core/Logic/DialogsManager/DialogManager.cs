@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using property_dealer_API.Application.Enums;
+﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.ActionExecution;
 using property_dealer_API.Core.Logic.PendingActionsManager;
-using property_dealer_API.Models.Cards;
 
 namespace property_dealer_API.Core.Logic.DialogsManager
 {
@@ -20,11 +18,6 @@ namespace property_dealer_API.Core.Logic.DialogsManager
         {
             _actionExecutionManager = actionExecutionManager;
             _pendingActionManager = pendingActionManager;
-        }
-
-        public ActionContext? ExecuteAction(string userId, string cardId, Card card, Player currentUser, List<Player> allPlayers)
-        {
-            throw new NotImplementedException();
         }
 
         public DialogProcessingResult ProcessPendingResponses(ActionContext actionContext)

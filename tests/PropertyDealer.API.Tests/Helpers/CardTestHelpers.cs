@@ -47,5 +47,60 @@ namespace PropertyDealer.API.Tests.TestHelpers
         {
             return new SystemWildCard(CardTypesEnum.SystemWildCard, name, value, description);
         }
+
+        public static Card CreateActionTypeCard(int actionTypeValue)
+        {
+            if (!Enum.IsDefined(typeof(ActionTypes), actionTypeValue))
+            {
+                throw new ArgumentException($"Invalid ActionType value: {actionTypeValue}");
+            }
+
+            var actionType = (ActionTypes)actionTypeValue;
+
+            return actionType switch
+            {
+                ActionTypes.Tribute => CreateTributeCard(),
+                ActionTypes.SystemWildCard => CreateSystemWildCard(),
+                _ => CreateCommandCard(actionType)
+            };
+        }
+
+        public static List<Card> CreateAllActionTypeCards()
+        {
+            var cards = new List<Card>();
+            var actionTypeValues = Enum.GetValues<ActionTypes>();
+
+            foreach (var actionType in actionTypeValues)
+            {
+                cards.Add(CreateActionTypeCard((int)actionType));
+            }
+
+            return cards;
+        }
+
+        public static List<Card> CreatePropertyCardSet(
+            PropertyCardColoursEnum color,
+            int cardCount,
+            int maxCards = 3,
+            List<int>? rentalValues = null)
+        {
+            var cards = new List<Card>();
+            rentalValues ??= new List<int> { 1, 2, 4 };
+
+            for (int i = 0; i < cardCount; i++)
+            {
+                var card = CreateStandardSystemCard(
+                    color: color,
+                    name: $"{color} Property {i + 1}",
+                    value: 2,
+                    description: $"Test {color} property card",
+                    maxCards: maxCards,
+                    rentalValues: rentalValues
+                );
+                cards.Add(card);
+            }
+
+            return cards;
+        }
     }
 }
