@@ -326,21 +326,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             this._playerHandManager.AddCardToPlayerTableHand(actionContext.ActionInitiatingPlayerId, buildingCard, actionContext.TargetSetColor.Value);
         }
 
-        private void ValidateTradeEmbargoAndProceed(ActionContext actionContext, Player player, Player targetPlayer, List<Player> allPlayers, PendingAction pendingAction)
-        {
-            if (actionContext.TargetSetColor.HasValue)
-            {
-                var targetPlayerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(targetPlayer.UserId, actionContext.TargetSetColor.Value);
-                this._rulesManager.ValidateTradeEmbargoTarget(targetPlayerTableHand, actionContext.TargetSetColor.Value);
-            }
-
-            actionContext.DialogToOpen = DialogTypeEnum.PayValue;
-            actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, targetPlayer, allPlayers, DialogTypeEnum.PayValue);
-
-            pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-            this._pendingActionManager.IncrementCurrentStep();
-        }
-
         private void BuildShieldsUpContext(ActionContext actionContext, Player player, Player? targetPlayer, List<Player> allPlayers, PendingAction pendingAction)
         {
             actionContext.DialogToOpen = DialogTypeEnum.ShieldsUp;
