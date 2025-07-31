@@ -29,6 +29,7 @@ namespace property_dealer_API.Core.Logic.TurnExecutionsManager
             var players = this._playerManager.GetAllPlayers();
             var currentUser = this._playerManager.GetPlayerByUserId(userId);
 
+
             switch (cardDestination)
             {
                 case CardDestinationEnum.CommandPile:

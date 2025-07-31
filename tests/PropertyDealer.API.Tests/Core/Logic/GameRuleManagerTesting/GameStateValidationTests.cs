@@ -102,76 +102,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         #endregion
 
-        #region ValidateTurn Tests
-
-        [Fact]
-        public void ValidateTurn_CorrectUserTurn_DoesNotThrowException()
-        {
-            // Arrange
-            var userId = "user123";
-            var currentUserIdTurn = "user123";
-
-            // Act & Assert - When a method should NOT throw an exception
-            var exception = Record.Exception(() => _gameRuleManager.ValidateTurn(userId, currentUserIdTurn));
-            Assert.Null(exception);
-        }
-
-        [Fact]
-        public void ValidateTurn_WrongUserTurn_ThrowsNotPlayerTurnException()
-        {
-            // Arrange
-            var userId = "user123";
-            var currentUserIdTurn = "user456";
-
-            // Act & Assert - When testing exceptions
-            var exception = Assert.Throws<NotPlayerTurnException>(() =>
-                _gameRuleManager.ValidateTurn(userId, currentUserIdTurn));
-
-            // Verify the exception message contains expected information
-            Assert.Contains("user123", exception.Message);
-            Assert.Contains("user456", exception.Message);
-        }
-
-        #endregion
-
-        #region ValidateActionLimit Tests
+        #region ValidatePlayerCanPlayCard Tests
 
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
         [InlineData(2)]
-        public void ValidateActionLimit_UnderLimit_DoesNotThrowException(int actionsPlayed)
-        {
-            // Arrange
-            var userId = "testUser";
-
-            // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateActionLimit(userId, actionsPlayed));
-            Assert.Null(exception);
-        }
-
-        [Theory]
-        [InlineData(3)]
-        [InlineData(4)]
-        [InlineData(10)]
-        public void ValidateActionLimit_AtOrOverLimit_ThrowsException(int actionsPlayed)
-        {
-            // Arrange
-            var userId = "testUser";
-
-            // Act & Assert
-            var exception = Assert.Throws<PlayerExceedingActionLimitException>(() =>
-                _gameRuleManager.ValidateActionLimit(userId, actionsPlayed));
-
-            Assert.NotNull(exception);
-        }
-
-        #endregion
-
-        #region ValidatePlayerCanPlayCard Tests
-
-        [Fact]
-        public void ValidatePlayerCanPlayCard_GameStartedAndCorrectTurn_DoesNotThrowException()
+        public void ValidatePlayerCanPlayCard_GameStartedAndCorrectTurnAndCorrectNumActionsPlayed_DoesNotThrowException(int noOfActionsPlayed)
         {
             // Arrange
             var gameState = GameStateEnum.GameStarted;
@@ -179,10 +116,29 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var currentTurnPlayerId = "player1";
 
             // Act
-            var exception = Record.Exception(() => this._gameRuleManager.ValidatePlayerCanPlayCard(gameState, playerId, currentTurnPlayerId));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidatePlayerCanPlayCard(gameState, playerId, currentTurnPlayerId, noOfActionsPlayed));
 
             // Assert
             Assert.Null(exception);
+        }
+
+        [Theory]
+        [InlineData(5)]
+        [InlineData(10)]
+        [InlineData(20)]
+        public void ValidatePlayerCanPlayCard_PlayedTooManyTurns_DoesNotThrowException(int noOfActionsPlayed)
+        {
+            // Arrange
+            var gameState = GameStateEnum.GameStarted;
+            var playerId = "player1";
+            var currentTurnPlayerId = "player1";
+
+            // Act
+            var exception = Assert.Throws<PlayerExceedingActionLimitException>(() => this._gameRuleManager.ValidatePlayerCanPlayCard(gameState, playerId, currentTurnPlayerId, noOfActionsPlayed));
+
+            // Assert
+            Assert.NotNull(exception);
+            Assert.Contains("playing more than allowed", exception.Message);
         }
 
         [Theory]
@@ -195,9 +151,10 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             // Arrange
             var playerId = "player1";
             var currentTurnPlayerId = "player1";
+            var noOfActionsPlayed = 1;
 
             // Act and assert
-            var exception = Assert.Throws<InvalidGameStateException>(() => this._gameRuleManager.ValidatePlayerCanPlayCard(currGameState, playerId, currentTurnPlayerId));
+            var exception = Assert.Throws<InvalidGameStateException>(() => this._gameRuleManager.ValidatePlayerCanPlayCard(currGameState, playerId, currentTurnPlayerId, noOfActionsPlayed));
             Assert.Contains("Cannot play cards when game is in", exception.Message);
         }
 
@@ -208,9 +165,10 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var gameState = GameStateEnum.GameStarted;
             var playerId = "player1";
             var currentTurnPlayerId = "player2";
+            var noOfActionsPlayed = 1;
 
             // Act
-            var exception = Assert.Throws<NotPlayerTurnException>(() => this._gameRuleManager.ValidatePlayerCanPlayCard(gameState, playerId, currentTurnPlayerId));
+            var exception = Assert.Throws<NotPlayerTurnException>(() => this._gameRuleManager.ValidatePlayerCanPlayCard(gameState, playerId, currentTurnPlayerId, noOfActionsPlayed));
 
             // Assert
             Assert.Contains("player1", exception.Message);

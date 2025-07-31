@@ -11,11 +11,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
     {
         // ===== JOINING & GAME STATE VALIDATION =====
         JoinGameResponseEnum? ValidatePlayerJoining(GameStateEnum gameState, List<Player> players, string? maxNumPlayers);
-        void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId);
-
-        // ===== TURN & ACTION VALIDATION =====  
-        void ValidateTurn(string userId, string currentUserIdTurn);
-        void ValidateActionLimit(string userId, int noOfActionsPlayed);
+        void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId, int noOfActionsPlayed);
 
         // ===== CARD PLACEMENT VALIDATION =====
         void ValidatePropertyPileCardType(Card cardRemoved);

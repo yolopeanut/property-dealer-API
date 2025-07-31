@@ -32,18 +32,18 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return null;
         }
 
-        public void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId)
+        public void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId, int noOfActionPlayed)
         {
             if (gameState != GameStateEnum.GameStarted)
             {
                 throw new InvalidGameStateException(gameState, GameStateEnum.GameStarted, "play cards");
             }
 
-            ValidateTurn(playerId, currentTurnPlayerId);
+            this.ValidateTurn(playerId, currentTurnPlayerId);
+            this.ValidateActionLimit(playerId, noOfActionPlayed);
         }
 
-
-        public void ValidateTurn(string userId, string currentUserIdTurn)
+        private void ValidateTurn(string userId, string currentUserIdTurn)
         {
             if (userId != currentUserIdTurn)
             {
@@ -51,7 +51,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             }
         }
 
-        public void ValidateActionLimit(string userId, int noOfActionsPlayed)
+        private void ValidateActionLimit(string userId, int noOfActionsPlayed)
         {
             if (noOfActionsPlayed >= 3)
             {

@@ -127,17 +127,15 @@ namespace property_dealer_API.Core
         // Otherwise return null.
         public ActionContext? PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
         {
-
             // Validating player turn and if they exceed their turn amount
-            this._rulesManager.ValidateTurn(userId, this._turnManager.GetCurrentUserTurn());
-            this._rulesManager.ValidateActionLimit(userId, this._turnManager.GetCurrentUserActionCount());
-
+            this._rulesManager.ValidatePlayerCanPlayCard(this.GameState, userId, this._turnManager.GetCurrentUserTurn(), this._turnManager.GetCurrentUserActionCount());
             var cardInPlayerHand = _playerHandManager.GetCardFromPlayerHandById(userId, cardId);
 
             try
             {
                 var actionContext = this._turnExecutionManager.ExecuteTurnAction(userId, cardInPlayerHand, cardDestination, cardColoursDestinationEnum);
 
+                // Property pile or money pile
                 if (actionContext == null)
                 {
                     HandleRemoveFromHand(userId, cardId);
@@ -145,7 +143,6 @@ namespace property_dealer_API.Core
                 }
                 return actionContext;
             }
-
             catch (Exception)
             {
                 // If ANY part of the turn fails (e.g., invalid card, empty deck error),
