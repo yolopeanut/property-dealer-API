@@ -15,7 +15,6 @@ using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 using System.Diagnostics.CodeAnalysis;
 using property_dealer_API.Core.Logic.DialogsManager;
-using Microsoft.VisualBasic;
 
 namespace property_dealer_API.Core
 {
