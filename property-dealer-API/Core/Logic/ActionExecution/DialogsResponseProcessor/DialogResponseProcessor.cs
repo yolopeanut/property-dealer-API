@@ -239,7 +239,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             {
                 case ActionTypes.TradeEmbargo:
                     // The user has selected their rent card to double, now show player selection
-                    actionContext.DialogToOpen = DialogTypeEnum.PlayerSelection;
+                    actionContext.DialogToOpen = DialogTypeEnum.PropertySetSelection;
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PropertySetSelection);
                     break;
                 default:
