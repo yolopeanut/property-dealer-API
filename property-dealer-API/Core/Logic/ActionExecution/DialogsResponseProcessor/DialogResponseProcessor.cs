@@ -85,6 +85,16 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     break;
                 case ActionTypes.BountyHunter:
                 case ActionTypes.TradeEmbargo:
+                    // Calculate doubled rent amount based on the selected rent card and property set
+                    if (actionContext.OwnTargetCardId?.Count > 0 && actionContext.TargetSetColor.HasValue)
+                    {
+                        var playerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(actionContext.ActionInitiatingPlayerId, actionContext.TargetSetColor.Value);
+
+                        // Calculate the base rent amount and then double it
+                        var baseRentAmount = this._rulesManager.CalculateRentAmount(actionContext.TargetSetColor.Value, playerTableHand);
+                        actionContext.PaymentAmount = baseRentAmount * 2; // Double the rent for Trade Embargo
+                    }
+
                     actionContext.DialogToOpen = DialogTypeEnum.PayValue;
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, targetPlayer, allPlayers, DialogTypeEnum.PayValue);
                     break;
@@ -124,7 +134,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     if (tributeCard != null && actionContext.TargetSetColor.HasValue)
                     {
                         var playerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(actionContext.ActionInitiatingPlayerId, actionContext.TargetSetColor.Value);
-                        actionContext.PaymentAmount = this._rulesManager.CalculateRentAmount(actionContext.ActionInitiatingPlayerId, tributeCard, actionContext.TargetSetColor.Value, playerTableHand);
+                        actionContext.PaymentAmount = this._rulesManager.CalculateRentAmount(actionContext.TargetSetColor.Value, playerTableHand);
                     }
 
                     actionContext.DialogToOpen = DialogTypeEnum.PayValue;
@@ -160,12 +170,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     break;
 
                 case ActionTypes.TradeEmbargo:
-                    if (targetPlayer == null)
-                    {
-                        throw new InvalidOperationException("Target player cannot be null when doing trade embargo!");
-                    }
+                    // For Trade Embargo, we don't have a target player yet at this step
+                    // We're selecting the property set first, then player selection
+                    actionContext.DialogToOpen = DialogTypeEnum.PlayerSelection;
+                    actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PlayerSelection);
 
-                    ValidateTradeEmbargoAndProceed(actionContext, player, targetPlayer, allPlayers, pendingAction);
+                    pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
+                    this._pendingActionManager.IncrementCurrentStep();
+
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported action type: {pendingAction.ActionType}");
@@ -188,7 +200,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 throw new InvalidOperationException("Target player cannot be null when doing ForcedTrade or PirateRaid!");
             }
 
-            ValidateAndExecuteTableHandAction(actionContext, player, targetPlayer, allPlayers, pendingAction);
+            this.ValidateAndExecuteTableHandAction(actionContext, player, targetPlayer, allPlayers, pendingAction);
             this._pendingActionManager.CanClearPendingAction = true;
         }
 
@@ -216,6 +228,26 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             {
                 this._actionExecutor.HandleRemoveFromHand(player.UserId, shieldsUpCard.CardGuid.ToString());
             }
+        }
+
+        public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
+        {
+            var pendingAction = this._pendingActionManager.CurrPendingAction;
+            var allPlayers = this._playerManager.GetAllPlayers();
+
+            switch (pendingAction.ActionType)
+            {
+                case ActionTypes.TradeEmbargo:
+                    // The user has selected their rent card to double, now show player selection
+                    actionContext.DialogToOpen = DialogTypeEnum.PlayerSelection;
+                    actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PropertySetSelection);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unsupported action type for own hand selection: {pendingAction.ActionType}");
+            }
+
+            pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
+            this._pendingActionManager.IncrementCurrentStep();
         }
 
         private void ValidateAndExecuteTableHandAction(ActionContext actionContext, Player player, Player targetPlayer, List<Player> allPlayers, PendingAction pendingAction)

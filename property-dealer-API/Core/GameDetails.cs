@@ -122,9 +122,6 @@ namespace property_dealer_API.Core
             return this.Config;
         }
 
-        // Return a tuple for flexibility of adjusting later.
-        // Currently the only return type would be a dialog. If the rules manager gives a dialog we return that
-        // Otherwise return null.
         public ActionContext? PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
         {
             // Validating player turn and if they exceed their turn amount

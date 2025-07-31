@@ -26,7 +26,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CalculateRentAmount_SingleProperty_ReturnsFirstRentalValue()
         {
             // Arrange
-            var playerId = "player1";
             var tributeCard = new TributeCard(CardTypesEnum.TributeCard, 3,
                 new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red }, "Red Rent");
             var targetColor = PropertyCardColoursEnum.Red;
@@ -37,7 +36,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(playerId, tributeCard, targetColor, playerPropertyCards);
+            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(2, result); // First rental value
@@ -47,7 +46,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CalculateRentAmount_MultipleProperties_ReturnsCorrectRentalValue()
         {
             // Arrange
-            var playerId = "player1";
             var tributeCard = new TributeCard(CardTypesEnum.TributeCard, 3,
                 new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red }, "Red Rent");
             var targetColor = PropertyCardColoursEnum.Red;
@@ -62,7 +60,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(playerId, tributeCard, targetColor, playerPropertyCards);
+            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(4, result); // Second rental value (index 1)
@@ -72,7 +70,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CalculateRentAmount_NoPropertiesOfTargetColor_ReturnsZero()
         {
             // Arrange
-            var playerId = "player1";
             var tributeCard = new TributeCard(CardTypesEnum.TributeCard, 3,
                 new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red }, "Red Rent");
             var targetColor = PropertyCardColoursEnum.Red;
@@ -84,7 +81,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(playerId, tributeCard, targetColor, playerPropertyCards);
+            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(0, result);

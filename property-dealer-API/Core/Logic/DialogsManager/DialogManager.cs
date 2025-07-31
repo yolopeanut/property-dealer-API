@@ -75,6 +75,11 @@ namespace property_dealer_API.Core.Logic.DialogsManager
                         this._actionExecutionManager.HandlePlayerSelectionResponse(player, newActionContext);
                         newActionContexts.Add(newActionContext);
                         break;
+                    case DialogTypeEnum.OwnHandSelection: // Add this case
+                        this._actionExecutionManager.HandleOwnHandSelectionResponse(player, newActionContext);
+                        newActionContexts.Add(newActionContext);
+                        break;
+
                         #endregion
                 }
             }

@@ -1,6 +1,7 @@
 ﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Logic.ActionExecution;
+using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -24,9 +25,14 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
             _playerHandManager = new PlayersHandManager();
             _playerManager = new PlayerManager();
             var rulesManager = new GameRuleManager();
+            var pendingActionManager = new PendingActionManager();
+            var deckManager = new DeckManager();
+            var playerHandManager = new PlayersHandManager();
+            var contexbuilder = new ActionContextBuilder(pendingActionManager, rulesManager, deckManager, playerHandManager);
+            var actionExecuter = new ActionExecutor(playerHandManager, deckManager, rulesManager);
+            var dialogResponseProcessor = new DialogResponseProcessor(playerHandManager, _playerManager, rulesManager, pendingActionManager, actionExecuter);
             var actionExecutionManager = new ActionExecutionManager(
-                _playerHandManager, _playerManager, rulesManager,
-                new PendingActionManager(), new DeckManager());
+                contexbuilder, dialogResponseProcessor);
 
             _turnExecutionManager = new TurnExecutionManager(
                 _playerHandManager, _playerManager, rulesManager, actionExecutionManager);

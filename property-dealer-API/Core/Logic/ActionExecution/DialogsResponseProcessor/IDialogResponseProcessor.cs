@@ -10,5 +10,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         void HandleTableHandSelectorResponse(Player player, ActionContext actionContext);
         void HandleWildCardResponse(Player player, ActionContext actionContext);
         void HandleShieldsUpResponse(Player player, ActionContext actionContext);
+        void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext);
     }
 }

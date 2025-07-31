@@ -12,5 +12,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         void HandlePropertySetSelectionResponse(Player player, ActionContext actionContext);
         void HandleTableHandSelectorResponse(Player player, ActionContext actionContext);
         void HandlePlayerSelectionResponse(Player player, ActionContext actionContext);
+        void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext);
     }
 }

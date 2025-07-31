@@ -80,8 +80,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
                 case ActionTypes.Starbase:
                     return CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
 
+                // Own HAND selection (selecting rent card from hand to double)
                 case ActionTypes.TradeEmbargo:
-                    return CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+                    return CreateActionContext(userId, cardId, DialogTypeEnum.OwnHandSelection, currentUser, null, allPlayers, pendingAction);
 
                 default:
                     throw new InvalidOperationException($"Unsupported command action: {commandCard.Command}");

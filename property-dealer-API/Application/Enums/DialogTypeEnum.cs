@@ -41,6 +41,12 @@
         /// </summary>
         WildcardColor,
 
+        /// <summary>
+        /// Prompts the player to select a card from their own hand.
+        /// <br/>Used By: Trade Embargo
+        /// </summary>
+        OwnHandSelection,
+
         // Debug enums
         SpawnCard
 

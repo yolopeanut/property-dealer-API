@@ -202,7 +202,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #region Calculations
 
-        public int CalculateRentAmount(string actionInitiatingPlayerId, TributeCard tributeCard, PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards)
+        public int CalculateRentAmount(PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards)
         {
             int cardCount = playerPropertyCards.Count(card =>
                 card is StandardSystemCard systemCard && systemCard.CardColoursEnum == targetColor);
@@ -246,7 +246,9 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                 DialogTypeEnum.PlayerSelection or
                 DialogTypeEnum.PropertySetSelection or
                 DialogTypeEnum.TableHandSelector or
+                DialogTypeEnum.OwnHandSelection or
                 DialogTypeEnum.WildcardColor => [callerUser],
+
 
                 DialogTypeEnum.ShieldsUp => targetUser != null
                     ? [targetUser]

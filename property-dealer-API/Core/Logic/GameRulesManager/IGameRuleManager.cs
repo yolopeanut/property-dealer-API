@@ -38,7 +38,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         bool IsPropertySetComplete(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color);
 
         // ===== CALCULATIONS =====
-        int CalculateRentAmount(string actionInitiatingPlayerId, TributeCard tributeCard, PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards);
+        int CalculateRentAmount(PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards);
         int? GetPaymentAmount(ActionTypes actionType);
 
         // ===== UI LOGIC =====

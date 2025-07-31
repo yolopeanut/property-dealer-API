@@ -1,19 +1,9 @@
 ﻿
 
-using Microsoft.AspNetCore.Mvc;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
+
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
-using property_dealer_API.Core.Logic.DecksManager;
-using property_dealer_API.Core.Logic.GameRulesManager;
-using property_dealer_API.Core.Logic.PendingActionsManager;
-using property_dealer_API.Core.Logic.PlayerHandsManager;
-using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Models.Cards;
-using property_dealer_API.Models.Enums.Cards;
-using System.Collections.Concurrent;
-using System.Numerics;
 
 namespace property_dealer_API.Core.Logic.ActionExecution
 {
@@ -51,5 +41,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
         public void HandlePlayerSelectionResponse(Player player, ActionContext actionContext)
             => _dialogProcessor.HandlePlayerSelectionResponse(player, actionContext);
+
+        public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
+            => _dialogProcessor.HandleOwnHandSelectionResponse(player, actionContext);
     }
 }
