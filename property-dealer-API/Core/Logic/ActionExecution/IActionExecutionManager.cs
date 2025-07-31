@@ -5,7 +5,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 {
     public interface IActionExecutionManager
     {
-        ActionContext? ExecuteAction(string userId, string cardId, Card card, Player currentUser, List<Player> allPlayers);
+        ActionContext? ExecuteAction(string userId, Card card, Player currentUser, List<Player> allPlayers);
         void HandleShieldsUpResponse(Player player, ActionContext actionContext);
         void HandlePayValueResponse(Player player, ActionContext actionContext);
         void HandleWildCardResponse(Player player, ActionContext actionContext);

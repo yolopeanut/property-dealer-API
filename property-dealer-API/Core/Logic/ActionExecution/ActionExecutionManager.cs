@@ -39,8 +39,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
         //=================== Action context building ===========================//
         #region Action context building
-        public ActionContext? ExecuteAction(string userId, string cardId, Card card, Player currentUser, List<Player> allPlayers)
+        public ActionContext? ExecuteAction(string userId, Card card, Player currentUser, List<Player> allPlayers)
         {
+            var cardId = card.CardGuid.ToString();
             // Handle all action types in one place
             switch (card)
             {

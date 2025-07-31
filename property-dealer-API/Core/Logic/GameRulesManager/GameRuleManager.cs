@@ -65,7 +65,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         public void ValidatePropertyPileCardType(Card cardRemoved)
         {
-            if (cardRemoved is not (StandardSystemCard or SystemWildCard))
+            if (cardRemoved is not StandardSystemCard)
             {
                 throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the property section. Only property cards are allowed.");
             }

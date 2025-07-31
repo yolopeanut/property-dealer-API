@@ -2,11 +2,13 @@
 using property_dealer_API.Core.Logic.ActionExecution;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
+using property_dealer_API.Core.Logic.DialogsManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.GameStateMapper;
 using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
+using property_dealer_API.Core.Logic.TurnExecutionsManager;
 using property_dealer_API.Core.Logic.TurnManager;
 
 namespace property_dealer_API.Core.Factories
@@ -25,32 +27,43 @@ namespace property_dealer_API.Core.Factories
             var pendingActionManager = new PendingActionManager();
 
             var actionExecutionManager = new ActionExecutionManager(
-                playerHandManager,  // IPlayerHandManager
-                playerManager,      // IPlayerManager
-                rulesManager,       // IGameRuleManager
-                pendingActionManager, // IPendingActionManager
-                deckManager);       // IDeckManager
+                playerHandManager,
+                playerManager,
+                rulesManager,
+                pendingActionManager,
+                deckManager);
 
             var debugManager = new DebugManager(
-                playerHandManager,  // IPlayerHandManager
-                playerManager,      // IPlayerManager
-                rulesManager,       // IGameRuleManager
-                pendingActionManager, // IPendingActionManager
-                deckManager);       // IDeckManager
+                playerHandManager,
+                playerManager,
+                rulesManager,
+                pendingActionManager,
+                deckManager);
+
+            var turnExecutionManager = new TurnExecutionManager(
+                playerHandManager,
+                playerManager,
+                rulesManager,
+                actionExecutionManager);
+
+            var dialogManager = new DialogManager(
+                actionExecutionManager,
+                pendingActionManager);
 
             return new GameDetails(
                 roomId,
                 roomName,
                 config,
-                deckManager,          // IDeckManager
-                playerManager,        // IPlayerManager
-                playerHandManager,    // IPlayerHandManager
-                gameStateMapper,      // IGameStateMapper
-                rulesManager,         // IGameRuleManager
-                turnManager,          // ITurnManager
-                pendingActionManager, // IPendingActionManager
-                actionExecutionManager, // IActionExecutionManager
-                debugManager);        // IDebugManager
+                deckManager,
+                playerManager,
+                playerHandManager,
+                gameStateMapper,
+                rulesManager,
+                turnManager,
+                debugManager,
+                turnExecutionManager,
+                dialogManager
+                );
         }
     }
 }
