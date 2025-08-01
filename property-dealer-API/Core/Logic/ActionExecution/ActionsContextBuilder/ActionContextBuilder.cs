@@ -36,13 +36,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
             switch (card)
             {
                 case CommandCard commandCard:
-                    return HandleCommandCard(commandCard, userId, cardId, currentUser, allPlayers);
+                    return this.HandleCommandCard(commandCard, userId, cardId, currentUser, allPlayers);
 
                 case TributeCard tributeCard:
-                    return HandleTributeCard(tributeCard, userId, cardId, currentUser, allPlayers);
+                    return this.HandleTributeCard(tributeCard, userId, cardId, currentUser, allPlayers);
 
                 case SystemWildCard wildCard:
-                    return HandleSystemWildCard(wildCard, userId, cardId, currentUser, allPlayers);
+                    return this.HandleSystemWildCard(wildCard, userId, cardId, currentUser, allPlayers);
 
                 default:
                     throw new InvalidOperationException($"Unsupported card type: {card.GetType().Name}");
@@ -57,7 +57,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
             {
                 // Immediate actions - no dialog needed
                 case ActionTypes.ExploreNewSector:
-                    AssignCardToPlayer(userId, 2);
+                    this.AssignCardToPlayer(userId, 2);
                     return null;
 
                 case ActionTypes.ShieldsUp:
@@ -69,20 +69,20 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
                 case ActionTypes.PirateRaid:
                 case ActionTypes.ForcedTrade:
                 case ActionTypes.BountyHunter:
-                    return CreateActionContext(userId, cardId, DialogTypeEnum.PlayerSelection, currentUser, null, allPlayers, pendingAction);
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PlayerSelection, currentUser, null, allPlayers, pendingAction);
 
                 // Direct payment actions
                 case ActionTypes.TradeDividend:
-                    return CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PayValue, currentUser, null, allPlayers, pendingAction);
 
                 // Property set selection actions
                 case ActionTypes.SpaceStation:
                 case ActionTypes.Starbase:
-                    return CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
 
                 // Own HAND selection (selecting rent card from hand to double)
                 case ActionTypes.TradeEmbargo:
-                    return CreateActionContext(userId, cardId, DialogTypeEnum.OwnHandSelection, currentUser, null, allPlayers, pendingAction);
+                    return this.CreateActionContext(userId, cardId, DialogTypeEnum.OwnHandSelection, currentUser, null, allPlayers, pendingAction);
 
                 default:
                     throw new InvalidOperationException($"Unsupported command action: {commandCard.Command}");
@@ -92,13 +92,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
         private ActionContext HandleTributeCard(TributeCard tributeCard, string userId, string cardId, Player currentUser, List<Player> allPlayers)
         {
             var pendingAction = new PendingAction { InitiatorUserId = userId, ActionType = ActionTypes.Tribute };
-            return CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
+            return this.CreateActionContext(userId, cardId, DialogTypeEnum.PropertySetSelection, currentUser, null, allPlayers, pendingAction);
         }
 
         private ActionContext HandleSystemWildCard(SystemWildCard wildCard, string userId, string cardId, Player currentUser, List<Player> allPlayers)
         {
             var pendingAction = new PendingAction { InitiatorUserId = userId, ActionType = ActionTypes.SystemWildCard };
-            return CreateActionContext(userId, cardId, DialogTypeEnum.WildcardColor, currentUser, null, allPlayers, pendingAction);
+            return this.CreateActionContext(userId, cardId, DialogTypeEnum.WildcardColor, currentUser, null, allPlayers, pendingAction);
         }
 
         private ActionContext CreateActionContext(string userId, string cardId, DialogTypeEnum dialogType, Player currentUser, Player? targetUser, List<Player> allPlayers, PendingAction pendingAction)

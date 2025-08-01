@@ -12,6 +12,6 @@
         Green,
         Hyperlane, // Railway Road 
         ResourceNode, // Utilities
-        OmniSector // Wild card
+        OmniSector
     }
 }

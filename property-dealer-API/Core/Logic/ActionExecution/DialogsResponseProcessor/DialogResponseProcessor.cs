@@ -35,25 +35,43 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
         public void HandlePayValueResponse(Player player, ActionContext context)
         {
+            Console.WriteLine($"[DEBUG] HandlePayValueResponse - Processing payment for player: {player.UserId}");
+            Console.WriteLine($"[DEBUG] HandlePayValueResponse - ActionInitiatingPlayerId: {context.ActionInitiatingPlayerId}");
+            Console.WriteLine($"[DEBUG] HandlePayValueResponse - Cards to process: {context.OwnTargetCardId?.Count ?? 0}");
+
             foreach (var ownCard in context.OwnTargetCardId ?? [])
             {
+                Console.WriteLine($"[DEBUG] HandlePayValueResponse - Processing card: {ownCard} for player: {player.UserId}");
+
                 Card cardRemoved;
-                var (handGroup, propertyGroup) = this._playerHandManager.FindCardInWhichHand(player.UserId, ownCard);
+                try
+                {
+                    var (handGroup, propertyGroup) = this._playerHandManager.FindCardInWhichHand(player.UserId, ownCard);
+                    Console.WriteLine($"[DEBUG] HandlePayValueResponse - Found card {ownCard} in handGroup: {handGroup}");
 
-                if (handGroup == 0)
-                {
-                    cardRemoved = this._playerHandManager.RemoveCardFromPlayerMoneyHand(player.UserId, ownCard);
-                    this._playerHandManager.AddCardToPlayerMoneyHand(context.ActionInitiatingPlayerId, cardRemoved);
-                }
-                else
-                {
-                    if (!propertyGroup.HasValue)
+                    if (handGroup == 0)
                     {
-                        throw new InvalidOperationException("Property group has no value!");
-                    }
+                        cardRemoved = this._playerHandManager.RemoveCardFromPlayerMoneyHand(player.UserId, ownCard);
+                        Console.WriteLine($"[DEBUG] HandlePayValueResponse - Removed card {ownCard} from {player.UserId}'s money hand");
 
-                    cardRemoved = this._playerHandManager.RemoveCardFromPlayerTableHand(player.UserId, ownCard);
-                    this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, cardRemoved, propertyGroup.Value);
+                        this._playerHandManager.AddCardToPlayerMoneyHand(context.ActionInitiatingPlayerId, cardRemoved);
+                        Console.WriteLine($"[DEBUG] HandlePayValueResponse - Added card {ownCard} to {context.ActionInitiatingPlayerId}'s money hand");
+                    }
+                    else
+                    {
+                        if (!propertyGroup.HasValue)
+                        {
+                            throw new InvalidOperationException("Property group has no value!");
+                        }
+
+                        cardRemoved = this._playerHandManager.RemoveCardFromPlayerTableHand(player.UserId, ownCard);
+                        this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, cardRemoved, propertyGroup.Value);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DEBUG] HandlePayValueResponse - ERROR processing card {ownCard} for player {player.UserId}: {ex.Message}");
+                    throw;
                 }
             }
 
@@ -201,7 +219,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
 
             this.ValidateAndExecuteTableHandAction(actionContext, player, targetPlayer, allPlayers, pendingAction);
-            this._pendingActionManager.CanClearPendingAction = true;
+
+            // Only clear pending action if no new dialog was opened
+            if (actionContext.DialogToOpen == DialogTypeEnum.TableHandSelector)
+            {
+                this._pendingActionManager.CanClearPendingAction = true;
+            }
         }
 
         public void HandleWildCardResponse(Player player, ActionContext context)
@@ -222,14 +245,37 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         public void HandleShieldsUpResponse(Player player, ActionContext context)
         {
             var playerHand = this._playerHandManager.GetPlayerHand(player.UserId);
+
+            // Debug: Log what's in the hand
+            Console.WriteLine($"[DEBUG] Player {player.UserId} hand before ShieldsUp removal:");
+            foreach (var card in playerHand)
+            {
+                Console.WriteLine($"  - {card.GetType().Name}: {card.CardGuid} (Command: {(card is CommandCard cmd ? cmd.Command.ToString() : "N/A")})");
+            }
+
             var shieldsUpCard = playerHand.FirstOrDefault(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
+
+            Console.WriteLine($"[DEBUG] Found ShieldsUp card: {shieldsUpCard?.CardGuid} (Type: {shieldsUpCard?.GetType().Name})");
+            Console.WriteLine($"[DEBUG] ActionContext CardId: {context.CardId} (for comparison)");
 
             if (shieldsUpCard != null)
             {
+                Console.WriteLine($"[DEBUG] Removing ShieldsUp card: {shieldsUpCard.CardGuid}");
                 this._actionExecutor.HandleRemoveFromHand(player.UserId, shieldsUpCard.CardGuid.ToString());
-            }
-        }
 
+                // Verify removal
+                var handAfterRemoval = this._playerHandManager.GetPlayerHand(player.UserId);
+                Console.WriteLine($"[DEBUG] Hand count after removal: {handAfterRemoval.Count}");
+                var stillHasShieldsUp = handAfterRemoval.Any(card => card is CommandCard cmd && cmd.Command == ActionTypes.ShieldsUp);
+                Console.WriteLine($"[DEBUG] Still has ShieldsUp after removal: {stillHasShieldsUp}");
+            }
+            else
+            {
+                Console.WriteLine("[DEBUG] No ShieldsUp card found in hand!");
+            }
+
+            this._pendingActionManager.CanClearPendingAction = true;
+        }
         public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
         {
             var pendingAction = this._pendingActionManager.CurrPendingAction;
@@ -258,7 +304,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
 
             var targetPlayerHand = this._playerHandManager.GetPlayerHand(targetPlayer.UserId);
-            var targetCard = this._playerHandManager.GetCardFromPlayerHandById(targetPlayer.UserId, actionContext.TargetCardId);
+            var (targetCard, _) = this._playerHandManager.GetCardInTableHand(targetPlayer.UserId, actionContext.TargetCardId);
 
             if (targetCard is StandardSystemCard systemCard)
             {

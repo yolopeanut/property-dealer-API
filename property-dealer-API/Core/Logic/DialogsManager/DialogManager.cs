@@ -36,7 +36,7 @@ namespace property_dealer_API.Core.Logic.DialogsManager
 
             foreach (var (player, context) in allResponses)
             {
-                var newActionContext = actionContext.Clone();
+                var newActionContext = context.Clone();
                 // For the scenario that the user does shields up (can come from pays value-button or shields up dialog)
                 if (context.DialogResponse == CommandResponseEnum.ShieldsUp)
                 {

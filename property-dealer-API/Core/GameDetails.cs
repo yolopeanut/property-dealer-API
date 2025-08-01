@@ -153,18 +153,21 @@ namespace property_dealer_API.Core
         public List<ActionContext>? RegisterActionResponse(string userId, ActionContext actionContext)
         {
             var player = this._playerManager.GetPlayerByUserId(userId);
+            Console.WriteLine($"[DEBUG] RegisterActionResponse called by {userId} for CardId: {actionContext.CardId}");
+
             var dialogProcessingResult = this._dialogManager.RegisterActionResponse(player, actionContext);
 
             if (dialogProcessingResult.ShouldClearPendingAction)
             {
+                Console.WriteLine($"[DEBUG] About to remove original command card {actionContext.CardId} from {actionContext.ActionInitiatingPlayerId}");
                 this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
+                Console.WriteLine($"[DEBUG] Successfully removed original command card");
                 this.CompleteTurn();
                 return null;
             }
 
             return dialogProcessingResult.NewActionContexts;
         }
-
         public void NextPlayerTurn(string userId)
         {
             // Draw Cards for new user
