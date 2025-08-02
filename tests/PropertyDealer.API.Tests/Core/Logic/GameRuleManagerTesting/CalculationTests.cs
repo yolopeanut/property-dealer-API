@@ -1,11 +1,5 @@
-﻿using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
-using property_dealer_API.Core.Entities;
-using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
-using property_dealer_API.Core.Logic.GameRulesManager;
+﻿using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Models.Cards;
-using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
@@ -16,7 +10,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public CalculationTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
 
@@ -36,7 +30,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
+            var result = this._gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(2, result); // First rental value
@@ -60,7 +54,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
+            var result = this._gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(4, result); // Second rental value (index 1)
@@ -81,7 +75,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
+            var result = this._gameRuleManager.CalculateRentAmount(targetColor, playerPropertyCards);
 
             // Assert
             Assert.Equal(0, result);
@@ -97,7 +91,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void GetPaymentAmount_ValidActionType_ReturnsCorrectAmount(ActionTypes actionType, int expectedAmount)
         {
             // Act
-            var result = _gameRuleManager.GetPaymentAmount(actionType);
+            var result = this._gameRuleManager.GetPaymentAmount(actionType);
 
             // Assert
             Assert.Equal(expectedAmount, result);
@@ -110,7 +104,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void GetPaymentAmount_InvalidActionType_ReturnsNull(ActionTypes actionType)
         {
             // Act
-            var result = _gameRuleManager.GetPaymentAmount(actionType);
+            var result = this._gameRuleManager.GetPaymentAmount(actionType);
 
             // Assert
             Assert.Null(result);

@@ -1,11 +1,8 @@
 ﻿using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Models.Cards;
-using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
@@ -16,7 +13,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public GameLogicQueryTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
         #region CheckIfPlayerWon Tests
@@ -25,7 +22,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CheckIfPlayerWon_ThreeCompleteSets_ReturnsTrue()
         {
             // Arrange - Create 3 complete property sets
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Red, 3, 3),     // Complete set 1
                 (PropertyCardColoursEnum.Cyan, 2, 2),    // Complete set 2  
                 (PropertyCardColoursEnum.Green, 3, 3),   // Complete set 3
@@ -33,7 +30,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             );
 
             // Act
-            var result = _gameRuleManager.CheckIfPlayerWon(tableHand);
+            var result = this._gameRuleManager.CheckIfPlayerWon(tableHand);
 
             // Assert
             Assert.True(result);
@@ -43,7 +40,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CheckIfPlayerWon_TwoCompleteSets_ReturnsFalse()
         {
             // Arrange - Create only 2 complete property sets
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Red, 3, 3),     // Complete set 1
                 (PropertyCardColoursEnum.Cyan, 2, 2),    // Complete set 2
                 (PropertyCardColoursEnum.Green, 1, 3),   // Incomplete set 1
@@ -51,7 +48,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             );
 
             // Act
-            var result = _gameRuleManager.CheckIfPlayerWon(tableHand);
+            var result = this._gameRuleManager.CheckIfPlayerWon(tableHand);
 
             // Assert
             Assert.False(result);
@@ -61,14 +58,14 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void CheckIfPlayerWon_NoCompleteSets_ReturnsFalse()
         {
             // Arrange - Create all incomplete property sets
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Red, 2, 3),     // Incomplete set 1
                 (PropertyCardColoursEnum.Cyan, 1, 2),    // Incomplete set 2
                 (PropertyCardColoursEnum.Green, 1, 3)    // Incomplete set 3
             );
 
             // Act
-            var result = _gameRuleManager.CheckIfPlayerWon(tableHand);
+            var result = this._gameRuleManager.CheckIfPlayerWon(tableHand);
 
             // Assert
             Assert.False(result);
@@ -82,13 +79,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void IsPropertySetComplete_CompleteSet_ReturnsTrue()
         {
             // Arrange - Create complete Red property set (3/3)
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Red, 3, 3),
                 (PropertyCardColoursEnum.Cyan, 1, 2)
             );
 
             // Act
-            var result = _gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
+            var result = this._gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
 
             // Assert
             Assert.True(result);
@@ -98,13 +95,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void IsPropertySetComplete_IncompleteSet_ReturnsFalse()
         {
             // Arrange - Create incomplete Red property set (2/3)
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Red, 2, 3),
                 (PropertyCardColoursEnum.Cyan, 2, 2)
             );
 
             // Act
-            var result = _gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
+            var result = this._gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
 
             // Assert
             Assert.False(result);
@@ -114,13 +111,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         public void IsPropertySetComplete_ColorNotFound_ReturnsFalse()
         {
             // Arrange - Create property sets without Red
-            var tableHand = CreatePropertyGroups(
+            var tableHand = this.CreatePropertyGroups(
                 (PropertyCardColoursEnum.Cyan, 2, 2),
                 (PropertyCardColoursEnum.Green, 1, 3)
             );
 
             // Act
-            var result = _gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
+            var result = this._gameRuleManager.IsPropertySetComplete(tableHand, PropertyCardColoursEnum.Red);
 
             // Assert
             Assert.False(result);
@@ -137,7 +134,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var cards = new List<Card>();
 
             // Act
-            var result = _gameRuleManager.IsPlayerHandEmpty(cards);
+            var result = this._gameRuleManager.IsPlayerHandEmpty(cards);
 
             // Assert
             Assert.True(result);
@@ -153,7 +150,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.IsPlayerHandEmpty(cards);
+            var result = this._gameRuleManager.IsPlayerHandEmpty(cards);
 
             // Assert
             Assert.False(result);
@@ -175,7 +172,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
+            var result = this._gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
 
             // Assert
             Assert.True(result);
@@ -193,7 +190,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             };
 
             // Act
-            var result = _gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
+            var result = this._gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
 
             // Assert
             Assert.False(result);
@@ -207,7 +204,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var playerHand = new List<Card>();
 
             // Act
-            var result = _gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
+            var result = this._gameRuleManager.DoesPlayerHaveShieldsUp(player, playerHand);
 
             // Assert
             Assert.False(result);

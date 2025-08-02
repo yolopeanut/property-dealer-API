@@ -14,13 +14,13 @@ namespace property_dealer_API.Application.Services.GameManagement
 
         public GameManagerService(IGameDetailsFactory gameDetailsFactory)
         {
-            _gameDetailsFactory = gameDetailsFactory;
+            this._gameDetailsFactory = gameDetailsFactory;
         }
 
         // Geting game list summary
         public IEnumerable<GameListSummaryResponse> GetGameListSummary()
         {
-            var summaries = _gamesDictConcurrent.Select(
+            var summaries = this._gamesDictConcurrent.Select(
                 item => new GameListSummaryResponse(
                     item.Key,
                     item.Value.RoomName,
@@ -35,24 +35,24 @@ namespace property_dealer_API.Application.Services.GameManagement
 
         public void CreateNewGame(string roomId, string roomName, GameConfig config)
         {
-            var gameDetails = _gameDetailsFactory.CreateGameDetails(roomId, roomName, config);
+            var gameDetails = this._gameDetailsFactory.CreateGameDetails(roomId, roomName, config);
             this.AddNewGameToDict(roomId, gameDetails);
         }
 
         // Adding new game to dictionary
         public void AddNewGameToDict(string roomId, GameDetails gameDetails)
         {
-            _gamesDictConcurrent.TryAdd(roomId, gameDetails);
+            this._gamesDictConcurrent.TryAdd(roomId, gameDetails);
         }
 
         public Boolean IsGameIdExisting(string roomId)
         {
-            return _gamesDictConcurrent.TryGetValue(roomId, out GameDetails? _value);
+            return this._gamesDictConcurrent.TryGetValue(roomId, out GameDetails? _value);
         }
 
         public GameDetails GetGameDetails(string roomId)
         {
-            if (_gamesDictConcurrent.TryGetValue(roomId, out GameDetails? gameInstance))
+            if (this._gamesDictConcurrent.TryGetValue(roomId, out GameDetails? gameInstance))
             {
                 return gameInstance;
             }
@@ -64,7 +64,7 @@ namespace property_dealer_API.Application.Services.GameManagement
 
         public void RemoveGame(string roomId)
         {
-            _gamesDictConcurrent.TryRemove(roomId, out GameDetails? _);
+            this._gamesDictConcurrent.TryRemove(roomId, out GameDetails? _);
         }
     }
 }

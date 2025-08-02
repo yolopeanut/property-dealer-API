@@ -17,32 +17,32 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             IActionContextBuilder contextBuilder,
             IDialogResponseProcessor dialogProcessor)
         {
-            _contextBuilder = contextBuilder;
-            _dialogProcessor = dialogProcessor;
+            this._contextBuilder = contextBuilder;
+            this._dialogProcessor = dialogProcessor;
         }
 
         public ActionContext? ExecuteAction(string userId, Card card, Player currentUser, List<Player> allPlayers)
-            => _contextBuilder.BuildActionContext(userId, card, currentUser, allPlayers);
+            => this._contextBuilder.BuildActionContext(userId, card, currentUser, allPlayers);
 
         public void HandleShieldsUpResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandleShieldsUpResponse(player, actionContext);
+            => this._dialogProcessor.HandleShieldsUpResponse(player, actionContext);
 
         public void HandlePayValueResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandlePayValueResponse(player, actionContext);
+            => this._dialogProcessor.HandlePayValueResponse(player, actionContext);
 
         public void HandleWildCardResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandleWildCardResponse(player, actionContext);
+            => this._dialogProcessor.HandleWildCardResponse(player, actionContext);
 
         public void HandlePropertySetSelectionResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandlePropertySetSelectionResponse(player, actionContext);
+            => this._dialogProcessor.HandlePropertySetSelectionResponse(player, actionContext);
 
         public void HandleTableHandSelectorResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandleTableHandSelectorResponse(player, actionContext);
+            => this._dialogProcessor.HandleTableHandSelectorResponse(player, actionContext);
 
         public void HandlePlayerSelectionResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandlePlayerSelectionResponse(player, actionContext);
+            => this._dialogProcessor.HandlePlayerSelectionResponse(player, actionContext);
 
         public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
-            => _dialogProcessor.HandleOwnHandSelectionResponse(player, actionContext);
+            => this._dialogProcessor.HandleOwnHandSelectionResponse(player, actionContext);
     }
 }

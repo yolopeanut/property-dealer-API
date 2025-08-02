@@ -10,7 +10,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public CardPlacementValidationTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
         #region ValidateStandardPropertyCardDestination Tests
@@ -22,7 +22,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var cardColor = PropertyCardColoursEnum.Red;
 
             // Act
-            var result = _gameRuleManager.ValidateStandardPropertyCardDestination(cardColor);
+            var result = this._gameRuleManager.ValidateStandardPropertyCardDestination(cardColor);
 
             // Assert
             Assert.Equal(PropertyCardColoursEnum.Red, result);
@@ -36,7 +36,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateStandardPropertyCardDestination(cardColor));
+                this._gameRuleManager.ValidateStandardPropertyCardDestination(cardColor));
 
             Assert.Contains("color cannot be null. Please select a valid color.", exception.Message);
         }
@@ -52,7 +52,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateStandardSystemCard();
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidatePropertyPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidatePropertyPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -74,7 +74,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidatePropertyPileCardType(card));
+                this._gameRuleManager.ValidatePropertyPileCardType(card));
 
             Assert.Contains("Cannot play a CommandCard card on the property section", exception.Message);
         }
@@ -87,7 +87,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidatePropertyPileCardType(card));
+                this._gameRuleManager.ValidatePropertyPileCardType(card));
 
             Assert.Contains("Cannot play a TributeCard card on the property section", exception.Message);
         }
@@ -100,7 +100,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidatePropertyPileCardType(card));
+                this._gameRuleManager.ValidatePropertyPileCardType(card));
 
             Assert.Contains("Cannot play a SystemWildCard card on the property section", exception.Message);
         }
@@ -113,7 +113,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidatePropertyPileCardType(card));
+                this._gameRuleManager.ValidatePropertyPileCardType(card));
 
             Assert.Contains("Cannot play a MoneyCard card on the property section", exception.Message);
         }
@@ -139,7 +139,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateCommandCard(actionType);
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateCommandPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateCommandPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -150,7 +150,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateTributeCard();
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateCommandPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateCommandPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -161,7 +161,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateSystemWildCard();
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateCommandPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateCommandPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -173,7 +173,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateCommandPileCardType(card));
+                this._gameRuleManager.ValidateCommandPileCardType(card));
 
             Assert.Contains("Cannot play a SystemCard card on the command section", exception.Message);
         }
@@ -186,7 +186,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateCommandPileCardType(card));
+                this._gameRuleManager.ValidateCommandPileCardType(card));
 
             Assert.Contains("Cannot play a MoneyCard card on the command section", exception.Message);
         }
@@ -202,7 +202,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateMoneyCard();
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateMoneyPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateMoneyPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -223,7 +223,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateCommandCard(actionType);
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateMoneyPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateMoneyPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -234,7 +234,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var card = CardTestHelpers.CreateTributeCard();
 
             // Act & Assert
-            var exception = Record.Exception(() => _gameRuleManager.ValidateMoneyPileCardType(card));
+            var exception = Record.Exception(() => this._gameRuleManager.ValidateMoneyPileCardType(card));
             Assert.Null(exception);
         }
 
@@ -246,7 +246,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateMoneyPileCardType(card));
+                this._gameRuleManager.ValidateMoneyPileCardType(card));
 
             Assert.Contains("Cannot play a SystemCard card on the money section", exception.Message);
         }
@@ -259,7 +259,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateMoneyPileCardType(card));
+                this._gameRuleManager.ValidateMoneyPileCardType(card));
 
             Assert.Contains("Cannot play a SystemWildCard card on the money section", exception.Message);
         }

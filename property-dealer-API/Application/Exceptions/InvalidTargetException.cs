@@ -11,15 +11,15 @@ namespace property_dealer_API.Application.Exceptions
         public InvalidTargetException(string actionType, PropertyCardColoursEnum targetColor, string targetPlayerId, string reason)
             : base($"{actionType} cannot target {targetPlayerId}'s {targetColor} property set: {reason}")
         {
-            ActionType = actionType;
-            TargetColor = targetColor;
-            TargetPlayerId = targetPlayerId;
+            this.ActionType = actionType;
+            this.TargetColor = targetColor;
+            this.TargetPlayerId = targetPlayerId;
         }
 
         public InvalidTargetException(string actionType, string reason)
             : base($"{actionType} cannot be used: {reason}")
         {
-            ActionType = actionType;
+            this.ActionType = actionType;
         }
     }
 }

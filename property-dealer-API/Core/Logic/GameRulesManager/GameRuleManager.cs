@@ -191,7 +191,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         public bool IsPropertySetComplete(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color)
         {
-            var propertyGroup = GetPropertyGroup(tableHand, color);
+            var propertyGroup = this.GetPropertyGroup(tableHand, color);
             if (propertyGroup == null) return false;
 
             var maxCards = propertyGroup.groupedPropertyCards.First().MaxCards;
@@ -308,9 +308,9 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         private void ValidatePropertySetCompletion(List<Card> propertySet, PropertyCardColoursEnum targetColor, bool shouldBeComplete, ActionTypes actionType)
         {
-            ValidatePropertySetExists(propertySet, targetColor, actionType);
+            this.ValidatePropertySetExists(propertySet, targetColor, actionType);
 
-            var systemCard = GetPropertySetSystemCard(propertySet, targetColor);
+            var systemCard = this.GetPropertySetSystemCard(propertySet, targetColor);
             var maxCards = systemCard.MaxCards;
             var currentCount = propertySet.Count;
             var isComplete = currentCount >= maxCards;

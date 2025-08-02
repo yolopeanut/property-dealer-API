@@ -1,12 +1,6 @@
-﻿using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
+﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Core.Entities;
-using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
 using property_dealer_API.Core.Logic.GameRulesManager;
-using property_dealer_API.Models.Cards;
-using property_dealer_API.Models.Enums;
-using property_dealer_API.Models.Enums.Cards;
 
 namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 {
@@ -16,7 +10,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public UILogicTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
         #region IdentifyWhoSeesDialog Tests
@@ -31,7 +25,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var playerList = new List<Player> { callerUser, targetUser, otherPlayer };
 
             // Act
-            var result = _gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, DialogTypeEnum.PayValue);
+            var result = this._gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, DialogTypeEnum.PayValue);
 
             // Assert
             Assert.Single(result);
@@ -48,7 +42,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var playerList = new List<Player> { callerUser, targetUser, otherPlayer };
 
             // Act
-            var result = _gameRuleManager.IdentifyWhoSeesDialog(callerUser, null, playerList, DialogTypeEnum.PayValue);
+            var result = this._gameRuleManager.IdentifyWhoSeesDialog(callerUser, null, playerList, DialogTypeEnum.PayValue);
 
             // Assert
             Assert.Equal(2, result.Count);
@@ -70,7 +64,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var playerList = new List<Player> { callerUser, targetUser };
 
             // Act
-            var result = _gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, dialogType);
+            var result = this._gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, dialogType);
 
             // Assert
             Assert.Single(result);
@@ -86,7 +80,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var playerList = new List<Player> { callerUser, targetUser };
 
             // Act
-            var result = _gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, DialogTypeEnum.ShieldsUp);
+            var result = this._gameRuleManager.IdentifyWhoSeesDialog(callerUser, targetUser, playerList, DialogTypeEnum.ShieldsUp);
 
             // Assert
             Assert.Single(result);
@@ -102,7 +96,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.IdentifyWhoSeesDialog(callerUser, null, playerList, DialogTypeEnum.ShieldsUp));
+                this._gameRuleManager.IdentifyWhoSeesDialog(callerUser, null, playerList, DialogTypeEnum.ShieldsUp));
 
             Assert.Contains("Cannot give ShieldsUp dialog if target user is null", exception.Message);
         }

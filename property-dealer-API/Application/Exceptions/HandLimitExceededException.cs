@@ -9,9 +9,9 @@
         public HandLimitExceededException(int currentCardCount, int maxAllowed = 7)
             : base($"Hand limit exceeded. You have {currentCardCount} cards but the limit is {maxAllowed}. Please discard {currentCardCount - maxAllowed} card(s).")
         {
-            CurrentCardCount = currentCardCount;
-            MaxAllowed = maxAllowed;
-            ExcessCards = currentCardCount - maxAllowed;
+            this.CurrentCardCount = currentCardCount;
+            this.MaxAllowed = maxAllowed;
+            this.ExcessCards = currentCardCount - maxAllowed;
         }
     }
 }

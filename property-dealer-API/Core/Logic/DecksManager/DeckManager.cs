@@ -49,7 +49,7 @@ namespace property_dealer_API.Core.Logic.DecksManager
                 }
 
                 Console.WriteLine("RESHUFFLING DECK");
-                ReshuffleIfNeeded();
+                this.ReshuffleIfNeeded();
 
                 if (this._drawPile.TryPop(out Card? afterReshuffle))
                 {
@@ -70,7 +70,7 @@ namespace property_dealer_API.Core.Logic.DecksManager
 
         private void ReshuffleIfNeeded()
         {
-            lock (_reshuffleLock)
+            lock (this._reshuffleLock)
             {
                 // Double-check: Another thread might have already done this while we waited.
                 if (!this._drawPile.IsEmpty || this._discardPile.IsEmpty)
@@ -103,13 +103,13 @@ namespace property_dealer_API.Core.Logic.DecksManager
 
         public Card GetDiscardedCardById(string cardId)
         {
-            lock (_discardPileLock)
+            lock (this._discardPileLock)
             {
                 var allCards = new List<Card>();
                 Card? foundCard = null;
 
                 // Pop all cards
-                while (_discardPile.TryPop(out Card? card))
+                while (this._discardPile.TryPop(out Card? card))
                 {
                     if (card.CardGuid.ToString() == cardId)
                     {
@@ -124,7 +124,7 @@ namespace property_dealer_API.Core.Logic.DecksManager
                 // Put back all cards except the found one
                 if (allCards.Count > 0)
                 {
-                    _discardPile.PushRange(allCards.ToArray());
+                    this._discardPile.PushRange(allCards.ToArray());
                 }
 
                 if (foundCard == null)

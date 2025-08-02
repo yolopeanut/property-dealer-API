@@ -2,11 +2,6 @@
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Models.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 {
@@ -16,7 +11,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public GameStateValidationTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
         #region ValidatePlayerJoining Tests
@@ -34,7 +29,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var maxNumPlayers = "4";
 
             // Act - Execute the method being tested
-            var result = _gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
+            var result = this._gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
 
             // Assert - Verify the result
             Assert.Null(result); // null means validation passed
@@ -49,7 +44,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var maxNumPlayers = "4";
 
             // Act
-            var result = _gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
+            var result = this._gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
 
             // Assert
             Assert.Equal(JoinGameResponseEnum.AlreadyInGame, result);
@@ -70,7 +65,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var maxNumPlayers = "4"; // Adding one more would exceed limit
 
             // Act
-            var result = _gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
+            var result = this._gameRuleManager.ValidatePlayerJoining(gameState, players, maxNumPlayers);
 
             // Assert
             Assert.Equal(JoinGameResponseEnum.GameFull, result);
@@ -94,7 +89,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             }
 
             // Act
-            var result = _gameRuleManager.ValidatePlayerJoining(gameState, players, maxPlayers);
+            var result = this._gameRuleManager.ValidatePlayerJoining(gameState, players, maxPlayers);
 
             // Assert
             Assert.Equal(JoinGameResponseEnum.GameFull, result);

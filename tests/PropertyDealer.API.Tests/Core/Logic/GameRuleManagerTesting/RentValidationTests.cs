@@ -1,11 +1,5 @@
-﻿using property_dealer_API.Application.DTOs.Responses;
-using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
-using property_dealer_API.Core.Entities;
-using property_dealer_API.Core.Entities.Cards.CardRelatedEntities;
-using property_dealer_API.Core.Logic.GameRulesManager;
+﻿using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Models.Cards;
-using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
@@ -16,7 +10,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
         public RentValidationTests()
         {
-            _gameRuleManager = new GameRuleManager();
+            this._gameRuleManager = new GameRuleManager();
         }
 
         #region ValidateRentTarget Tests
@@ -34,7 +28,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                _gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
+                this._gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
             Assert.Null(exception);
         }
 
@@ -51,7 +45,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
+                this._gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
 
             Assert.Contains("Cannot charge rent for Red properties", exception.Message);
             Assert.Contains("doesn't own any Red properties", exception.Message);
@@ -70,7 +64,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                _gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
+                this._gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
             Assert.Null(exception);
         }
 
@@ -83,7 +77,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                _gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
+                this._gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
             Assert.Null(exception);
         }
 
@@ -96,7 +90,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
+                this._gameRuleManager.ValidateRentCardColors(rentCardColor, targetColor));
 
             Assert.Contains("Cannot use Red rent card to charge rent on Cyan properties", exception.Message);
             Assert.Contains("Colors must match", exception.Message);
@@ -120,7 +114,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                _gameRuleManager.ValidateWildcardRentTarget(availableColors, selectedColor));
+                this._gameRuleManager.ValidateWildcardRentTarget(availableColors, selectedColor));
             Assert.Null(exception);
         }
 
@@ -137,7 +131,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                _gameRuleManager.ValidateWildcardRentTarget(availableColors, selectedColor));
+                this._gameRuleManager.ValidateWildcardRentTarget(availableColors, selectedColor));
 
             Assert.Contains("Cannot charge rent for Green properties", exception.Message);
             Assert.Contains("Available colors are: Red, Cyan", exception.Message);

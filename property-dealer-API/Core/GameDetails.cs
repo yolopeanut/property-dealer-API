@@ -4,17 +4,17 @@ using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
+using property_dealer_API.Core.Logic.DialogsManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.GameStateMapper;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
-using property_dealer_API.Core.Logic.TurnManager;
 using property_dealer_API.Core.Logic.TurnExecutionsManager;
+using property_dealer_API.Core.Logic.TurnManager;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums;
 using property_dealer_API.Models.Enums.Cards;
 using System.Diagnostics.CodeAnalysis;
-using property_dealer_API.Core.Logic.DialogsManager;
 
 namespace property_dealer_API.Core
 {
@@ -26,9 +26,9 @@ namespace property_dealer_API.Core
         private readonly IPlayerHandManager _playerHandManager;
 
         // But expose readonly versions publicly
-        public IReadOnlyDeckManager PublicDeckManager => _deckManager;
-        public IReadOnlyPlayerManager PublicPlayerManager => _playerManager;
-        public IReadOnlyPlayerHandManager PublicPlayerHandManager => _playerHandManager;
+        public IReadOnlyDeckManager PublicDeckManager => this._deckManager;
+        public IReadOnlyPlayerManager PublicPlayerManager => this._playerManager;
+        public IReadOnlyPlayerHandManager PublicPlayerHandManager => this._playerHandManager;
 
         private readonly IGameStateMapper _mapper;
         private readonly IGameRuleManager _rulesManager;
@@ -89,12 +89,12 @@ namespace property_dealer_API.Core
 
         public RemovePlayerReturn RemovePlayerByUserId(string userId)
         {
-            var playerName = _playerManager.RemovePlayerFromDictByUserId(userId);   // Removal from player list
+            var playerName = this._playerManager.RemovePlayerFromDictByUserId(userId);   // Removal from player list
 
             // Only can remove player hand if game is started, else will throw error
-            if (GameState == GameStateEnum.GameStarted)
+            if (this.GameState == GameStateEnum.GameStarted)
             {
-                _playerHandManager.RemovePlayerByUserId(userId);                        // Removal from player hand lists
+                this._playerHandManager.RemovePlayerByUserId(userId);                        // Removal from player hand lists
             }
 
             // Successful removal with no players remaining
@@ -122,11 +122,11 @@ namespace property_dealer_API.Core
             return this.Config;
         }
 
-        public ActionContext? PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
+        public TurnResult PlayTurn(string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColoursDestinationEnum)
         {
             // Validating player turn and if they exceed their turn amount
             this._rulesManager.ValidatePlayerCanPlayCard(this.GameState, userId, this._turnManager.GetCurrentUserTurn(), this._turnManager.GetCurrentUserActionCount());
-            var cardInPlayerHand = _playerHandManager.GetCardFromPlayerHandById(userId, cardId);
+            var cardInPlayerHand = this._playerHandManager.GetCardFromPlayerHandById(userId, cardId);
 
             try
             {
@@ -135,10 +135,11 @@ namespace property_dealer_API.Core
                 // Property pile or money pile
                 if (actionContext == null)
                 {
-                    HandleRemoveFromHand(userId, cardId);
-                    CompleteTurn();
+                    this.HandleRemoveFromHand(userId, cardId);
+                    var winningPlayer = this.CompleteTurn();
+                    return new TurnResult(null, winningPlayer);
                 }
-                return actionContext;
+                return new TurnResult(actionContext, null);
             }
             catch (Exception)
             {
@@ -150,7 +151,7 @@ namespace property_dealer_API.Core
             }
         }
 
-        public List<ActionContext>? RegisterActionResponse(string userId, ActionContext actionContext)
+        public TurnResult RegisterActionResponse(string userId, ActionContext actionContext)
         {
             var player = this._playerManager.GetPlayerByUserId(userId);
             Console.WriteLine($"[DEBUG] RegisterActionResponse called by {userId} for CardId: {actionContext.CardId}");
@@ -162,25 +163,37 @@ namespace property_dealer_API.Core
                 Console.WriteLine($"[DEBUG] About to remove original command card {actionContext.CardId} from {actionContext.ActionInitiatingPlayerId}");
                 this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
                 Console.WriteLine($"[DEBUG] Successfully removed original command card");
-                this.CompleteTurn();
-                return null;
+                var winningPlayer = this.CompleteTurn();
+                return new TurnResult(null, winningPlayer);
             }
 
-            return dialogProcessingResult.NewActionContexts;
+            return new TurnResult(dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
         }
+
         public void NextPlayerTurn(string userId)
         {
             // Draw Cards for new user
             this.AssignCardToPlayer(userId, 2);
         }
 
-        private void CompleteTurn()
+        private Player? CompleteTurn()
         {
+            // Check for win condition before moving to next turn
+            var winningPlayer = this.CheckIfAnyPlayersWon();
+            if (winningPlayer != null)
+            {
+                // Game is over, don't proceed with next turn
+                Console.WriteLine($"[GAME] Player {winningPlayer.PlayerName} has won the game!");
+                return winningPlayer;
+            }
+
             var nextUserTurn = this._turnManager.IncrementUserActionCount();
             if (nextUserTurn != null)
             {
                 this.NextPlayerTurn(nextUserTurn);
             }
+
+            return null;
         }
 
         public Player GetCurrentPlayerTurn()

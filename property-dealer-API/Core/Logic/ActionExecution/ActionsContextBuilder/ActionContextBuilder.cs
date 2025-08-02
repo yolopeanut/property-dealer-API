@@ -23,10 +23,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
             IDeckManager deckManager,
             IPlayerHandManager playerHandManager)
         {
-            _pendingActionManager = pendingActionManager;
-            _rulesManager = rulesManager;
-            _deckManager = deckManager;
-            _playerHandManager = playerHandManager;
+            this._pendingActionManager = pendingActionManager;
+            this._rulesManager = rulesManager;
+            this._deckManager = deckManager;
+            this._playerHandManager = playerHandManager;
         }
 
         public ActionContext? BuildActionContext(string userId, Card card, Player currentUser, List<Player> allPlayers)
@@ -103,13 +103,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
 
         private ActionContext CreateActionContext(string userId, string cardId, DialogTypeEnum dialogType, Player currentUser, Player? targetUser, List<Player> allPlayers, PendingAction pendingAction)
         {
-            var dialogTargetList = _rulesManager.IdentifyWhoSeesDialog(currentUser, targetUser, allPlayers, dialogType);
-            var amountToPay = _rulesManager.GetPaymentAmount(pendingAction.ActionType);
+            var dialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(currentUser, targetUser, allPlayers, dialogType);
+            var amountToPay = this._rulesManager.GetPaymentAmount(pendingAction.ActionType);
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(dialogTargetList);
 
             // Set the pending action
-            _pendingActionManager.CurrPendingAction = pendingAction;
-            _pendingActionManager.CanClearPendingAction = false;
+            this._pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CanClearPendingAction = false;
 
             return new ActionContext
             {
@@ -124,8 +124,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
 
         private void AssignCardToPlayer(string userId, int numCardsToDraw)
         {
-            var freshCards = _deckManager.DrawCard(numCardsToDraw);
-            _playerHandManager.AssignPlayerHand(userId, freshCards);
+            var freshCards = this._deckManager.DrawCard(numCardsToDraw);
+            this._playerHandManager.AssignPlayerHand(userId, freshCards);
         }
     }
 }

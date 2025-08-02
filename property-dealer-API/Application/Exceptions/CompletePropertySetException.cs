@@ -9,7 +9,7 @@ namespace property_dealer_API.Application.Exceptions
         public CompletePropertySetException(PropertyCardColoursEnum color)
             : base($"The {color} property set is already complete and protected from this action.")
         {
-            Color = color;
+            this.Color = color;
         }
     }
 }

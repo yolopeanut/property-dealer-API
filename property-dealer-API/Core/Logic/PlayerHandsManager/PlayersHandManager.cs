@@ -17,7 +17,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
         public List<Card> GetPlayerHand(string userId)
         {
-            if (_playerHands.TryGetValue(userId, out List<Card>? hand))
+            if (this._playerHands.TryGetValue(userId, out List<Card>? hand))
             {
                 lock (hand) // Lock while making the copy
                 {
@@ -69,12 +69,12 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
         public void ProcessAllTableHandsSafely(Action<string, IReadOnlyDictionary<PropertyCardColoursEnum, IReadOnlyList<Card>>, IReadOnlyList<Card>> processAction)
         {
-            foreach (var playerTableHand in _playerTableHands)
+            foreach (var playerTableHand in this._playerTableHands)
             {
                 var userId = playerTableHand.Key;
                 var tableHandCards = playerTableHand.Value;
 
-                _playerMoneyHands.TryGetValue(userId, out List<Card>? moneyHandCards);
+                this._playerMoneyHands.TryGetValue(userId, out List<Card>? moneyHandCards);
 
                 // Lock BOTH collections to ensure a consistent snapshot
                 lock (tableHandCards)
@@ -103,7 +103,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 Console.WriteLine($"[DEBUG]   Adding card: {card.CardGuid} (Type: {card.GetType().Name}, Command: {(card is CommandCard cmd ? cmd.Command.ToString() : "N/A")})");
             }
 
-            var hand = _playerHands.GetOrAdd(userId, (key) => new List<Card>());
+            var hand = this._playerHands.GetOrAdd(userId, (key) => new List<Card>());
             lock (hand)
             {
                 hand.AddRange(cards);
@@ -115,9 +115,9 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         // Method used only for adding to player hands and table hands (instantiating on game start)
         public void AddPlayerHand(string userId)
         {
-            _playerHands.TryAdd(userId, new List<Card>());
-            _playerTableHands.TryAdd(userId, new Dictionary<PropertyCardColoursEnum, List<Card>>());
-            _playerMoneyHands.TryAdd(userId, new List<Card>());
+            this._playerHands.TryAdd(userId, new List<Card>());
+            this._playerTableHands.TryAdd(userId, new Dictionary<PropertyCardColoursEnum, List<Card>>());
+            this._playerMoneyHands.TryAdd(userId, new List<Card>());
         }
         public Card RemoveFromPlayerHand(string userId, string cardId)
         {

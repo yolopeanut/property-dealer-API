@@ -10,8 +10,8 @@ namespace property_dealer_API.Application.Exceptions
         public InvalidGameStateException(GameStateEnum currentState, GameStateEnum requiredState, string action)
             : base($"Cannot {action} when game is in {currentState} state. Game must be in {requiredState} state.")
         {
-            CurrentState = currentState;
-            RequiredState = requiredState;
+            this.CurrentState = currentState;
+            this.RequiredState = requiredState;
         }
     }
 }

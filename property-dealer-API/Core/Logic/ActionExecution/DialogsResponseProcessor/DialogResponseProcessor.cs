@@ -143,7 +143,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                         throw new InvalidOperationException("Property set color must be specified for SpaceStation/Starbase");
                     }
 
-                    ValidateAndExecuteBuildingPlacement(actionContext, pendingAction);
+                    this.ValidateAndExecuteBuildingPlacement(actionContext, pendingAction);
                     this._pendingActionManager.CanClearPendingAction = true;
                     break;
 
@@ -178,7 +178,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     var targetPlayerHand = this._playerHandManager.GetPlayerHand(targetPlayer.UserId);
                     if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                     {
-                        BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
+                        this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
                     }
                     else
                     {
@@ -331,7 +331,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
                     if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                     {
-                        BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
+                        this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
                     }
                     else
                     {
@@ -342,7 +342,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 case ActionTypes.PirateRaid:
                     if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                     {
-                        BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
+                        this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
                     }
                     else
                     {

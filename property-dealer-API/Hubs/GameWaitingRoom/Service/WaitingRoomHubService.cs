@@ -20,12 +20,12 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public List<Player> GetAllPlayers(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
         }
 
         public Player GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
@@ -45,14 +45,14 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public GameConfig GetRoomConfig(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).Config;
+            return this._gameManagerService.GetGameDetails(gameRoomId).Config;
         }
 
         public bool DoesRoomExist(string gameRoomId)
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId);
+                this._gameManagerService.GetGameDetails(gameRoomId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -65,7 +65,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+                this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -89,7 +89,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public IEnumerable<GameListSummaryResponse> GetAllExistingRoomIds()
         {
-            return _gameManagerService.GetGameListSummary(); // We'll need to add this to GameManagerService too
+            return this._gameManagerService.GetGameListSummary(); // We'll need to add this to GameManagerService too
         }
 
 

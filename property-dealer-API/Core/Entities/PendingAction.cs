@@ -13,6 +13,6 @@ namespace property_dealer_API.Core.Entities
         public ConcurrentBag<Player> RequiredResponders { get; set; } = new();
         public ConcurrentQueue<(Player player, ActionContext Response)> ResponseQueue { get; set; } = new();
 
-        public bool IsWaitingForResponses => RequiredResponders.Count > ResponseQueue.Count;
+        public bool IsWaitingForResponses => this.RequiredResponders.Count > this.ResponseQueue.Count;
     }
 }

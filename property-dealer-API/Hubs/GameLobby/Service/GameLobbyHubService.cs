@@ -1,7 +1,6 @@
 ﻿
 using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Services.GameManagement;
-using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Factories;
 using property_dealer_API.Models.Enums;
@@ -15,14 +14,14 @@ namespace property_dealer_API.Hubs.GameLobby.Service
 
         public GameLobbyHubService(IGameManagerService gameManagerService, IGameDetailsFactory gameDetailsFactory)
         {
-            _gameManagerService = gameManagerService;
-            _gameDetailsFactory = gameDetailsFactory;
+            this._gameManagerService = gameManagerService;
+            this._gameDetailsFactory = gameDetailsFactory;
         }
 
         // Geting game list summary
         public IEnumerable<GameListSummaryResponse> GetGameListSummary()
         {
-            return _gameManagerService.GetGameListSummary();
+            return this._gameManagerService.GetGameListSummary();
         }
 
         // Creating Room
@@ -30,16 +29,16 @@ namespace property_dealer_API.Hubs.GameLobby.Service
         {
             // Ensure unique id
             var newRoomId = Guid.NewGuid().ToString();
-            while (_gameManagerService.IsGameIdExisting(newRoomId))
+            while (this._gameManagerService.IsGameIdExisting(newRoomId))
             {
                 newRoomId = Guid.NewGuid().ToString();
             }
 
             var newPlayer = new Player { UserId = userId, PlayerName = playerName };
 
-            var newGameDetails = _gameDetailsFactory.CreateGameDetails(newRoomId, roomName, config);
+            var newGameDetails = this._gameDetailsFactory.CreateGameDetails(newRoomId, roomName, config);
             newGameDetails.AddPlayer(newPlayer);
-            _gameManagerService.AddNewGameToDict(newRoomId, newGameDetails);
+            this._gameManagerService.AddNewGameToDict(newRoomId, newGameDetails);
 
             return newRoomId;
         }

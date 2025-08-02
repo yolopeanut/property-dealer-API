@@ -31,11 +31,11 @@ namespace property_dealer_API.Hubs.GamePlay
         public override async Task OnConnectedAsync()
         {
             // 1. Get IDs from the query string
-            var httpContext = Context.GetHttpContext();
+            var httpContext = this.Context.GetHttpContext();
             if (httpContext == null)
             {
                 // Should not happen in normal circumstances
-                Context.Abort();
+                this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
             }
@@ -46,7 +46,7 @@ namespace property_dealer_API.Hubs.GamePlay
             if (string.IsNullOrEmpty(gameRoomId) || string.IsNullOrEmpty(userId))
             {
                 // If no ID is provided, we can't proceed.
-                Context.Abort();
+                this.Context.Abort();
                 return;
             }
 
@@ -60,25 +60,25 @@ namespace property_dealer_API.Hubs.GamePlay
 
             if (!roomExists)
             {
-                await Clients.Caller.ErrorMsg("The game room you are trying to join does not exist.");
-                Context.Abort();
+                await this.Clients.Caller.ErrorMsg("The game room you are trying to join does not exist.");
+                this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
             }
-            if (!_gamePlayService.DoesPlayerExist(userId, gameRoomId))
+            if (!this._gamePlayService.DoesPlayerExist(userId, gameRoomId))
             {
-                await Clients.Caller.ErrorMsg("Your player object does not exist, please retry.");
-                Context.Abort();
+                await this.Clients.Caller.ErrorMsg("Your player object does not exist, please retry.");
+                this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
             }
 
             // 3. Store BOTH IDs in the connection's context for later use
-            Context.Items[GameRoomIdKey] = gameRoomId;
-            Context.Items[UserIdKey] = userId;
+            this.Context.Items[GameRoomIdKey] = gameRoomId;
+            this.Context.Items[UserIdKey] = userId;
 
             // 4. Add connection to the group
-            await Groups.AddToGroupAsync(Context.ConnectionId, gameRoomId);
+            await this.Groups.AddToGroupAsync(this.Context.ConnectionId, gameRoomId);
 
             // 5. Notify the group that a player has joined
             var player = this._gamePlayService.GetPlayerByUserId(gameRoomId, userId);
@@ -89,8 +89,8 @@ namespace property_dealer_API.Hubs.GamePlay
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            Context.Items.TryGetValue(GameRoomIdKey, out var gameRoomIdObj);
-            Context.Items.TryGetValue(UserIdKey, out var userIdObj);
+            this.Context.Items.TryGetValue(GameRoomIdKey, out var gameRoomIdObj);
+            this.Context.Items.TryGetValue(UserIdKey, out var userIdObj);
 
             var gameRoomId = gameRoomIdObj as string;
             var userId = userIdObj as string;
@@ -110,11 +110,11 @@ namespace property_dealer_API.Hubs.GamePlay
         {
             try
             {
-                var playerName = _gamePlayService.RemovePlayerFromGame(gameRoomId, userId);
+                var playerName = this._gamePlayService.RemovePlayerFromGame(gameRoomId, userId);
 
                 if (!string.IsNullOrEmpty(playerName))
                 {
-                    await Clients.Group(gameRoomId).PlayerLeft(playerName);
+                    await this.Clients.Group(gameRoomId).PlayerLeft(playerName);
 
                     // Send the full player list to the whole group
                     await this.GetAllPlayerList(gameRoomId);
@@ -133,7 +133,7 @@ namespace property_dealer_API.Hubs.GamePlay
                 var allPlayers = this._gamePlayService.GetAllPlayers(gameRoomId);
 
                 Console.WriteLine(gameRoomId, allPlayers);
-                await Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
+                await this.Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
             }
             catch (Exception e)
             {
@@ -148,7 +148,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var playerHand = this._gamePlayService.GetPlayerHand(gameRoomId, userId);
-                await Clients.Caller.PlayerHand(playerHand);
+                await this.Clients.Caller.PlayerHand(playerHand);
             }
             catch (Exception e)
             {
@@ -161,7 +161,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var allTableHands = this._gamePlayService.GetAllPlayerTableHands(gameRoomId);
-                await Clients.Group(gameRoomId).AllTableHands(allTableHands);
+                await this.Clients.Group(gameRoomId).AllTableHands(allTableHands);
             }
             catch (Exception e)
             {
@@ -174,7 +174,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var discardedCard = this._gamePlayService.GetMostRecentDiscardedCard(gameRoomId);
-                await Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
+                await this.Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
             }
             catch (Exception e)
             {
@@ -184,21 +184,28 @@ namespace property_dealer_API.Hubs.GamePlay
 
         public async Task PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
-            _logger.LogInformation(
+            this._logger.LogInformation(
                    "--> PlayCard called with params: GameRoomId={GameRoomId}, UserId={UserId}, CardId={CardId}, Destination={Destination}, ColorDestination={ColorDestination}",
                    gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
             //Play user card (send to discard pile, show up on all players screen, remove from user hand, draw card)
             try
             {
-                var actionContext = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+                var result = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
 
-                if (actionContext != null)
+                // Check if someone won
+                if (result.GameEnded)
                 {
-                    await Clients.Group(gameRoomId).OpenCommandDialog(actionContext);
+                    await this.Clients.Group(gameRoomId).PlayerWon(result.WinningPlayer);
+                    return; // Don't continue with normal flow if game ended
+                }
+
+                if (result.ActionContext != null)
+                {
+                    await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
                 }
 
                 bool includeDiscardPile = cardDestination == CardDestinationEnum.CommandPile;
-                await RefreshFullGameState(gameRoomId, includeDiscardPile, userId);
+                await this.RefreshFullGameState(gameRoomId, includeDiscardPile, userId);
             }
             catch (Exception e)
             {
@@ -206,11 +213,12 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
+
         public async Task GetCurrentPlayerTurn(string gameRoomId)
         {
             try
             {
-                await Clients.Group(gameRoomId).CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
+                await this.Clients.Group(gameRoomId).CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
             }
             catch (Exception e)
             {
@@ -222,17 +230,21 @@ namespace property_dealer_API.Hubs.GamePlay
         {
             try
             {
-                var newActionContexts = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
+                var result = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
 
-                await RefreshGameState(gameRoomId, actionContext.ActionInitiatingPlayerId, userId);
+                // Check if someone won
+                if (result.GameEnded)
+                {
+                    await this.Clients.Group(gameRoomId).PlayerWon(result.WinningPlayer);
+                    return; // Don't continue with normal flow if game ended
+                }
+
+                await this.RefreshGameState(gameRoomId, actionContext.ActionInitiatingPlayerId, userId);
 
                 // If there's a new dialog to open, send it to clients
-                if (newActionContexts != null)
+                if (result.ActionContext != null)
                 {
-                    foreach (var newActionContext in newActionContexts)
-                    {
-                        await Clients.Group(gameRoomId).OpenCommandDialog(newActionContext);
-                    }
+                    await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
                 }
             }
             catch (Exception e)
@@ -256,7 +268,7 @@ namespace property_dealer_API.Hubs.GamePlay
         public async Task CheckIfAnyPlayersWon(string gameRoomId)
         {
             var player = this._gamePlayService.CheckIfAnyPlayersWon(gameRoomId);
-            await Clients.Group(gameRoomId).PlayerWon(player);
+            await this.Clients.Group(gameRoomId).PlayerWon(player);
         }
 
         #endregion
@@ -265,7 +277,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
         private async Task ExceptionHandler(Exception e)
         {
-            await Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
+            await this.Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
         }
 
         private async Task RefreshGameState(string gameRoomId, params string[] userIds)
@@ -286,7 +298,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
         private async Task RefreshFullGameState(string gameRoomId, bool includeDiscardPile = false, params string[] userIds)
         {
-            await RefreshGameState(gameRoomId, userIds);
+            await this.RefreshGameState(gameRoomId, userIds);
 
             if (includeDiscardPile)
             {

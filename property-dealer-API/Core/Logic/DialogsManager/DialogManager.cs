@@ -16,8 +16,8 @@ namespace property_dealer_API.Core.Logic.DialogsManager
             IActionExecutionManager actionExecutionManager,
             IPendingActionManager pendingActionManager)
         {
-            _actionExecutionManager = actionExecutionManager;
-            _pendingActionManager = pendingActionManager;
+            this._actionExecutionManager = actionExecutionManager;
+            this._pendingActionManager = pendingActionManager;
         }
 
         public DialogProcessingResult ProcessPendingResponses(ActionContext actionContext)

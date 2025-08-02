@@ -14,14 +14,14 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
 
         public PendingActionManagerTests()
         {
-            _pendingActionManager = new PendingActionManager();
+            this._pendingActionManager = new PendingActionManager();
         }
 
         [Fact]
         public void CurrPendingAction_WhenNull_ThrowsPendingActionNotFoundException()
         {
             // Act & Assert
-            Assert.Throws<PendingActionNotFoundException>(() => _pendingActionManager.CurrPendingAction);
+            Assert.Throws<PendingActionNotFoundException>(() => this._pendingActionManager.CurrPendingAction);
         }
 
         [Fact]
@@ -35,12 +35,12 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
             };
 
             // Act
-            _pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CurrPendingAction = pendingAction;
 
             // Assert
-            Assert.Equal(pendingAction, _pendingActionManager.CurrPendingAction);
-            Assert.Equal("user1", _pendingActionManager.CurrPendingAction.InitiatorUserId);
-            Assert.Equal(ActionTypes.HostileTakeover, _pendingActionManager.CurrPendingAction.ActionType);
+            Assert.Equal(pendingAction, this._pendingActionManager.CurrPendingAction);
+            Assert.Equal("user1", this._pendingActionManager.CurrPendingAction.InitiatorUserId);
+            Assert.Equal(ActionTypes.HostileTakeover, this._pendingActionManager.CurrPendingAction.ActionType);
         }
 
         [Fact]
@@ -58,10 +58,10 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 ActionType = ActionTypes.ForcedTrade
             };
 
-            _pendingActionManager.CurrPendingAction = pendingAction1;
+            this._pendingActionManager.CurrPendingAction = pendingAction1;
 
             // Act & Assert
-            var exception = Assert.Throws<InvalidOperationException>(() => _pendingActionManager.CurrPendingAction = pendingAction2);
+            var exception = Assert.Throws<InvalidOperationException>(() => this._pendingActionManager.CurrPendingAction = pendingAction2);
             Assert.Contains("Cannot set new pending action when current one has not ended", exception.Message);
         }
 
@@ -75,7 +75,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 ActionType = ActionTypes.PirateRaid,
                 RequiredResponders = new ConcurrentBag<Player>() // Empty = not waiting
             };
-            _pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CurrPendingAction = pendingAction;
 
             var player = PlayerTestHelpers.CreatePlayer("user2", "Player2");
             var actionContext = PlayerTestHelpers.CreateActionContext(
@@ -83,11 +83,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 dialogToOpen: DialogTypeEnum.ShieldsUp);
 
             // Act
-            var result = _pendingActionManager.AddResponseToQueue(player, actionContext);
+            var result = this._pendingActionManager.AddResponseToQueue(player, actionContext);
 
             // Assert
             Assert.True(result);
-            Assert.Single(_pendingActionManager.CurrPendingAction.ResponseQueue);
+            Assert.Single(this._pendingActionManager.CurrPendingAction.ResponseQueue);
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 ActionType = ActionTypes.TradeDividend,
                 RequiredResponders = requiredResponders
             };
-            _pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CurrPendingAction = pendingAction;
 
             var player = PlayerTestHelpers.CreatePlayer("user2", "Player2");
             var actionContext = PlayerTestHelpers.CreateActionContext(
@@ -112,11 +112,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 dialogToOpen: DialogTypeEnum.PayValue);
 
             // Act
-            var result = _pendingActionManager.AddResponseToQueue(player, actionContext);
+            var result = this._pendingActionManager.AddResponseToQueue(player, actionContext);
 
             // Assert
             Assert.False(result); // Still waiting for user3
-            Assert.Single(_pendingActionManager.CurrPendingAction.ResponseQueue);
+            Assert.Single(this._pendingActionManager.CurrPendingAction.ResponseQueue);
         }
 
         [Fact]
@@ -129,13 +129,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
                 ActionType = ActionTypes.BountyHunter,
                 CurrentStep = 1
             };
-            _pendingActionManager.CurrPendingAction = pendingAction;
+            this._pendingActionManager.CurrPendingAction = pendingAction;
 
             // Act
-            _pendingActionManager.IncrementCurrentStep();
+            this._pendingActionManager.IncrementCurrentStep();
 
             // Assert
-            Assert.Equal(2, _pendingActionManager.CurrPendingAction.CurrentStep);
+            Assert.Equal(2, this._pendingActionManager.CurrPendingAction.CurrentStep);
         }
     }
 }

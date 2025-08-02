@@ -1,5 +1,4 @@
 ﻿using property_dealer_API.Application.Enums;
-using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Logic.ActionExecution;
 using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DecksManager;
@@ -22,20 +21,20 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
 
         public TurnExecutionManagerTests()
         {
-            _playerHandManager = new PlayersHandManager();
-            _playerManager = new PlayerManager();
+            this._playerHandManager = new PlayersHandManager();
+            this._playerManager = new PlayerManager();
             var rulesManager = new GameRuleManager();
             var pendingActionManager = new PendingActionManager();
             var deckManager = new DeckManager();
             var playerHandManager = new PlayersHandManager();
             var contexbuilder = new ActionContextBuilder(pendingActionManager, rulesManager, deckManager, playerHandManager);
             var actionExecuter = new ActionExecutor(playerHandManager, deckManager, rulesManager);
-            var dialogResponseProcessor = new DialogResponseProcessor(playerHandManager, _playerManager, rulesManager, pendingActionManager, actionExecuter);
+            var dialogResponseProcessor = new DialogResponseProcessor(playerHandManager, this._playerManager, rulesManager, pendingActionManager, actionExecuter);
             var actionExecutionManager = new ActionExecutionManager(
                 contexbuilder, dialogResponseProcessor);
 
-            _turnExecutionManager = new TurnExecutionManager(
-                _playerHandManager, _playerManager, rulesManager, actionExecutionManager);
+            this._turnExecutionManager = new TurnExecutionManager(
+                this._playerHandManager, this._playerManager, rulesManager, actionExecutionManager);
         }
 
         [Fact]
@@ -43,13 +42,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
         {
             // Arrange
             var player = PlayerTestHelpers.CreatePlayer();
-            _playerManager.AddPlayerToDict(player);
-            _playerHandManager.AddPlayerHand(player.UserId);
+            this._playerManager.AddPlayerToDict(player);
+            this._playerHandManager.AddPlayerHand(player.UserId);
 
             var card = CardTestHelpers.CreateMoneyCard(5);
 
             // Act
-            var result = _turnExecutionManager.ExecuteTurnAction(
+            var result = this._turnExecutionManager.ExecuteTurnAction(
                 player.UserId, card, CardDestinationEnum.MoneyPile, null);
 
             // Assert
@@ -61,13 +60,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
         {
             // Arrange
             var player = PlayerTestHelpers.CreatePlayer();
-            _playerManager.AddPlayerToDict(player);
-            _playerHandManager.AddPlayerHand(player.UserId);
+            this._playerManager.AddPlayerToDict(player);
+            this._playerHandManager.AddPlayerHand(player.UserId);
 
             var card = CardTestHelpers.CreateStandardSystemCard(PropertyCardColoursEnum.Red);
 
             // Act
-            var result = _turnExecutionManager.ExecuteTurnAction(
+            var result = this._turnExecutionManager.ExecuteTurnAction(
                 player.UserId, card, CardDestinationEnum.PropertyPile, PropertyCardColoursEnum.Red);
 
             // Assert
@@ -79,13 +78,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
         {
             // Arrange
             var player = PlayerTestHelpers.CreatePlayer();
-            _playerManager.AddPlayerToDict(player);
-            _playerHandManager.AddPlayerHand(player.UserId);
+            this._playerManager.AddPlayerToDict(player);
+            this._playerHandManager.AddPlayerHand(player.UserId);
 
             var card = CardTestHelpers.CreateCommandCard(ActionTypes.ExploreNewSector);
 
             // Act
-            var result = _turnExecutionManager.ExecuteTurnAction(
+            var result = this._turnExecutionManager.ExecuteTurnAction(
                 player.UserId, card, CardDestinationEnum.CommandPile, null);
 
             // Assert
@@ -102,8 +101,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
         {
             // Arrange
             var player = PlayerTestHelpers.CreatePlayer();
-            _playerManager.AddPlayerToDict(player);
-            _playerHandManager.AddPlayerHand(player.UserId);
+            this._playerManager.AddPlayerToDict(player);
+            this._playerHandManager.AddPlayerHand(player.UserId);
 
             Card card = destination switch
             {
@@ -118,7 +117,7 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
                 : (PropertyCardColoursEnum?)null;
 
             // Act & Assert - should not throw
-            var result = _turnExecutionManager.ExecuteTurnAction(
+            var result = this._turnExecutionManager.ExecuteTurnAction(
                 player.UserId, card, destination, colorDestination);
 
             // Command pile might return ActionContext, others return null
@@ -137,13 +136,13 @@ namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
         {
             // Arrange
             var player = PlayerTestHelpers.CreatePlayer();
-            _playerManager.AddPlayerToDict(player);
-            _playerHandManager.AddPlayerHand(player.UserId);
+            this._playerManager.AddPlayerToDict(player);
+            this._playerHandManager.AddPlayerHand(player.UserId);
 
             var card = CardTestHelpers.CreateCommandCard(ActionTypes.TradeEmbargo);
 
             // Act & Assert - should not throw
-            _turnExecutionManager.RecoverFromFailedTurn(player.UserId, card);
+            this._turnExecutionManager.RecoverFromFailedTurn(player.UserId, card);
         }
     }
 }
