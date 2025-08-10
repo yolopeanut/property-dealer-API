@@ -2,6 +2,18 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Factories;
+using property_dealer_API.Core.Logic.ActionExecution;
+using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
+using property_dealer_API.Core.Logic.DebuggingManager;
+using property_dealer_API.Core.Logic.DecksManager;
+using property_dealer_API.Core.Logic.DialogsManager;
+using property_dealer_API.Core.Logic.GameRulesManager;
+using property_dealer_API.Core.Logic.GameStateMapper;
+using property_dealer_API.Core.Logic.PendingActionsManager;
+using property_dealer_API.Core.Logic.PlayerHandsManager;
+using property_dealer_API.Core.Logic.PlayersManager;
+using property_dealer_API.Core.Logic.TurnExecutionsManager;
+using property_dealer_API.Core.Logic.TurnManager;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GameLobby.Service;
 using property_dealer_API.Hubs.GamePlay;
@@ -41,7 +53,21 @@ builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
 builder.Services.AddSingleton<ICardFactoryService, CardFactoryService>();
 builder.Services.AddSingleton<IGameDetailsFactory, GameDetailsFactory>();
 
-// Scoped service which are used for command card processing
+// Scoped manager services for gameplay
+builder.Services.AddScoped<IDeckManager, DeckManager>();
+builder.Services.AddScoped<IPlayerManager, PlayerManager>();
+builder.Services.AddScoped<IPlayerHandManager, PlayersHandManager>();
+builder.Services.AddScoped<IGameStateMapper, GameStateMapper>();
+builder.Services.AddScoped<IGameRuleManager, GameRuleManager>();
+builder.Services.AddScoped<ITurnManager, TurnManager>();
+builder.Services.AddScoped<ITurnExecutionManager, TurnExecutionManager>();
+builder.Services.AddScoped<IPendingActionManager, PendingActionManager>();
+builder.Services.AddScoped<IActionContextBuilder, ActionContextBuilder>();
+builder.Services.AddScoped<IDialogManager, DialogManager>();
+builder.Services.AddScoped<IDialogResponseProcessor, DialogResponseProcessor>();
+builder.Services.AddScoped<IActionExecutor, ActionExecutor>();
+builder.Services.AddScoped<IActionExecutionManager, ActionExecutionManager>();
+builder.Services.AddScoped<IDebugManager, DebugManager>();
 
 builder.Services.AddCors((o) =>
 {

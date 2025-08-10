@@ -16,55 +16,46 @@ namespace property_dealer_API.Core.Factories
 {
     public class GameDetailsFactory : IGameDetailsFactory
     {
+        private readonly IServiceProvider _serviceProvider;
+
+        public GameDetailsFactory(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
         public GameDetails CreateGameDetails(string roomId, string roomName, GameConfig config)
         {
-            // Create all dependencies
-            var deckManager = new DeckManager();
-            var playerManager = new PlayerManager();
-            var playerHandManager = new PlayersHandManager();
-            var gameStateMapper = new GameStateMapper(playerHandManager, playerManager);
-            var rulesManager = new GameRuleManager();
-            var turnManager = new TurnManager(roomId);
-            var pendingActionManager = new PendingActionManager();
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedProvider = scope.ServiceProvider;
+                // Create all dependencies
+                var deckManager = scopedProvider.GetRequiredService<IDeckManager>();
+                var playerManager = scopedProvider.GetRequiredService<IPlayerManager>();
+                var playerHandManager = scopedProvider.GetRequiredService<IPlayerHandManager>();
+                var gameStateMapper = scopedProvider.GetRequiredService<IGameStateMapper>();
+                var rulesManager = scopedProvider.GetRequiredService<IGameRuleManager>();
+                var debugManager = scopedProvider.GetRequiredService<IDebugManager>();
+                var turnExecutionManager = scopedProvider.GetRequiredService<ITurnExecutionManager>();
+                var dialogManager = scopedProvider.GetRequiredService<IDialogManager>();
 
-            var actionContextBuilder = new ActionContextBuilder(pendingActionManager, rulesManager, deckManager, playerHandManager);
-            var actionExecutor = new ActionExecutor(playerHandManager, deckManager, rulesManager);
-            var dialogProcessor = new DialogResponseProcessor(playerHandManager, playerManager, rulesManager, pendingActionManager, actionExecutor);
+                // Regular dependency injection for turn manager since it uses room id
+                var turnManager = new TurnManager(roomId);
 
-            var actionExecutionManager = new ActionExecutionManager(actionContextBuilder, dialogProcessor);
-
-            var debugManager = new DebugManager(
-                playerHandManager,
-                playerManager,
-                rulesManager,
-                pendingActionManager,
-                deckManager);
-
-            var turnExecutionManager = new TurnExecutionManager(
-                playerHandManager,
-                playerManager,
-                rulesManager,
-                actionExecutionManager);
-
-            var dialogManager = new DialogManager(
-                actionExecutionManager,
-                pendingActionManager);
-
-
-            return new GameDetails(
-                roomId,
-                roomName,
-                config,
-                deckManager,
-                playerManager,
-                playerHandManager,
-                gameStateMapper,
-                rulesManager,
-                turnManager,
-                debugManager,
-                turnExecutionManager,
-                dialogManager
-                );
+                return new GameDetails(
+                    roomId,
+                    roomName,
+                    config,
+                    deckManager,
+                    playerManager,
+                    playerHandManager,
+                    gameStateMapper,
+                    rulesManager,
+                    turnManager,
+                    debugManager,
+                    turnExecutionManager,
+                    dialogManager
+                    );
+            }
         }
     }
 }
