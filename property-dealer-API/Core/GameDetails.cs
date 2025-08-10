@@ -213,9 +213,9 @@ namespace property_dealer_API.Core
             return this._playerHandManager.GetCardFromPlayerHandById(userId, cardId).ToDto();
         }
 
-        public CardDto GetMostRecentDiscardedCard()
+        public CardDto? GetMostRecentDiscardedCard()
         {
-            return this._deckManager.GetMostRecentDiscardedCard().ToDto();
+            return this._deckManager.GetMostRecentDiscardedCard()?.ToDto();
         }
 
         public void ExecuteDebugCommand(string userId, DebugOptionsEnum debugOption)

@@ -99,7 +99,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
             return card;
         }
-        public CardDto GetMostRecentDiscardedCard(string gameRoomId)
+        public CardDto? GetMostRecentDiscardedCard(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             var card = gameInstance.GetMostRecentDiscardedCard();

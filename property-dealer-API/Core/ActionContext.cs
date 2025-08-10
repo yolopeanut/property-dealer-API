@@ -4,7 +4,6 @@ using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Core
 {
-    // Not in use yet, might need to use when command responses are implmented.
     public class ActionContext
     {
         // Variables the initiator sets

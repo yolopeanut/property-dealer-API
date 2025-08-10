@@ -91,14 +91,13 @@ namespace property_dealer_API.Core.Logic.DecksManager
             }
         }
 
-        public Card GetMostRecentDiscardedCard()
+        public Card? GetMostRecentDiscardedCard()
         {
             if (this._discardPile.TryPeek(out Card? card))
             {
                 return card;
             }
-
-            throw new CardNotFoundException("Cannot retrieve most recent discarded card, there are no cards in the discard pile");
+            return null;
         }
 
         public Card GetDiscardedCardById(string cardId)

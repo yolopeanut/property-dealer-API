@@ -18,7 +18,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         TurnResult PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum);
         string RemovePlayerFromGame(string gameRoomId, string userId);
         CardDto GetCardByIdFromPlayerHand(string gameRoomId, string userId, string cardId);
-        CardDto GetMostRecentDiscardedCard(string gameRoomId);
+        CardDto? GetMostRecentDiscardedCard(string gameRoomId);
         Player GetCurrentPlayerTurn(string gameRoomId);
         TurnResult SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
         void SendDebugCommand(string gameRoomId, string userId, DebugOptionsEnum debugOption);

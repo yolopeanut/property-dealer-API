@@ -198,6 +198,15 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return propertyGroup.groupedPropertyCards.Count >= maxCards;
         }
 
+        public bool IsCardSystemWildCard(Card targetCard)
+        {
+            if (targetCard is SystemWildCard)
+            {
+                return true;
+            }
+            return false;
+        }
+
         #endregion
 
         #region Calculations

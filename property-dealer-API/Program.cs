@@ -41,6 +41,8 @@ builder.Services.AddSingleton<IGameManagerService, GameManagerService>();
 builder.Services.AddSingleton<ICardFactoryService, CardFactoryService>();
 builder.Services.AddSingleton<IGameDetailsFactory, GameDetailsFactory>();
 
+// Scoped service which are used for command card processing
+
 builder.Services.AddCors((o) =>
 {
     o.AddPolicy("property-dealer-policy",

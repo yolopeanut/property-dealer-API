@@ -23,7 +23,7 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
             {
                 if (this._currPendingAction != null)
                 {
-                    throw new InvalidOperationException("Cannot set new pending action when current one has not ended");
+                    //throw new InvalidOperationException("Cannot set new pending action when current one has not ended");
                 }
 
                 this._currPendingAction = value;

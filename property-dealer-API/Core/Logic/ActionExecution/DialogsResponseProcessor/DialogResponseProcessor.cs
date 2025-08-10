@@ -229,15 +229,83 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
         public void HandleWildCardResponse(Player player, ActionContext context)
         {
+            var pendingAction = this._pendingActionManager.CurrPendingAction;
             var targetSetColor = context.TargetSetColor;
 
             if (!targetSetColor.HasValue)
             {
-                throw new InvalidOperationException("Wildcard operation tried accessing target color with it being null!");
+                throw new InvalidOperationException("A color must be selected when placing a wildcard!");
             }
 
-            var foundCard = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, context.CardId);
-            this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, foundCard, targetSetColor.Value);
+            switch (pendingAction.ActionType)
+            {
+                case ActionTypes.PirateRaid:
+                    // The initiator is stealing a wildcard and has just chosen its new color.
+                    if (context.TargetPlayerId == null || context.TargetCardId == null)
+                    {
+                        throw new ActionContextParameterNullException(context, "Missing target info for Pirate Raid on wildcard.");
+                    }
+
+                    // Manually execute the raid because a wildcard is involved.
+                    Card stolenWildcard = this._playerHandManager.GetCardFromPlayerHandById(context.TargetPlayerId, context.TargetCardId);
+                    this._playerHandManager.RemoveCardFromPlayerTableHand(context.TargetPlayerId, context.TargetCardId);
+                    this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, stolenWildcard, targetSetColor.Value);
+                    break;
+
+                case ActionTypes.ForcedTrade:
+                    // The player who responded to the dialog determines which card was the wildcard.
+                    if (player.UserId == context.ActionInitiatingPlayerId)
+                    {
+                        // The INITIATOR chose a color, meaning they are STEALING a wildcard.
+                        if (context.TargetPlayerId == null || context.TargetCardId == null || context.OwnTargetCardId == null || !context.OwnTargetCardId.Any())
+                        {
+                            throw new ActionContextParameterNullException(context, "Missing context for Forced Trade (stealing wildcard).");
+                        }
+
+                        string ownCardIdToGive = context.OwnTargetCardId.First();
+
+                        // Get cards and their original locations
+                        Card cardToGive = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, ownCardIdToGive);
+                        Card stolenCard = this._playerHandManager.GetCardFromPlayerHandById(context.TargetPlayerId, context.TargetCardId);
+                        var (_, ownCardOriginalGroup) = this._playerHandManager.FindCardInWhichHand(context.ActionInitiatingPlayerId, ownCardIdToGive);
+                        if (!ownCardOriginalGroup.HasValue) throw new InvalidOperationException("Could not find property group for card being given in trade.");
+
+                        // Perform the swap
+                        this._playerHandManager.RemoveCardFromPlayerTableHand(context.ActionInitiatingPlayerId, ownCardIdToGive);
+                        this._playerHandManager.RemoveCardFromPlayerTableHand(context.TargetPlayerId, context.TargetCardId);
+                        this._playerHandManager.AddCardToPlayerTableHand(context.TargetPlayerId, cardToGive, ownCardOriginalGroup.Value);
+                        this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, stolenCard, targetSetColor.Value);
+                    }
+                    else // player.UserId == context.TargetPlayerId
+                    {
+                        // The TARGET chose a color, meaning they are RECEIVING a wildcard.
+                        if (context.TargetPlayerId == null || context.TargetCardId == null || context.OwnTargetCardId == null || !context.OwnTargetCardId.Any())
+                        {
+                            throw new ActionContextParameterNullException(context, "Missing context for Forced Trade (receiving wildcard).");
+                        }
+
+                        string ownWildcardIdToGive = context.OwnTargetCardId.First();
+
+                        // Get cards and their original locations
+                        Card cardToBeStolen = this._playerHandManager.GetCardFromPlayerHandById(context.TargetPlayerId, context.TargetCardId);
+                        Card wildcardToGive = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, ownWildcardIdToGive);
+                        var (_, cardToBeStolenOriginalGroup) = this._playerHandManager.FindCardInWhichHand(context.TargetPlayerId, context.TargetCardId);
+                        if (!cardToBeStolenOriginalGroup.HasValue) throw new InvalidOperationException("Could not find property group for card being stolen in trade.");
+
+                        // Perform the swap
+                        this._playerHandManager.RemoveCardFromPlayerTableHand(context.ActionInitiatingPlayerId, ownWildcardIdToGive);
+                        this._playerHandManager.RemoveCardFromPlayerTableHand(context.TargetPlayerId, context.TargetCardId);
+                        this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, cardToBeStolen, cardToBeStolenOriginalGroup.Value);
+                        this._playerHandManager.AddCardToPlayerTableHand(context.TargetPlayerId, wildcardToGive, targetSetColor.Value);
+                    }
+                    break;
+
+                default:
+                    // This handles playing a wildcard from your own hand (e.g., a System Wild Card).
+                    Card foundCard = this._playerHandManager.GetCardFromPlayerHandById(context.ActionInitiatingPlayerId, context.CardId);
+                    this._playerHandManager.AddCardToPlayerTableHand(context.ActionInitiatingPlayerId, foundCard, targetSetColor.Value);
+                    break;
+            }
 
             this._pendingActionManager.CanClearPendingAction = true;
         }
@@ -276,6 +344,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
             this._pendingActionManager.CanClearPendingAction = true;
         }
+
         public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
         {
             var pendingAction = this._pendingActionManager.CurrPendingAction;
@@ -306,53 +375,18 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             var targetPlayerHand = this._playerHandManager.GetPlayerHand(targetPlayer.UserId);
             var (targetCard, _) = this._playerHandManager.GetCardInTableHand(targetPlayer.UserId, actionContext.TargetCardId);
 
-            if (targetCard is StandardSystemCard systemCard)
-            {
-                var targetPlayerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(targetPlayer.UserId, systemCard.CardColoursEnum);
+            // Validates rules specific to the action type.
+            this.TableHand_ValidateActionPrerequisites(pendingAction, targetPlayer, targetCard);
 
-                switch (pendingAction.ActionType)
-                {
-                    case ActionTypes.ForcedTrade:
-                        this._rulesManager.ValidateForcedTradeTarget(targetPlayerTableHand, systemCard.CardColoursEnum);
-                        break;
-                    case ActionTypes.PirateRaid:
-                        this._rulesManager.ValidatePirateRaidTarget(targetPlayerTableHand, systemCard.CardColoursEnum);
-                        break;
-                }
+            // Checks for and handles blocking/special conditions. Returns true if the action was handled.
+            bool wasHandled = this.TableHand_TryHandleSpecialConditions(actionContext, player, targetPlayer, allPlayers, pendingAction, targetCard, targetPlayerHand);
+            if (wasHandled)
+            {
+                return;
             }
 
-            switch (pendingAction.ActionType)
-            {
-                case ActionTypes.ForcedTrade:
-                    if (actionContext.OwnTargetCardId == null)
-                    {
-                        throw new ActionContextParameterNullException(actionContext, "OwnTargetCardId was found null in forced trade!");
-                    }
-
-                    if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                    {
-                        this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
-                    }
-                    else
-                    {
-                        this._actionExecutor.ExecuteForcedTrade(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId, actionContext.OwnTargetCardId.First());
-                    }
-                    break;
-
-                case ActionTypes.PirateRaid:
-                    if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                    {
-                        this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
-                    }
-                    else
-                    {
-                        this._actionExecutor.ExecutePirateRaid(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetCardId);
-                    }
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Unsupported action type: {pendingAction.ActionType}");
-            }
+            // Executes the standard action if no special conditions were met.
+            this.TableHand_ExecuteNormalAction(actionContext, targetPlayer, pendingAction);
         }
 
         private void ValidateAndExecuteBuildingPlacement(ActionContext actionContext, PendingAction pendingAction)
@@ -379,6 +413,104 @@ namespace property_dealer_API.Core.Logic.ActionExecution
 
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
             this._pendingActionManager.IncrementCurrentStep();
+        }
+
+        private void BuildWildCardMovementContext(ActionContext actionContext, Player player, List<Player> allPlayers, PendingAction pendingAction)
+        {
+            actionContext.DialogToOpen = DialogTypeEnum.WildcardColor;
+            actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.WildcardColor);
+
+            pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
+            this._pendingActionManager.IncrementCurrentStep();
+        }
+
+        private void TableHand_ValidateActionPrerequisites(PendingAction pendingAction, Player targetPlayer, Card targetCard)
+        {
+            if (targetCard is StandardSystemCard systemCard)
+            {
+                var targetPlayerTableHand = this._playerHandManager.GetPropertyGroupInPlayerTableHand(targetPlayer.UserId, systemCard.CardColoursEnum);
+
+                switch (pendingAction.ActionType)
+                {
+                    case ActionTypes.ForcedTrade:
+                        this._rulesManager.ValidateForcedTradeTarget(targetPlayerTableHand, systemCard.CardColoursEnum);
+                        break;
+                    case ActionTypes.PirateRaid:
+                        this._rulesManager.ValidatePirateRaidTarget(targetPlayerTableHand, systemCard.CardColoursEnum);
+                        break;
+                }
+            }
+        }
+
+        private bool TableHand_TryHandleSpecialConditions(ActionContext actionContext, Player player, Player targetPlayer, List<Player> allPlayers, PendingAction pendingAction, Card targetCard, List<Card> targetPlayerHand)
+        {
+            if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+            {
+                this.BuildShieldsUpContext(actionContext, player, targetPlayer, allPlayers, pendingAction);
+                return true;
+            }
+
+            if (this._rulesManager.IsCardSystemWildCard(targetCard))
+            {
+                // If the target card is the wild card, the current player benefits.
+                this.BuildWildCardMovementContext(actionContext, player, allPlayers, pendingAction);
+                return true;
+            }
+
+            // This check is specific to ForcedTrade
+            if (pendingAction.ActionType == ActionTypes.ForcedTrade)
+            {
+                if (actionContext.OwnTargetCardId == null)
+                {
+                    throw new ActionContextParameterNullException(actionContext, "OwnTargetCardId null when handling forced trade!");
+                }
+
+                var (ownTargetCard, _) = this._playerHandManager.GetCardInTableHand(actionContext.ActionInitiatingPlayerId, actionContext.OwnTargetCardId.First());
+                if (this._rulesManager.IsCardSystemWildCard(ownTargetCard))
+                {
+                    // If the card we want to trade is the wild card, the target player benefits.
+                    this.BuildWildCardMovementContext(actionContext, targetPlayer, allPlayers, pendingAction);
+                    return true;
+                }
+            }
+
+            return false; // No special conditions were met
+        }
+
+        private void TableHand_ExecuteNormalAction(ActionContext actionContext, Player targetPlayer, PendingAction pendingAction)
+        {
+            if (actionContext.TargetCardId == null)
+            {
+                throw new ActionContextParameterNullException(actionContext, "OwnTargetCardId null when handling forced trade!");
+            }
+
+            switch (pendingAction.ActionType)
+            {
+                case ActionTypes.ForcedTrade:
+                    if (actionContext.OwnTargetCardId == null)
+                    {
+                        throw new ActionContextParameterNullException(actionContext, "OwnTargetCardId null when handling forced trade!");
+                    }
+
+                    this._actionExecutor.ExecuteForcedTrade(
+                        actionContext.ActionInitiatingPlayerId,
+                        targetPlayer.UserId,
+                        actionContext.TargetCardId,
+                        actionContext.OwnTargetCardId.First()
+                    );
+                    break;
+
+                case ActionTypes.PirateRaid:
+                    this._actionExecutor.ExecutePirateRaid(
+                        actionContext.ActionInitiatingPlayerId,
+                        targetPlayer.UserId,
+                        actionContext.TargetCardId
+                    );
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"Unsupported action type: {pendingAction.ActionType}");
+            }
         }
     }
 }

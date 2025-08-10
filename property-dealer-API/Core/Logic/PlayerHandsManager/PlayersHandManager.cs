@@ -207,6 +207,9 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 throw new HandNotFoundException(userId);
             }
 
+            Card? cardToRemove = null;
+            PropertyCardColoursEnum? groupKeyToRemove = null;
+
             lock (propertyGroupDict)
             {
                 foreach (var propertyGroup in propertyGroupDict)
@@ -215,20 +218,37 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
                     lock (cardList)
                     {
-                        var cardToRemove = cardList.Find(card => card.CardGuid.ToString() == cardId);
-                        if (cardToRemove != null)
+                        var foundCard = cardList.Find(card => card.CardGuid.ToString() == cardId);
+                        if (foundCard != null)
                         {
-                            cardList.Remove(cardToRemove);
+                            cardToRemove = foundCard;
 
-                            if (cardList.Count <= 0)
+                            // Remove the card from the list
+                            cardList.Remove(foundCard);
+
+                            // If the list is now empty, MARK the group for removal later
+                            if (cardList.Count == 0)
                             {
-                                propertyGroupDict.Remove(propertyGroup.Key);
+                                groupKeyToRemove = propertyGroup.Key;
                             }
-
-                            return cardToRemove;
+                            break;
                         }
                     }
                 }
+
+                if (groupKeyToRemove.HasValue)
+                {
+                    propertyGroupDict.Remove(groupKeyToRemove.Value);
+                }
+
+            }
+
+            if (cardToRemove != null)
+            {
+                return cardToRemove;
+            }
+            else
+            {
                 throw new CardNotFoundException(cardId, userId);
             }
         }

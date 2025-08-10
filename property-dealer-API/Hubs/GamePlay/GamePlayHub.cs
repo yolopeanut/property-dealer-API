@@ -174,7 +174,10 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var discardedCard = this._gamePlayService.GetMostRecentDiscardedCard(gameRoomId);
-                await this.Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
+                if (discardedCard!= null)
+                {
+                    await this.Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
+                }
             }
             catch (Exception e)
             {

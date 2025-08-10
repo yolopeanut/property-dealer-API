@@ -66,7 +66,7 @@ namespace property_dealer_API.Core.Logic.DialogsManager
                     case DialogTypeEnum.TableHandSelector:
                         this._actionExecutionManager.HandleTableHandSelectorResponse(player, newActionContext);
                         newActionContexts.Add(newActionContext);
-                        // prompt shields up next dialog
+                        // prompt shields up next dialog or wildcard
                         break;
                     #endregion
 
@@ -75,7 +75,7 @@ namespace property_dealer_API.Core.Logic.DialogsManager
                         this._actionExecutionManager.HandlePlayerSelectionResponse(player, newActionContext);
                         newActionContexts.Add(newActionContext);
                         break;
-                    case DialogTypeEnum.OwnHandSelection: // Add this case
+                    case DialogTypeEnum.OwnHandSelection:
                         this._actionExecutionManager.HandleOwnHandSelectionResponse(player, newActionContext);
                         newActionContexts.Add(newActionContext);
                         break;

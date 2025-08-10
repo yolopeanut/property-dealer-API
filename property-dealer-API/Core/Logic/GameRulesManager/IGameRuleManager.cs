@@ -36,6 +36,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         bool IsPlayerHandEmpty(List<Card> cards);
         bool CheckIfPlayerWon(List<PropertyCardGroup> tableHand);
         bool IsPropertySetComplete(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color);
+        bool IsCardSystemWildCard(Card targetCard);
 
         // ===== CALCULATIONS =====
         int CalculateRentAmount(PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards);
