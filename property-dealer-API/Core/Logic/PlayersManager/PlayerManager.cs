@@ -8,7 +8,7 @@ namespace property_dealer_API.Core.Logic.PlayersManager
     /// <summary>
     /// Manages the state for a game with a small number of players.
     /// </summary>
-    public class PlayerManager : IReadOnlyPlayerManager
+    public class PlayerManager : IPlayerManager
     {
         private ConcurrentDictionary<string, Player> Players { get; } = new ConcurrentDictionary<string, Player>();
 
@@ -19,17 +19,17 @@ namespace property_dealer_API.Core.Logic.PlayersManager
         // Interface methods (read-only)
         public int CountPlayers()
         {
-            return Players.Count;
+            return this.Players.Count;
         }
 
         public List<Player> GetAllPlayers()
         {
-            return Players.Values.ToList();
+            return this.Players.Values.ToList();
         }
 
         public Player GetPlayerByUserId(string userId)
         {
-            var player = Players.Values.FirstOrDefault(player => player.UserId == userId);
+            var player = this.Players.Values.FirstOrDefault(player => player.UserId == userId);
 
             if (player != null)
             {
@@ -43,7 +43,7 @@ namespace property_dealer_API.Core.Logic.PlayersManager
 
         public JoinGameResponseEnum AddPlayerToDict(Player player)
         {
-            if (Players.TryAdd(player.UserId, player))
+            if (this.Players.TryAdd(player.UserId, player))
             {
                 return JoinGameResponseEnum.JoinedSuccess;
             }
@@ -56,7 +56,7 @@ namespace property_dealer_API.Core.Logic.PlayersManager
 
         public string RemovePlayerFromDictByUserId(string userId)
         {
-            if (Players.TryRemove(userId, out Player? player))
+            if (this.Players.TryRemove(userId, out Player? player))
             {
                 return player.PlayerName;
             }

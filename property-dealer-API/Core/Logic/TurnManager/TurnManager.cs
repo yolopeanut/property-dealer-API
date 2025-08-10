@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.TurnManager
 {
-    public class TurnManager
+    public class TurnManager : ITurnManager
     {
         private ConcurrentQueue<string> _turnKeeper = new();
         private int CurrUserActionCount = 0;
@@ -55,7 +55,7 @@ namespace property_dealer_API.Core.Logic.TurnManager
 
                 if (listTurnKeeper.Remove(userId))
                 {
-                    _turnKeeper = new ConcurrentQueue<string>(listTurnKeeper);
+                    this._turnKeeper = new ConcurrentQueue<string>(listTurnKeeper);
                 }
             }
         }

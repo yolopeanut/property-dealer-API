@@ -3,7 +3,7 @@ using property_dealer_API.Core.Entities;
 
 namespace property_dealer_API.Core.Logic.PendingActionsManager
 {
-    public class PendingActionManager
+    public class PendingActionManager : IPendingActionManager
     {
         private PendingAction? _currPendingAction { get; set; }
         public Boolean CanClearPendingAction { get; set; }
@@ -17,14 +17,14 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
                     throw new PendingActionNotFoundException(null);
                 }
 
-                return _currPendingAction;
+                return this._currPendingAction;
             }
             set
             {
-                //if (this._currPendingAction != null)
-                //{
-                //    throw new InvalidOperationException("Cannot set new pending action when current one has not ended");
-                //}
+                if (this._currPendingAction != null)
+                {
+                    //throw new InvalidOperationException("Cannot set new pending action when current one has not ended");
+                }
 
                 this._currPendingAction = value;
             }

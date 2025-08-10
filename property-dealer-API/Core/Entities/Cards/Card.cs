@@ -20,7 +20,7 @@ namespace property_dealer_API.Models.Cards
             this.Description = description;
         }
 
-        public override string ToString() => $"{Name} (Bank Value: {BankValue}M Credits)";
+        public override string ToString() => $"{this.Name} (Bank Value: {this.BankValue}M Credits)";
 
         public virtual CardDto ToDto()
         {

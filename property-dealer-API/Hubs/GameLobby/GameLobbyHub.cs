@@ -2,6 +2,7 @@
 using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Hubs.GameLobby.Service;
 using property_dealer_API.Models.Enums;
 
 namespace property_dealer_API.Hubs.GameLobby
@@ -20,7 +21,7 @@ namespace property_dealer_API.Hubs.GameLobby
         {
             var summaries = this._gameLobbyHubService.GetGameListSummary();
 
-            await Clients.Caller.GetAllLobbySummary(summaries);
+            await this.Clients.Caller.GetAllLobbySummary(summaries);
         }
 
         public async Task CreateGameRoom(string userId, string playerName, string roomName, GameConfig createGameConfig)
@@ -36,7 +37,7 @@ namespace property_dealer_API.Hubs.GameLobby
                 Console.WriteLine($"User ID: '{userId}'");
                 Console.WriteLine($"Player Name: '{playerName}'");
 
-                await Clients.Caller.CreateGameRoomId(roomIdCreated);
+                await this.Clients.Caller.CreateGameRoomId(roomIdCreated);
 
                 Console.WriteLine("CreateRoom completed");
 
@@ -44,7 +45,7 @@ namespace property_dealer_API.Hubs.GameLobby
                 Console.WriteLine("About to get summaries");
                 var summaries = this._gameLobbyHubService.GetGameListSummary();
                 Console.WriteLine($"Got {summaries.Count()} summaries");
-                await Clients.All.GetAllLobbySummary(summaries);
+                await this.Clients.All.GetAllLobbySummary(summaries);
 
                 Console.WriteLine("Broadcast completed");
             }
@@ -64,15 +65,15 @@ namespace property_dealer_API.Hubs.GameLobby
             {
                 // Joining room
                 var response = this._gameLobbyHubService.JoinRoom(gameRoomId, userId, playerName);
-                await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
+                await this.Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
 
                 // Broadcasting to all lobby status
                 var summaries = this._gameLobbyHubService.GetGameListSummary();
-                await Clients.All.GetAllLobbySummary(summaries);
+                await this.Clients.All.GetAllLobbySummary(summaries);
             }
             catch (GameNotFoundException)
             {
-                await Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(JoinGameResponseEnum.FailedToJoin, gameRoomId));
+                await this.Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(JoinGameResponseEnum.FailedToJoin, gameRoomId));
             }
         }
 

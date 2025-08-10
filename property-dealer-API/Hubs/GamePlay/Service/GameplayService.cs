@@ -2,6 +2,7 @@
 using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core;
@@ -22,7 +23,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+                this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -39,7 +40,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         {
             try
             {
-                _gameManagerService.GetGameDetails(gameRoomId);
+                this._gameManagerService.GetGameDetails(gameRoomId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -50,12 +51,12 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
         public List<Player> GetAllPlayers(string gameRoomId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
         }
 
         public Player GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return _gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
@@ -85,7 +86,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return this._gameManagerService.GetGameDetails(gameRoomId).GetAllPlayerHands();
         }
 
-        public ActionContext? PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
+        public TurnResult PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             return gameInstance.PlayTurn(userId, cardId, cardDestination, cardColorDestinationEnum);
@@ -98,7 +99,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
             return card;
         }
-        public CardDto GetMostRecentDiscardedCard(string gameRoomId)
+        public CardDto? GetMostRecentDiscardedCard(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             var card = gameInstance.GetMostRecentDiscardedCard();
@@ -112,7 +113,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return gameInstance.GetCurrentPlayerTurn();
         }
 
-        public List<ActionContext>? SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
+        public TurnResult SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
@@ -125,6 +126,12 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
             gameInstance.ExecuteDebugCommand(userId, debugOption);
+        }
+
+        public Player? CheckIfAnyPlayersWon(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            return gameInstance.CheckIfAnyPlayersWon();
         }
     }
 }

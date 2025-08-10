@@ -5,6 +5,7 @@
         WaitingRoom,
         GameStarted,
         GamePaused,
-        TimeOut
+        TimeOut,
+        GameOver
     }
 }

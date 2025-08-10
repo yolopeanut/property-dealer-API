@@ -18,5 +18,6 @@ namespace property_dealer_API.Hubs.GamePlay
         Task LatestDiscardPileCard(CardDto discardedCard);
         Task OpenCommandDialog(ActionContext actionContext);
         Task CurrentPlayerTurn(Player player);
+        Task PlayerWon(Player? player);
     }
 }
