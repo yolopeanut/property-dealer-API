@@ -9,6 +9,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         void ExecuteForcedTrade(string initiatorUserId, string targetUserId, string targetCardId, string ownCardId);
         void ExecutePirateRaid(string initiatorUserId, string targetUserId, string targetCardId);
         Card HandleRemoveFromHand(string userId, string cardId);
-        void AssignCardToPlayer(string userId, int numCardsToDraw);
+        void ExecuteDrawCards(string userId, int numCardsToDraw);
+        void ExecutePayment(string receivingPlayerId, string payingPlayerId, List<string> targetsChosenCards);
+        void ExecutePlayToTable(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor);
+        void ExecuteBuildOnSet(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor);
     }
 }

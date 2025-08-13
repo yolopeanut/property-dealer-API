@@ -6,7 +6,17 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
     public class PendingActionManager : IPendingActionManager
     {
         private PendingAction? _currPendingAction { get; set; }
-        public Boolean CanClearPendingAction { get; set; }
+        public Boolean CanClearPendingAction
+        {
+            get
+            {
+                if (this.CurrPendingAction.NumProcessedResponses >= this.CurrPendingAction.RequiredResponders.Count)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
 
         public PendingAction CurrPendingAction
         {
@@ -33,7 +43,6 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
         public void ClearPendingAction()
         {
             this._currPendingAction = null;
-            this.CanClearPendingAction = false;
         }
 
         public Boolean AddResponseToQueue(Player player, ActionContext actionContext)
@@ -50,9 +59,9 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
             }
         }
 
-        public void IncrementCurrentStep()
+        public void IncrementProcessedActions()
         {
-            this.CurrPendingAction.CurrentStep += 1;
+            this.CurrPendingAction.NumProcessedResponses += 1;
         }
     }
 }

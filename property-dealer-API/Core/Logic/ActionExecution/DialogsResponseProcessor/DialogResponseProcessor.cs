@@ -75,7 +75,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 }
             }
 
-            this._pendingActionManager.CanClearPendingAction = true;
+            // this._pendingActionManager.CanClearPendingAction = true;
         }
 
         public void HandlePlayerSelectionResponse(Player player, ActionContext actionContext)
@@ -120,7 +120,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     throw new InvalidOperationException($"Unsupported action type: {pendingAction.ActionType}");
             }
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-            this._pendingActionManager.IncrementCurrentStep();
         }
 
         public void HandlePropertySetSelectionResponse(Player player, ActionContext actionContext)
@@ -144,7 +143,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     }
 
                     this.ValidateAndExecuteBuildingPlacement(actionContext, pendingAction);
-                    this._pendingActionManager.CanClearPendingAction = true;
+                    // this._pendingActionManager.CanClearPendingAction = true;
                     break;
 
                 case ActionTypes.Tribute:
@@ -159,7 +158,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PayValue);
 
                     pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-                    this._pendingActionManager.IncrementCurrentStep();
                     break;
 
                 case ActionTypes.HostileTakeover:
@@ -183,7 +181,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     else
                     {
                         this._actionExecutor.ExecuteHostileTakeover(actionContext.ActionInitiatingPlayerId, targetPlayer.UserId, actionContext.TargetSetColor!.Value);
-                        this._pendingActionManager.CanClearPendingAction = true;
+                        // // this._pendingActionManager.CanClearPendingAction = true;
                     }
                     break;
 
@@ -194,7 +192,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.PlayerSelection);
 
                     pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-                    this._pendingActionManager.IncrementCurrentStep();
 
                     break;
                 default:
@@ -223,7 +220,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             // Only clear pending action if no new dialog was opened
             if (actionContext.DialogToOpen == DialogTypeEnum.TableHandSelector)
             {
-                this._pendingActionManager.CanClearPendingAction = true;
+                // // this._pendingActionManager.CanClearPendingAction = true;
             }
         }
 
@@ -307,7 +304,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     break;
             }
 
-            this._pendingActionManager.CanClearPendingAction = true;
+            // // this._pendingActionManager.CanClearPendingAction = true;
         }
 
         public void HandleShieldsUpResponse(Player player, ActionContext context)
@@ -342,7 +339,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 Console.WriteLine("[DEBUG] No ShieldsUp card found in hand!");
             }
 
-            this._pendingActionManager.CanClearPendingAction = true;
+            // // this._pendingActionManager.CanClearPendingAction = true;
         }
 
         public void HandleOwnHandSelectionResponse(Player player, ActionContext actionContext)
@@ -362,7 +359,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
 
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-            this._pendingActionManager.IncrementCurrentStep();
         }
 
         private void ValidateAndExecuteTableHandAction(ActionContext actionContext, Player player, Player targetPlayer, List<Player> allPlayers, PendingAction pendingAction)
@@ -412,7 +408,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, targetPlayer, allPlayers, DialogTypeEnum.ShieldsUp);
 
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-            this._pendingActionManager.IncrementCurrentStep();
         }
 
         private void BuildWildCardMovementContext(ActionContext actionContext, Player player, List<Player> allPlayers, PendingAction pendingAction)
@@ -421,7 +416,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             actionContext.DialogTargetList = this._rulesManager.IdentifyWhoSeesDialog(player, null, allPlayers, DialogTypeEnum.WildcardColor);
 
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(actionContext.DialogTargetList);
-            this._pendingActionManager.IncrementCurrentStep();
         }
 
         private void TableHand_ValidateActionPrerequisites(PendingAction pendingAction, Player targetPlayer, Card targetCard)

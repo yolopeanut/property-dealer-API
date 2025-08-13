@@ -109,7 +109,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder
 
             // Set the pending action
             this._pendingActionManager.CurrPendingAction = pendingAction;
-            this._pendingActionManager.CanClearPendingAction = false;
+            //this._pendingActionManager.CanClearPendingAction = false;
 
             return new ActionContext
             {

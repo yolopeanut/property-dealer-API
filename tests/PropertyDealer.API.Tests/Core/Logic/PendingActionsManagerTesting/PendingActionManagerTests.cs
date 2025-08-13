@@ -118,24 +118,5 @@ namespace PropertyDealer.API.Tests.Core.Logic.PendingActionsManager
             Assert.False(result); // Still waiting for user3
             Assert.Single(this._pendingActionManager.CurrPendingAction.ResponseQueue);
         }
-
-        [Fact]
-        public void IncrementCurrentStep_IncrementsCurrentStep()
-        {
-            // Arrange
-            var pendingAction = new PendingAction
-            {
-                InitiatorUserId = "user1",
-                ActionType = ActionTypes.BountyHunter,
-                CurrentStep = 1
-            };
-            this._pendingActionManager.CurrPendingAction = pendingAction;
-
-            // Act
-            this._pendingActionManager.IncrementCurrentStep();
-
-            // Assert
-            Assert.Equal(2, this._pendingActionManager.CurrPendingAction.CurrentStep);
-        }
     }
 }

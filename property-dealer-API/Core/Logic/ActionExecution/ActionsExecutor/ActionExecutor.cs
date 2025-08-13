@@ -1,4 +1,6 @@
-﻿using property_dealer_API.Application.Exceptions;
+﻿using Microsoft.AspNetCore.Mvc;
+using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
@@ -78,16 +80,61 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             var handIsEmpty = this._rulesManager.IsPlayerHandEmpty(this._playerHandManager.GetPlayerHand(userId));
             if (handIsEmpty)
             {
-                this.AssignCardToPlayer(userId, 5);
+                this.ExecuteDrawCards(userId, 5);
             }
 
             return cardRemoved;
         }
 
-        public void AssignCardToPlayer(string userId, int numCardsToDraw)
+        public void ExecuteDrawCards(string userId, int numCardsToDraw)
         {
             var freshCards = this._deckManager.DrawCard(numCardsToDraw);
             this._playerHandManager.AssignPlayerHand(userId, freshCards);
+        }
+
+        public void ExecutePayment(string receivingPlayerId, string payingPlayerId, List<string> targetsChosenCards)
+        {
+            foreach (var card in targetsChosenCards ?? [])
+            {
+                Card cardRemoved;
+                try
+                {
+                    var (handGroup, propertyGroup) = this._playerHandManager.FindCardInWhichHand(payingPlayerId, card);
+
+                    if (handGroup == 0)
+                    {
+                        cardRemoved = this._playerHandManager.RemoveCardFromPlayerMoneyHand(payingPlayerId, card);
+                        this._playerHandManager.AddCardToPlayerMoneyHand(receivingPlayerId, cardRemoved);
+                    }
+                    else
+                    {
+                        if (!propertyGroup.HasValue)
+                        {
+                            throw new InvalidOperationException("Property group has no value!");
+                        }
+
+                        cardRemoved = this._playerHandManager.RemoveCardFromPlayerTableHand(payingPlayerId, card);
+                        this._playerHandManager.AddCardToPlayerTableHand(receivingPlayerId, cardRemoved, propertyGroup.Value);
+                    }
+                }
+                catch
+                {
+                    throw;
+                }
+            }
+
+        }
+
+        public void ExecutePlayToTable(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor)
+        {
+            Card foundCard = this._playerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayerId, cardId);
+            this._playerHandManager.AddCardToPlayerTableHand(actionInitiatingPlayerId, foundCard, targetSetColor);
+        }
+
+        public void ExecuteBuildOnSet(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor)
+        {
+            var buildingCard = this._playerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayerId, cardId);
+            this._playerHandManager.AddCardToPlayerTableHand(actionInitiatingPlayerId, buildingCard, targetSetColor);
         }
     }
 }

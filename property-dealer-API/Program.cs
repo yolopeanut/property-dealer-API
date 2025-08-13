@@ -3,6 +3,7 @@ using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Factories;
 using property_dealer_API.Core.Logic.ActionExecution;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers;
 using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
@@ -55,8 +56,17 @@ builder.Services.AddSingleton<IGameDetailsFactory, GameDetailsFactory>();
 
 // Scoped manager services for gameplay
 builder.Services.AddScoped<IDeckManager, DeckManager>();
+builder.Services.AddScoped<IReadOnlyDeckManager>(provider =>
+    provider.GetRequiredService<IDeckManager>());
+
 builder.Services.AddScoped<IPlayerManager, PlayerManager>();
+builder.Services.AddScoped<IReadOnlyPlayerManager>(provider =>
+    provider.GetRequiredService<IPlayerManager>());
+
 builder.Services.AddScoped<IPlayerHandManager, PlayersHandManager>();
+builder.Services.AddScoped<IReadOnlyPlayerHandManager>(provider =>
+    provider.GetRequiredService<IPlayerHandManager>());
+
 builder.Services.AddScoped<IGameStateMapper, GameStateMapper>();
 builder.Services.AddScoped<IGameRuleManager, GameRuleManager>();
 builder.Services.AddScoped<ITurnManager, TurnManager>();
@@ -68,6 +78,24 @@ builder.Services.AddScoped<IDialogResponseProcessor, DialogResponseProcessor>();
 builder.Services.AddScoped<IActionExecutor, ActionExecutor>();
 builder.Services.AddScoped<IActionExecutionManager, ActionExecutionManager>();
 builder.Services.AddScoped<IDebugManager, DebugManager>();
+
+builder.Services.AddScoped<IActionHandlerResolver, ActionHandlerResolver>();
+
+builder.Services.AddTransient<HostileTakeoverHandler>();
+builder.Services.AddTransient<ForcedTradeHandler>();
+builder.Services.AddTransient<PirateRaidHandler>();
+builder.Services.AddTransient<BountyHunterHandler>();
+builder.Services.AddTransient<TradeDividendHandler>();
+builder.Services.AddTransient<ExploreNewSectorHandler>();
+
+builder.Services.AddTransient<SpaceStationHandler>();
+builder.Services.AddTransient<StarbaseHandler>();
+
+builder.Services.AddTransient<TradeEmbargoHandler>();
+//builder.Services.AddTransient<ShieldsUpHandler>();
+builder.Services.AddTransient<SystemWildCardHandler>();
+builder.Services.AddTransient<TributeCardHandler>();
+builder.Services.AddTransient<WildCardTributeHandler>();
 
 builder.Services.AddCors((o) =>
 {
@@ -103,3 +131,5 @@ app.Urls.Add("http://*:5200");
 app.Urls.Add("https://*:7200");
 
 app.Run();
+
+public partial class Program { }

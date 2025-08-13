@@ -1,6 +1,6 @@
-﻿using property_dealer_API.Application.Enums;
+﻿using Microsoft.Extensions.DependencyInjection;
+using property_dealer_API.Application.Enums;
 using property_dealer_API.Core.Logic.ActionExecution;
-using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
@@ -9,10 +9,11 @@ using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Models.Enums.Cards;
 using PropertyDealer.API.Tests.TestHelpers;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace PropertyDealer.API.Tests.Core.Logic.Integration
 {
-    public class EndToEndActionFlowTests
+    public class EndToEndActionFlowTests : IntegrationTestBase
     {
         private readonly IPlayerHandManager _playerHandManager;
         private readonly IPlayerManager _playerManager;
@@ -21,20 +22,36 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
         private readonly IDeckManager _deckManager;
         private readonly IDialogManager _dialogManager;
         private readonly IActionExecutionManager _actionExecutionManager;
+        private readonly IActionHandlerResolver _actionHandlerResolver;
 
-        public EndToEndActionFlowTests()
+        public EndToEndActionFlowTests(TestWebApplicationFactory factory)
+            : base(factory)
         {
-            this._playerHandManager = new PlayersHandManager();
-            this._playerManager = new PlayerManager();
-            this._rulesManager = new GameRuleManager();
-            this._pendingActionManager = new PendingActionManager();
-            this._deckManager = new DeckManager();
+            this._playerHandManager = base.ServiceProvider.GetRequiredService<IPlayerHandManager>();
+            this._playerManager = base.ServiceProvider.GetRequiredService<IPlayerManager>();
+            this._rulesManager = base.ServiceProvider.GetRequiredService<IGameRuleManager>();
+            this._pendingActionManager = base.ServiceProvider.GetRequiredService<IPendingActionManager>();
+            this._deckManager = base.ServiceProvider.GetRequiredService<IDeckManager>();
+            this._actionHandlerResolver = base.ServiceProvider.GetRequiredService<IActionHandlerResolver>();
+            this._actionExecutionManager = base.ServiceProvider.GetRequiredService<IActionExecutionManager>();
+            this._dialogManager = base.ServiceProvider.GetRequiredService<IDialogManager>();
+        }
 
-            var contextBuilder = new ActionContextBuilder(this._pendingActionManager, this._rulesManager, this._deckManager, this._playerHandManager);
-            var actionExecutor = new ActionExecutor(this._playerHandManager, this._deckManager, this._rulesManager);
-            var dialogResponseProcessor = new DialogResponseProcessor(this._playerHandManager, this._playerManager, this._rulesManager, this._pendingActionManager, actionExecutor);
-            this._actionExecutionManager = new ActionExecutionManager(contextBuilder, dialogResponseProcessor);
-            this._dialogManager = new DialogManager(this._actionExecutionManager, this._pendingActionManager);
+        [Fact]
+        public async Task Should_Initialize_Game_Components_Successfully()
+        {
+            // Arrange & Act
+            // Verify that all required services are properly injected and available
+
+            // Assert
+            Assert.NotNull(_playerHandManager);
+            Assert.NotNull(_playerManager);
+            Assert.NotNull(_rulesManager);
+            Assert.NotNull(_pendingActionManager);
+            Assert.NotNull(_deckManager);
+            Assert.NotNull(_dialogManager);
+            Assert.NotNull(_actionExecutionManager);
+            Assert.NotNull(_actionHandlerResolver);
         }
 
         #region Immediate Actions
