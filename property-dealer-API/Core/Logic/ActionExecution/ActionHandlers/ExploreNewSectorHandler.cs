@@ -49,7 +49,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             this.ActionExecutor.ExecuteDrawCards(initiator.UserId, cardsToDraw);
 
             // This is an immediate action that is now complete.
-            // CompleteAction() correctly signals that no further steps are needed and returns null.
             return base.CompleteAction();
         }
         public void ProcessResponse(Player responder, ActionContext currentContext)

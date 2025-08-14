@@ -106,12 +106,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
             if (!specialConditionHandled)
             {
-                // If no special conditions were met, execute the normal action.
                 this.ExecuteNormalAction(currentContext, targetPlayer, pendingAction);
-                // Complete the action ONLY if it was normally executed.
                 base.CompleteAction();
             }
-            // If a special condition WAS handled, a new dialog was opened, so we do NOT complete the action here.
         }
 
         private void ValidateActionPrerequisites(PendingAction pendingAction, Player targetPlayer, Card targetCard)

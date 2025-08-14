@@ -1,11 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using property_dealer_API.Application.Enums;
-using property_dealer_API.Core.Logic.ActionExecution;
-using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
-using property_dealer_API.Core.Logic.DecksManager;
-using property_dealer_API.Core.Logic.DialogsManager;
-using property_dealer_API.Core.Logic.GameRulesManager;
-using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Core.Logic.TurnExecutionsManager;
@@ -15,20 +9,17 @@ using PropertyDealer.API.Tests.TestHelpers;
 
 namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
 {
-    public class TurnExecutionManagerTests
+    public class TurnExecutionManagerTests : IntegrationTestBase
     {
         private readonly ITurnExecutionManager _turnExecutionManager;
         private readonly IPlayerHandManager _playerHandManager;
         private readonly IPlayerManager _playerManager;
 
-        private readonly IServiceProvider _serviceProvider;
-
-        public TurnExecutionManagerTests(IServiceProvider serviceProvider)
+        public TurnExecutionManagerTests(TestWebApplicationFactory factory) : base(factory)
         {
-            this._serviceProvider = serviceProvider;
-            this._playerHandManager = this._serviceProvider.GetRequiredService<IPlayerHandManager>();
-            this._playerManager = this._serviceProvider.GetRequiredService<IPlayerManager>();
-            this._turnExecutionManager = this._serviceProvider.GetRequiredService<ITurnExecutionManager>();
+            this._playerHandManager = base.ServiceProvider.GetRequiredService<IPlayerHandManager>();
+            this._playerManager = base.ServiceProvider.GetRequiredService<IPlayerManager>();
+            this._turnExecutionManager = base.ServiceProvider.GetRequiredService<ITurnExecutionManager>();
         }
 
         [Fact]

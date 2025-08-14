@@ -65,11 +65,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 throw new ActionContextParameterNullException(currentContext, "TargetSetColor must be provided when choosing a wildcard color.");
             }
 
-            // We assume the card being played is the one in the ActionContext's CardId.
             base.ActionExecutor.ExecutePlayToTable(
                 currentContext.ActionInitiatingPlayerId,
                 currentContext.CardId,
-                currentContext.TargetSetColor.Value // The color chosen by the player.
+                currentContext.TargetSetColor.Value
             );
 
             base.CompleteAction();

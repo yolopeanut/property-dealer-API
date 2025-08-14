@@ -19,6 +19,7 @@
   <ItemGroup>
     <Folder Include="Application\DTOs\Requests\" />
     <Folder Include="Controllers\" />
+    <Folder Include="Core\Logic\ActionExecution\ActionHandlers\ActionHandlerSteps\" />
     <Folder Include="Data\" />
   </ItemGroup>
 

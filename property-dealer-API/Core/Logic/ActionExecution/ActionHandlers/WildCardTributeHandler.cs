@@ -15,7 +15,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
     // but can be used on any property set.
     public class WildCardTributeHandler : ActionHandlerBase, IActionHandler
     {
-        // Assuming a new ActionType for this specific card
         public ActionTypes ActionType => ActionTypes.TributeWildCard;
 
         public WildCardTributeHandler(
@@ -37,7 +36,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = commandCard.Command };
             var newActionContext = base.CreateActionContext(card.CardGuid.ToString(), DialogTypeEnum.PropertySetSelection, initiator, null, allPlayers, pendingAction);
 
-            // The flow starts identically to a normal tribute: the initiator must choose a property set.
             base.SetNextDialog(newActionContext, DialogTypeEnum.PropertySetSelection, initiator, null);
             return newActionContext;
         }
@@ -110,7 +108,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             );
         }
 
-        // NOTE: This method is an exact duplicate.
         private void CalculateTributeAmount(ActionContext currentContext)
         {
             if (currentContext.TargetSetColor.HasValue)

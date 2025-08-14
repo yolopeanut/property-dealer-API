@@ -15,7 +15,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
     {
         public ActionTypes ActionType => ActionTypes.TradeEmbargo;
 
-        // ... (Constructor is the same)
         public TradeEmbargoHandler(
             IPlayerManager playerManager,
             IPlayerHandManager playerHandManager,
