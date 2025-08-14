@@ -47,7 +47,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 case DialogTypeEnum.PropertySetSelection:
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("Only the action initiator can select a property set.");
+                    if (!currentContext.TargetSetColor.HasValue)
+                        throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during wildcard tribute action!");
 
+                    // No need to validate color as wildcard can be applied to any color
                     this.ProcessPropertySetSelection(currentContext);
                     break;
 

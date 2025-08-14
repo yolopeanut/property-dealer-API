@@ -35,28 +35,51 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             }
         }
 
-        public void ExecuteForcedTrade(string initiatorUserId, string targetUserId, string targetCardId, string ownCardId)
+        public void MovePropertyBetweenTableHands(string initiatorId, string targetId, string cardIdToTake, PropertyCardColoursEnum colorForTakenCard, string? cardIdToGive = null, PropertyCardColoursEnum? colorForGivenCard = null)
         {
-            var initiatorCard = this._playerHandManager.RemoveCardFromPlayerTableHand(initiatorUserId, ownCardId);
-            var targetCard = this._playerHandManager.RemoveCardFromPlayerTableHand(targetUserId, targetCardId);
+            // The Initiator TAKES a card from the Target
+            var cardTaken = this._playerHandManager.RemoveCardFromPlayerTableHand(targetId, cardIdToTake);
+            if (cardTaken is not StandardSystemCard && cardTaken is not SystemWildCard)
+            {
+                throw new InvalidOperationException($"Card {cardIdToTake} is not a movable property card.");
+            }
+            this._playerHandManager.AddCardToPlayerTableHand(initiatorId, cardTaken, colorForTakenCard);
 
-            if (targetCard is StandardSystemCard targetSystemCard)
+            // The Initiator GIVES a card to the Target (Optional)
+            if (cardIdToGive != null && colorForGivenCard.HasValue)
             {
-                this._playerHandManager.AddCardToPlayerTableHand(initiatorUserId, targetSystemCard, targetSystemCard.CardColoursEnum);
+                var cardGiven = this._playerHandManager.RemoveCardFromPlayerTableHand(initiatorId, cardIdToGive);
+                if (cardGiven is not StandardSystemCard && cardGiven is not SystemWildCard)
+                {
+                    throw new InvalidOperationException($"Card {cardIdToGive} is not a movable property card.");
+                }
+                this._playerHandManager.AddCardToPlayerTableHand(targetId, cardGiven, colorForGivenCard.Value);
             }
-            else
+            else if (cardIdToGive != null || colorForGivenCard.HasValue)
             {
-                throw new StandardSystemCardException(targetCardId);
+                throw new ArgumentException("For a return trade, both cardIdToGive and colorForGivenCard must be provided.");
+            }
+        }
+
+        public void ExecutePropertyTrade(string initiatorId, string initiatorCardId, PropertyCardColoursEnum colorForCardFromTarget, string targetId, string targetCardId, PropertyCardColoursEnum colorForCardFromInitiator)
+        {
+            // 1. Remove both cards from their original owners.
+            var cardFromInitiator = this._playerHandManager.RemoveCardFromPlayerTableHand(initiatorId, initiatorCardId);
+            var cardFromTarget = this._playerHandManager.RemoveCardFromPlayerTableHand(targetId, targetCardId);
+
+            // Basic validation to ensure we're only trading property cards.
+            if (cardFromInitiator is not StandardSystemCard && cardFromInitiator is not SystemWildCard)
+            {
+                throw new InvalidOperationException($"Card {initiatorCardId} is not a tradable property card.");
+            }
+            if (cardFromTarget is not StandardSystemCard && cardFromTarget is not SystemWildCard)
+            {
+                throw new InvalidOperationException($"Card {targetCardId} is not a tradable property card.");
             }
 
-            if (initiatorCard is StandardSystemCard initiatorSystemCard)
-            {
-                this._playerHandManager.AddCardToPlayerTableHand(targetUserId, initiatorSystemCard, initiatorSystemCard.CardColoursEnum);
-            }
-            else
-            {
-                throw new StandardSystemCardException(ownCardId);
-            }
+            // 2. Add the cards to their new owners with the specified colors.
+            this._playerHandManager.AddCardToPlayerTableHand(initiatorId, cardFromTarget, colorForCardFromTarget);
+            this._playerHandManager.AddCardToPlayerTableHand(targetId, cardFromInitiator, colorForCardFromInitiator);
         }
 
         public void ExecutePirateRaid(string initiatorUserId, string targetUserId, string targetCardId)

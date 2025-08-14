@@ -46,6 +46,14 @@ namespace PropertyDealer.API.Tests.TestHelpers
             }
             return properties;
         }
+        public static List<Card> GivePlayerPropertySet(
+            IPlayerHandManager handManager,
+            string userId,
+            PropertyCardColoursEnum color, Card cardToAdd)
+        {
+            handManager.AddCardToPlayerTableHand(userId, cardToAdd, color);
+            return handManager.GetPropertyGroupInPlayerTableHand(userId, color);
+        }
 
         public static void GivePlayerCards(
             IPlayerHandManager handManager,

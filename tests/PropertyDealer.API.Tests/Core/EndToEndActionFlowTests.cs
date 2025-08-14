@@ -267,6 +267,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             Assert.DoesNotContain(targetProperty, targetPropertiesAfter);
         }
 
+
+
         [Fact]
         public void HostileTakeover_EndToEnd_StealsCompletePropertySet()
         {
@@ -443,6 +445,107 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             Assert.Equal(doubledRent, initiatorMoney);
         }
 
+        [Fact]
+        public void PirateRaid_EndToEnd_StealsWildCardProperty()
+        {
+            // Arrange
+            var initiator = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user1", "Initiator");
+            var target = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user2", "Target");
+
+            var systemWildCard = CardTestHelpers.CreateSystemWildCard();
+            var targetProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown, systemWildCard);
+            var targetProperty = targetProperties[0];
+            var pirateRaidCard = CardTestHelpers.CreateCommandCard(ActionTypes.PirateRaid);
+
+            // Act - Step 1: Execute action (Player Selection)
+            var actionContext = this._actionExecutionManager.ExecuteAction(initiator.UserId, pirateRaidCard, initiator, this._playerManager.GetAllPlayers());
+
+            Assert.Equal(DialogTypeEnum.PlayerSelection, actionContext.DialogToOpen);
+
+            // Act - Step 2: Select target player
+            var playerSelectionResponse = ResponseTestHelpers.CreatePlayerSelectionResponse(actionContext, target.UserId);
+            var step2Result = this._dialogManager.RegisterActionResponse(initiator, playerSelectionResponse);
+
+            Assert.False(step2Result.ShouldClearPendingAction);
+            Assert.Equal(DialogTypeEnum.TableHandSelector, step2Result.NewActionContexts[0].DialogToOpen);
+
+            // Act - Step 3: Select target property
+            var propertySelectionResponse = ResponseTestHelpers.CreateTableHandResponse(step2Result.NewActionContexts[0], targetProperty.CardGuid.ToString());
+            var step3Result = this._dialogManager.RegisterActionResponse(initiator, propertySelectionResponse);
+
+            // Act - Step 4: WildCard dialog selection
+            var wildcardResponse = ResponseTestHelpers.CreateWildcardColorResponse(step3Result.NewActionContexts[0], PropertyCardColoursEnum.Cyan);
+
+            var finalResult = this._dialogManager.RegisterActionResponse(initiator, wildcardResponse);
+
+            // Assert
+            Assert.True(finalResult.ShouldClearPendingAction);
+
+            // Verify property stolen
+            var initiatorProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan);
+            var targetPropertiesAfter = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Green);
+
+            Assert.Contains(targetProperty, initiatorProperties);
+            Assert.DoesNotContain(targetProperty, targetPropertiesAfter);
+        }
+
+        [Fact]
+        public void ForcedTrade_EndToEnd_SwapsWildCardProperties()
+        {
+            // Arrange
+            GameStateTestHelpers.PopulateTestDeck(this._deckManager);
+
+            var initiator = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user1", "Initiator");
+            var target = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user2", "Target");
+
+            var initiatorProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 1);
+
+            var systemWildCard = CardTestHelpers.CreateSystemWildCard();
+            var targetProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown, systemWildCard);
+
+            var initiatorProperty = initiatorProperties[0];
+            var targetProperty = targetProperties[0];
+            var forcedTradeCard = CardTestHelpers.CreateCommandCard(ActionTypes.ForcedTrade);
+            GameStateTestHelpers.GivePlayerCards(this._playerHandManager, initiator.UserId, [forcedTradeCard]);
+
+            // Act - Step 1: Player Selection
+            var actionContext = this._actionExecutionManager.ExecuteAction(initiator.UserId, forcedTradeCard, initiator, this._playerManager.GetAllPlayers());
+
+            var playerSelectionResponse = ResponseTestHelpers.CreatePlayerSelectionResponse(actionContext!, target.UserId);
+            var step2Result = this._dialogManager.RegisterActionResponse(initiator, playerSelectionResponse);
+
+            Assert.Equal(DialogTypeEnum.TableHandSelector, step2Result.NewActionContexts![0].DialogToOpen);
+
+            // Act - Step 2: Select target's property and own property
+            var tradeResponse = ResponseTestHelpers.CreateTableHandResponse(step2Result.NewActionContexts[0], targetProperty.CardGuid.ToString());
+            tradeResponse.OwnTargetCardId = [initiatorProperty.CardGuid.ToString()];
+
+            var step3Result = this._dialogManager.RegisterActionResponse(initiator, tradeResponse);
+            Assert.Equal(DialogTypeEnum.WildcardColor, step3Result.NewActionContexts![0].DialogToOpen);
+
+            // Act - Step 3: WildCard dialog selection
+            var wildcardResponse = ResponseTestHelpers.CreateWildcardColorResponse(step3Result.NewActionContexts[0], PropertyCardColoursEnum.Cyan);
+
+            var finalResult = this._dialogManager.RegisterActionResponse(initiator, wildcardResponse);
+
+            // Assert
+            Assert.True(finalResult.ShouldClearPendingAction);
+
+            // Verify properties swapped
+            var initiatorRedProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red);
+            var initiatorCyanProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan);
+            var targetBrownProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown);
+            var targetRedProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Red);
+
+
+            // Initiator should now have target's cyan property
+            Assert.Contains(targetProperty, initiatorCyanProperties);
+            Assert.DoesNotContain(initiatorProperty, initiatorRedProperties);
+
+            // Target should now have initiator's red property
+            Assert.Contains(initiatorProperty, targetRedProperties);
+            Assert.DoesNotContain(targetProperty, targetBrownProperties);
+        }
         #endregion
 
         #region ShieldsUp Response Tests

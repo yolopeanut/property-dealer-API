@@ -13,46 +13,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             this._gameRuleManager = new GameRuleManager();
         }
 
-        #region ValidateRentTarget Tests
-
-        [Fact]
-        public void ValidateRentTarget_PlayerHasTargetColorProperties_DoesNotThrowException()
-        {
-            // Arrange
-            var targetColor = PropertyCardColoursEnum.Red;
-            var targetPlayerProperties = new List<Card>
-            {
-                new StandardSystemCard(CardTypesEnum.SystemCard, "Red Property", 3, PropertyCardColoursEnum.Red, "Test", 3, new List<int> { 2, 4, 7 }),
-                new StandardSystemCard(CardTypesEnum.SystemCard, "Cyan Property", 3, PropertyCardColoursEnum.Cyan, "Test", 2, new List<int> { 1, 3 })
-            };
-
-            // Act & Assert
-            var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
-            Assert.Null(exception);
-        }
-
-        [Fact]
-        public void ValidateRentTarget_PlayerDoesNotHaveTargetColorProperties_ThrowsInvalidOperationException()
-        {
-            // Arrange
-            var targetColor = PropertyCardColoursEnum.Red;
-            var targetPlayerProperties = new List<Card>
-            {
-                new StandardSystemCard(CardTypesEnum.SystemCard, "Cyan Property", 3, PropertyCardColoursEnum.Cyan, "Test", 2, new List<int> { 1, 3 }),
-                new CommandCard(CardTypesEnum.CommandCard, ActionTypes.ExploreNewSector, "Explore", 2, "Move card")
-            };
-
-            // Act & Assert
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateRentTarget(targetColor, targetPlayerProperties));
-
-            Assert.Contains("Cannot charge rent for Red properties", exception.Message);
-            Assert.Contains("doesn't own any Red properties", exception.Message);
-        }
-
-        #endregion
-
         #region ValidateRentCardColors Tests
 
         [Fact]

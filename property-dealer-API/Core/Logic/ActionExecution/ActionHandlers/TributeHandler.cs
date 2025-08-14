@@ -46,7 +46,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     // Only the initiator can select the property set.
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("Only the action initiator can select a property set.");
+                    if (!currentContext.TargetSetColor.HasValue)
+                        throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
 
+                    this.ValidateRentTarget(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
                     this.ProcessPropertySetSelection(currentContext);
                     // DO NOT complete the action here, as it transitions to the payment step for others.
                     break;
@@ -69,6 +72,20 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
                 default:
                     throw new InvalidOperationException($"Invalid state for Tribute action: {currentContext.DialogToOpen}");
+            }
+        }
+
+        private void ValidateRentTarget(string actionInitiatingPlayer, PropertyCardColoursEnum targetColor)
+        {
+            try
+            {
+                var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(actionInitiatingPlayer, targetColor);
+
+            }
+            catch (Exception)
+            {
+
+                throw new InvalidOperationException($"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties.");
             }
         }
 

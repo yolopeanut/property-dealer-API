@@ -64,10 +64,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
         }
 
-        protected ActionContext? CompleteAction()
+        protected virtual void CompleteAction()
         {
             PendingActionManager.IncrementProcessedActions();
-            return null;
         }
 
         protected void HandleShieldsUp(Player responder)

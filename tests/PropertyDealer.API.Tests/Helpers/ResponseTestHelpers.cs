@@ -79,7 +79,7 @@ namespace PropertyDealer.API.Tests.TestHelpers
         {
             var response = originalContext.Clone();
             response.TargetSetColor = color;
-            response.DialogResponse = CommandResponseEnum.Accept;
+            response.DialogResponse = CommandResponseEnum.SendIt;
             return response;
 
         }
