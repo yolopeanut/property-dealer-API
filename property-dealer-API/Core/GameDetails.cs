@@ -2,6 +2,7 @@
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -36,6 +37,7 @@ namespace property_dealer_API.Core
         private readonly IDebugManager _debugManager;
         private readonly ITurnExecutionManager _turnExecutionManager;
         private readonly IDialogManager _dialogManager;
+        private readonly IServiceScope _scope; // TODO dispose of scope on game end
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -55,7 +57,8 @@ namespace property_dealer_API.Core
             ITurnManager turnManager,
             IDebugManager debugManager,
             ITurnExecutionManager turnExecutionManager,
-            IDialogManager dialogManager)
+            IDialogManager dialogManager,
+            IServiceScope scope)
         {
             this.RoomId = roomId;
             this.RoomName = roomName;
@@ -70,6 +73,7 @@ namespace property_dealer_API.Core
             this._debugManager = debugManager;
             this._turnExecutionManager = turnExecutionManager;
             this._dialogManager = dialogManager;
+            this._scope = scope;
         }
 
         // Adding players, validating game rules for player to join will be done here

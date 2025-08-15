@@ -1,4 +1,5 @@
 ﻿using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -22,9 +23,11 @@ namespace property_dealer_API.Core.Factories
 
         public GameDetails CreateGameDetails(string roomId, string roomName, GameConfig config)
         {
-            using (var scope = _serviceProvider.CreateScope())
+            var scope = _serviceProvider.CreateScope();
+            var scopedProvider = scope.ServiceProvider;
+
+            try
             {
-                var scopedProvider = scope.ServiceProvider;
                 // Create all dependencies
                 var deckManager = scopedProvider.GetRequiredService<IDeckManager>();
                 var playerManager = scopedProvider.GetRequiredService<IPlayerManager>();
@@ -34,6 +37,7 @@ namespace property_dealer_API.Core.Factories
                 var debugManager = scopedProvider.GetRequiredService<IDebugManager>();
                 var turnExecutionManager = scopedProvider.GetRequiredService<ITurnExecutionManager>();
                 var dialogManager = scopedProvider.GetRequiredService<IDialogManager>();
+                var actionHandlerResolver = scopedProvider.GetRequiredService<IActionHandlerResolver>();
 
                 // Regular dependency injection for turn manager since it uses room id
                 var turnManager = new TurnManager(roomId);
@@ -50,8 +54,15 @@ namespace property_dealer_API.Core.Factories
                     turnManager,
                     debugManager,
                     turnExecutionManager,
-                    dialogManager
+                    dialogManager,
+                    scope
                     );
+            }
+            catch
+            {
+                // If creation fails, dispose the scope
+                scope.Dispose();
+                throw;
             }
         }
     }

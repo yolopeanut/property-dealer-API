@@ -50,6 +50,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                         throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
 
                     this.ValidateRentTarget(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
+                    // currently the only validation ^ does is check if selected color is in property, not if the tribute can rent on that color
                     this.ProcessPropertySetSelection(currentContext);
                     // DO NOT complete the action here, as it transitions to the payment step for others.
                     break;
