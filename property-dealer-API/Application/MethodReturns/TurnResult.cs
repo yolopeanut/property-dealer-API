@@ -7,12 +7,15 @@ namespace property_dealer_API.Application.MethodReturns
     {
         public ActionContext? ActionContext { get; set; }
         public Player? WinningPlayer { get; set; }
+        public List<Player> AllPlayersToRefreshState { get; set; }
         public bool GameEnded => this.WinningPlayer != null;
 
-        public TurnResult(ActionContext? actionContext = null, Player? winningPlayer = null)
+
+        public TurnResult(List<Player> allPlayersToRefreshState, ActionContext? actionContext = null, Player? winningPlayer = null)
         {
             this.ActionContext = actionContext;
             this.WinningPlayer = winningPlayer;
+            this.AllPlayersToRefreshState = allPlayersToRefreshState;
         }
     }
 }

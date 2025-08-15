@@ -131,6 +131,7 @@ namespace property_dealer_API.Core
             // Validating player turn and if they exceed their turn amount
             this._rulesManager.ValidatePlayerCanPlayCard(this.GameState, userId, this._turnManager.GetCurrentUserTurn(), this._turnManager.GetCurrentUserActionCount());
             var cardInPlayerHand = this._playerHandManager.GetCardFromPlayerHandById(userId, cardId);
+            var allPlayers = this._playerManager.GetAllPlayers();
 
             try
             {
@@ -141,9 +142,9 @@ namespace property_dealer_API.Core
                 {
                     this.HandleRemoveFromHand(userId, cardId);
                     var winningPlayer = this.CompleteTurn();
-                    return new TurnResult(null, winningPlayer);
+                    return new TurnResult(allPlayers, null, winningPlayer);
                 }
-                return new TurnResult(actionContext, null);
+                return new TurnResult(allPlayers, actionContext, null);
             }
             catch (Exception)
             {
@@ -159,6 +160,7 @@ namespace property_dealer_API.Core
         {
             var player = this._playerManager.GetPlayerByUserId(userId);
             Console.WriteLine($"[DEBUG] RegisterActionResponse called by {userId} for CardId: {actionContext.CardId}");
+            var allPlayers = this._playerManager.GetAllPlayers();
 
             var dialogProcessingResult = this._dialogManager.RegisterActionResponse(player, actionContext);
 
@@ -168,10 +170,10 @@ namespace property_dealer_API.Core
                 this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
                 Console.WriteLine($"[DEBUG] Successfully removed original command card");
                 var winningPlayer = this.CompleteTurn();
-                return new TurnResult(null, winningPlayer);
+                return new TurnResult(allPlayers, null, winningPlayer);
             }
 
-            return new TurnResult(dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
+            return new TurnResult(allPlayers, dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
         }
 
         public void NextPlayerTurn(string userId)
