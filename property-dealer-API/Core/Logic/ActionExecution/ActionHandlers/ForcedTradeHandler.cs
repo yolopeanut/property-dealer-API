@@ -48,10 +48,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
         /// </summary>
         public void ProcessResponse(Player responder, ActionContext currentContext)
         {
-            // For this action, only the initiator should be responding after the first step.
-            if (responder.UserId != currentContext.ActionInitiatingPlayerId)
+            var isNotActionInitiatingPlayer = responder.UserId != currentContext.ActionInitiatingPlayerId;
+            var isNotTargetPlayer = responder.UserId != currentContext.TargetPlayerId;
+
+            // For this action, only the initiator should be responding after the first step unless for shields up.
+            if (isNotActionInitiatingPlayer && isNotTargetPlayer)
             {
-                throw new InvalidOperationException("Only the action initiator can respond during a Forced Trade.");
+                throw new InvalidOperationException("Only the action initiator and target player can respond during a Forced Trade.");
             }
 
             var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);

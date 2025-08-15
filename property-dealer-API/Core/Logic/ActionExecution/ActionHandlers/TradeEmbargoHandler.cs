@@ -51,6 +51,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 case DialogTypeEnum.PropertySetSelection:
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("Only the action initiator can select a property set.");
+
+                    this.ValidateRentTarget(currentContext.ActionInitiatingPlayerId, currentContext);
                     this.ProcessPropertySetSelection(currentContext);
                     break;
                 case DialogTypeEnum.PlayerSelection:
@@ -87,6 +89,27 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
             var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);
             base.SetNextDialog(currentContext, DialogTypeEnum.PropertySetSelection, initiator, null);
+        }
+
+        private void ValidateRentTarget(string actionInitiatingPlayer, ActionContext currentContext)
+        {
+            if (!currentContext.TargetSetColor.HasValue)
+                throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
+
+            var targetColor = currentContext.TargetSetColor.Value;
+
+            try
+            {
+                var tributeCard = this.PlayerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayer, currentContext.CardId);
+                base.RulesManager.ValidateTributeCardTarget(targetColor, tributeCard);
+                var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(actionInitiatingPlayer, targetColor);
+
+            }
+            catch (Exception)
+            {
+
+                throw new InvalidOperationException($"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties.");
+            }
         }
 
         private void ProcessPropertySetSelection(ActionContext currentContext)

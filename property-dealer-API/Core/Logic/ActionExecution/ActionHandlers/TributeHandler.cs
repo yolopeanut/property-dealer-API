@@ -46,11 +46,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     // Only the initiator can select the property set.
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("Only the action initiator can select a property set.");
-                    if (!currentContext.TargetSetColor.HasValue)
-                        throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
 
-                    this.ValidateRentTarget(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
-                    // currently the only validation ^ does is check if selected color is in property, not if the tribute can rent on that color
+                    this.ValidateRentTarget(currentContext.ActionInitiatingPlayerId, currentContext);
                     this.ProcessPropertySetSelection(currentContext);
                     // DO NOT complete the action here, as it transitions to the payment step for others.
                     break;
@@ -76,10 +73,17 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
         }
 
-        private void ValidateRentTarget(string actionInitiatingPlayer, PropertyCardColoursEnum targetColor)
+        private void ValidateRentTarget(string actionInitiatingPlayer, ActionContext currentContext)
         {
+            if (!currentContext.TargetSetColor.HasValue)
+                throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
+
+            var targetColor = currentContext.TargetSetColor.Value;
+
             try
             {
+                var tributeCard = this.PlayerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayer, currentContext.CardId);
+                base.RulesManager.ValidateTributeCardTarget(targetColor, tributeCard);
                 var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(actionInitiatingPlayer, targetColor);
 
             }

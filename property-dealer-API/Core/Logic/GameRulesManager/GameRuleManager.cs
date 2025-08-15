@@ -129,6 +129,22 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                 throw new InvalidOperationException($"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties.");
             }
         }
+        public void ValidateTributeCardTarget(PropertyCardColoursEnum targetColor, Card cardToValidate)
+        {
+            if (cardToValidate is not TributeCard)
+            {
+                throw new InvalidOperationException($"{cardToValidate} is not a tribute card!");
+            }
+
+            if (cardToValidate is TributeCard tributeCard)
+            {
+                var result = tributeCard.TargetColorsToApplyRent.Any(color => color == targetColor);
+                if (!result)
+                {
+                    throw new InvalidOperationException($"Target color selected it not a available color on the tribute card!");
+                }
+            }
+        }
 
         public void ValidateRentCardColors(PropertyCardColoursEnum rentCardColor, PropertyCardColoursEnum targetColor)
         {
