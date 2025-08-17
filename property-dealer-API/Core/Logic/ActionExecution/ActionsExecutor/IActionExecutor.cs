@@ -6,9 +6,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution
     public interface IActionExecutor
     {
         void ExecuteHostileTakeover(string initiatorUserId, string targetUserId, PropertyCardColoursEnum targetSetColor);
-        void ExecuteForcedTrade(string initiatorUserId, string targetUserId, string targetCardId, string ownCardId);
+        void MovePropertyBetweenTableHands(string initiatorId, string targetId, string cardIdToTake, PropertyCardColoursEnum colorForTakenCard, string? cardIdToGive = null, PropertyCardColoursEnum? colorForGivenCard = null);
+        void ExecutePropertyTrade(string initiatorId, string initiatorCardId, PropertyCardColoursEnum colorForCardFromTarget, string targetId, string targetCardId, PropertyCardColoursEnum colorForCardFromInitiator);
         void ExecutePirateRaid(string initiatorUserId, string targetUserId, string targetCardId);
         Card HandleRemoveFromHand(string userId, string cardId);
-        void AssignCardToPlayer(string userId, int numCardsToDraw);
+        void ExecuteDrawCards(string userId, int numCardsToDraw);
+        void ExecutePayment(string receivingPlayerId, string payingPlayerId, List<string> targetsChosenCards);
+        void ExecutePlayToTable(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor);
+        void ExecuteBuildOnSet(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor);
     }
 }

@@ -29,6 +29,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         void ValidateEndOfTurnCardLimit(List<Card> playerHand);
         void ValidateTradeEmbargoTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor);
         void ValidateRentCardColors(PropertyCardColoursEnum rentCardColor, PropertyCardColoursEnum targetColor);
+        void ValidateTributeCardTarget(PropertyCardColoursEnum targetColor, Card cardToValidate);
         void ValidateWildcardRentTarget(List<PropertyCardColoursEnum> availableColors, PropertyCardColoursEnum selectedColor);
 
         // ===== QUERIES =====

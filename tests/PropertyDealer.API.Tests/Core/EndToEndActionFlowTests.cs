@@ -1,6 +1,6 @@
-﻿using property_dealer_API.Application.Enums;
+﻿using Microsoft.Extensions.DependencyInjection;
+using property_dealer_API.Application.Enums;
 using property_dealer_API.Core.Logic.ActionExecution;
-using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
@@ -9,10 +9,12 @@ using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Models.Enums.Cards;
 using PropertyDealer.API.Tests.TestHelpers;
+using Microsoft.AspNetCore.Mvc.Testing;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 
 namespace PropertyDealer.API.Tests.Core.Logic.Integration
 {
-    public class EndToEndActionFlowTests
+    public class EndToEndActionFlowTests : IntegrationTestBase
     {
         private readonly IPlayerHandManager _playerHandManager;
         private readonly IPlayerManager _playerManager;
@@ -21,20 +23,36 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
         private readonly IDeckManager _deckManager;
         private readonly IDialogManager _dialogManager;
         private readonly IActionExecutionManager _actionExecutionManager;
+        private readonly IActionHandlerResolver _actionHandlerResolver;
 
-        public EndToEndActionFlowTests()
+        public EndToEndActionFlowTests(TestWebApplicationFactory factory)
+            : base(factory)
         {
-            this._playerHandManager = new PlayersHandManager();
-            this._playerManager = new PlayerManager();
-            this._rulesManager = new GameRuleManager();
-            this._pendingActionManager = new PendingActionManager();
-            this._deckManager = new DeckManager();
+            this._playerHandManager = base.ServiceProvider.GetRequiredService<IPlayerHandManager>();
+            this._playerManager = base.ServiceProvider.GetRequiredService<IPlayerManager>();
+            this._rulesManager = base.ServiceProvider.GetRequiredService<IGameRuleManager>();
+            this._pendingActionManager = base.ServiceProvider.GetRequiredService<IPendingActionManager>();
+            this._deckManager = base.ServiceProvider.GetRequiredService<IDeckManager>();
+            this._actionHandlerResolver = base.ServiceProvider.GetRequiredService<IActionHandlerResolver>();
+            this._actionExecutionManager = base.ServiceProvider.GetRequiredService<IActionExecutionManager>();
+            this._dialogManager = base.ServiceProvider.GetRequiredService<IDialogManager>();
+        }
 
-            var contextBuilder = new ActionContextBuilder(this._pendingActionManager, this._rulesManager, this._deckManager, this._playerHandManager);
-            var actionExecutor = new ActionExecutor(this._playerHandManager, this._deckManager, this._rulesManager);
-            var dialogResponseProcessor = new DialogResponseProcessor(this._playerHandManager, this._playerManager, this._rulesManager, this._pendingActionManager, actionExecutor);
-            this._actionExecutionManager = new ActionExecutionManager(contextBuilder, dialogResponseProcessor);
-            this._dialogManager = new DialogManager(this._actionExecutionManager, this._pendingActionManager);
+        [Fact]
+        public async Task Should_Initialize_Game_Components_Successfully()
+        {
+            // Arrange & Act
+            // Verify that all required services are properly injected and available
+
+            // Assert
+            Assert.NotNull(_playerHandManager);
+            Assert.NotNull(_playerManager);
+            Assert.NotNull(_rulesManager);
+            Assert.NotNull(_pendingActionManager);
+            Assert.NotNull(_deckManager);
+            Assert.NotNull(_dialogManager);
+            Assert.NotNull(_actionExecutionManager);
+            Assert.NotNull(_actionHandlerResolver);
         }
 
         #region Immediate Actions
@@ -249,6 +267,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             Assert.DoesNotContain(targetProperty, targetPropertiesAfter);
         }
 
+
+
         [Fact]
         public void HostileTakeover_EndToEnd_StealsCompletePropertySet()
         {
@@ -380,7 +400,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
 
             var rentCard = CardTestHelpers.CreateTributeCard(); // Rent card to double
             GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 2);
-            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 2);
             GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target.UserId, 20);
             var tradeEmbargoCard = CardTestHelpers.CreateCommandCard(ActionTypes.TradeEmbargo);
 
@@ -425,6 +444,107 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             Assert.Equal(doubledRent, initiatorMoney);
         }
 
+        [Fact]
+        public void PirateRaid_EndToEnd_StealsWildCardProperty()
+        {
+            // Arrange
+            var initiator = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user1", "Initiator");
+            var target = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user2", "Target");
+
+            var systemWildCard = CardTestHelpers.CreateSystemWildCard();
+            var targetProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown, systemWildCard);
+            var targetProperty = targetProperties[0];
+            var pirateRaidCard = CardTestHelpers.CreateCommandCard(ActionTypes.PirateRaid);
+
+            // Act - Step 1: Execute action (Player Selection)
+            var actionContext = this._actionExecutionManager.ExecuteAction(initiator.UserId, pirateRaidCard, initiator, this._playerManager.GetAllPlayers());
+
+            Assert.Equal(DialogTypeEnum.PlayerSelection, actionContext.DialogToOpen);
+
+            // Act - Step 2: Select target player
+            var playerSelectionResponse = ResponseTestHelpers.CreatePlayerSelectionResponse(actionContext, target.UserId);
+            var step2Result = this._dialogManager.RegisterActionResponse(initiator, playerSelectionResponse);
+
+            Assert.False(step2Result.ShouldClearPendingAction);
+            Assert.Equal(DialogTypeEnum.TableHandSelector, step2Result.NewActionContexts[0].DialogToOpen);
+
+            // Act - Step 3: Select target property
+            var propertySelectionResponse = ResponseTestHelpers.CreateTableHandResponse(step2Result.NewActionContexts[0], targetProperty.CardGuid.ToString());
+            var step3Result = this._dialogManager.RegisterActionResponse(initiator, propertySelectionResponse);
+
+            // Act - Step 4: WildCard dialog selection
+            var wildcardResponse = ResponseTestHelpers.CreateWildcardColorResponse(step3Result.NewActionContexts[0], PropertyCardColoursEnum.Cyan);
+
+            var finalResult = this._dialogManager.RegisterActionResponse(initiator, wildcardResponse);
+
+            // Assert
+            Assert.True(finalResult.ShouldClearPendingAction);
+
+            // Verify property stolen
+            var initiatorProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan);
+            var targetPropertiesAfter = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Green);
+
+            Assert.Contains(targetProperty, initiatorProperties);
+            Assert.DoesNotContain(targetProperty, targetPropertiesAfter);
+        }
+
+        [Fact]
+        public void ForcedTrade_EndToEnd_SwapsWildCardProperties()
+        {
+            // Arrange
+            GameStateTestHelpers.PopulateTestDeck(this._deckManager);
+
+            var initiator = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user1", "Initiator");
+            var target = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user2", "Target");
+
+            var initiatorProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 1);
+
+            var systemWildCard = CardTestHelpers.CreateSystemWildCard();
+            var targetProperties = GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown, systemWildCard);
+
+            var initiatorProperty = initiatorProperties[0];
+            var targetProperty = targetProperties[0];
+            var forcedTradeCard = CardTestHelpers.CreateCommandCard(ActionTypes.ForcedTrade);
+            GameStateTestHelpers.GivePlayerCards(this._playerHandManager, initiator.UserId, [forcedTradeCard]);
+
+            // Act - Step 1: Player Selection
+            var actionContext = this._actionExecutionManager.ExecuteAction(initiator.UserId, forcedTradeCard, initiator, this._playerManager.GetAllPlayers());
+
+            var playerSelectionResponse = ResponseTestHelpers.CreatePlayerSelectionResponse(actionContext!, target.UserId);
+            var step2Result = this._dialogManager.RegisterActionResponse(initiator, playerSelectionResponse);
+
+            Assert.Equal(DialogTypeEnum.TableHandSelector, step2Result.NewActionContexts![0].DialogToOpen);
+
+            // Act - Step 2: Select target's property and own property
+            var tradeResponse = ResponseTestHelpers.CreateTableHandResponse(step2Result.NewActionContexts[0], targetProperty.CardGuid.ToString());
+            tradeResponse.OwnTargetCardId = [initiatorProperty.CardGuid.ToString()];
+
+            var step3Result = this._dialogManager.RegisterActionResponse(initiator, tradeResponse);
+            Assert.Equal(DialogTypeEnum.WildcardColor, step3Result.NewActionContexts![0].DialogToOpen);
+
+            // Act - Step 3: WildCard dialog selection
+            var wildcardResponse = ResponseTestHelpers.CreateWildcardColorResponse(step3Result.NewActionContexts[0], PropertyCardColoursEnum.Cyan);
+
+            var finalResult = this._dialogManager.RegisterActionResponse(initiator, wildcardResponse);
+
+            // Assert
+            Assert.True(finalResult.ShouldClearPendingAction);
+
+            // Verify properties swapped
+            var initiatorRedProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red);
+            var initiatorCyanProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan);
+            var targetBrownProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Brown);
+            var targetRedProperties = ResponseTestHelpers.GetPropertyGroupSafely(this._playerHandManager, target.UserId, PropertyCardColoursEnum.Red);
+
+
+            // Initiator should now have target's cyan property
+            Assert.Contains(targetProperty, initiatorCyanProperties);
+            Assert.DoesNotContain(initiatorProperty, initiatorRedProperties);
+
+            // Target should now have initiator's red property
+            Assert.Contains(initiatorProperty, targetRedProperties);
+            Assert.DoesNotContain(targetProperty, targetBrownProperties);
+        }
         #endregion
 
         #region ShieldsUp Response Tests

@@ -1,9 +1,5 @@
-﻿using property_dealer_API.Application.Enums;
-using property_dealer_API.Core.Logic.ActionExecution;
-using property_dealer_API.Core.Logic.ActionExecution.ActionsContextBuilder;
-using property_dealer_API.Core.Logic.DecksManager;
-using property_dealer_API.Core.Logic.GameRulesManager;
-using property_dealer_API.Core.Logic.PendingActionsManager;
+﻿using Microsoft.Extensions.DependencyInjection;
+using property_dealer_API.Application.Enums;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Core.Logic.TurnExecutionsManager;
@@ -13,28 +9,17 @@ using PropertyDealer.API.Tests.TestHelpers;
 
 namespace PropertyDealer.API.Tests.Core.Logic.TurnExecutionsManager
 {
-    public class TurnExecutionManagerTests
+    public class TurnExecutionManagerTests : IntegrationTestBase
     {
-        private readonly TurnExecutionManager _turnExecutionManager;
-        private readonly PlayersHandManager _playerHandManager;
-        private readonly PlayerManager _playerManager;
+        private readonly ITurnExecutionManager _turnExecutionManager;
+        private readonly IPlayerHandManager _playerHandManager;
+        private readonly IPlayerManager _playerManager;
 
-        public TurnExecutionManagerTests()
+        public TurnExecutionManagerTests(TestWebApplicationFactory factory) : base(factory)
         {
-            this._playerHandManager = new PlayersHandManager();
-            this._playerManager = new PlayerManager();
-            var rulesManager = new GameRuleManager();
-            var pendingActionManager = new PendingActionManager();
-            var deckManager = new DeckManager();
-            var playerHandManager = new PlayersHandManager();
-            var contexbuilder = new ActionContextBuilder(pendingActionManager, rulesManager, deckManager, playerHandManager);
-            var actionExecuter = new ActionExecutor(playerHandManager, deckManager, rulesManager);
-            var dialogResponseProcessor = new DialogResponseProcessor(playerHandManager, this._playerManager, rulesManager, pendingActionManager, actionExecuter);
-            var actionExecutionManager = new ActionExecutionManager(
-                contexbuilder, dialogResponseProcessor);
-
-            this._turnExecutionManager = new TurnExecutionManager(
-                this._playerHandManager, this._playerManager, rulesManager, actionExecutionManager);
+            this._playerHandManager = base.ServiceProvider.GetRequiredService<IPlayerHandManager>();
+            this._playerManager = base.ServiceProvider.GetRequiredService<IPlayerManager>();
+            this._turnExecutionManager = base.ServiceProvider.GetRequiredService<ITurnExecutionManager>();
         }
 
         [Fact]

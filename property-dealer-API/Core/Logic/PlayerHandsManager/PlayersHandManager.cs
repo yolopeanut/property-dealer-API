@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.PlayerHandsManager
 {
-    public class PlayersHandManager : IPlayerHandManager
+    public class PlayersHandManager : IPlayerHandManager, IReadOnlyPlayerHandManager
     {
         private readonly ConcurrentDictionary<string, List<Card>> _playerHands = new(); // All cards
         private readonly ConcurrentDictionary<string, Dictionary<PropertyCardColoursEnum, List<Card>>> _playerTableHands = new(); // Can be system card or wildcard

@@ -37,51 +37,8 @@ namespace property_dealer_API.Core.Logic.DialogsManager
             foreach (var (player, context) in allResponses)
             {
                 var newActionContext = context.Clone();
-                // For the scenario that the user does shields up (can come from pays value-button or shields up dialog)
-                if (context.DialogResponse == CommandResponseEnum.ShieldsUp)
-                {
-                    this._actionExecutionManager.HandleShieldsUpResponse(player, newActionContext);
-                    continue;
-                }
-
-                // Handle all the responses
-                switch (context.DialogToOpen)
-                {
-                    #region No new dialogs
-                    case DialogTypeEnum.PayValue:
-                        //This can only have ok or shields up, since shields up handled, no further dialog.
-                        this._actionExecutionManager.HandlePayValueResponse(player, newActionContext);
-                        break;
-                    case DialogTypeEnum.WildcardColor:
-                        // just do processing on wildcard color
-                        this._actionExecutionManager.HandleWildCardResponse(player, newActionContext);
-                        break;
-                    #endregion
-
-                    #region Might have new dialog
-                    case DialogTypeEnum.PropertySetSelection:
-                        this._actionExecutionManager.HandlePropertySetSelectionResponse(player, newActionContext);
-                        newActionContexts.Add(newActionContext);
-                        break;
-                    case DialogTypeEnum.TableHandSelector:
-                        this._actionExecutionManager.HandleTableHandSelectorResponse(player, newActionContext);
-                        newActionContexts.Add(newActionContext);
-                        // prompt shields up next dialog or wildcard
-                        break;
-                    #endregion
-
-                    #region Only new target dialogs
-                    case DialogTypeEnum.PlayerSelection:
-                        this._actionExecutionManager.HandlePlayerSelectionResponse(player, newActionContext);
-                        newActionContexts.Add(newActionContext);
-                        break;
-                    case DialogTypeEnum.OwnHandSelection:
-                        this._actionExecutionManager.HandleOwnHandSelectionResponse(player, newActionContext);
-                        newActionContexts.Add(newActionContext);
-                        break;
-
-                        #endregion
-                }
+                this._actionExecutionManager.HandleDialogResponse(player, newActionContext);
+                newActionContexts.Add(newActionContext);
             }
 
             // Clear pending action after finishing processing all responses

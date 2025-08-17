@@ -18,6 +18,7 @@
         TradeEmbargo,     // Replaces DoubleTheRent
         ShieldsUp,         // Replaces JustSayNo
         SystemWildCard,
-        Tribute
+        Tribute,
+        TributeWildCard
     }
 }

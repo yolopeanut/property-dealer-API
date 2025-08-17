@@ -36,7 +36,7 @@ namespace PropertyDealer.API.Tests.TestHelpers
             List<PropertyCardColoursEnum>? targetColors = null,
             string description = "Test tribute card")
         {
-            targetColors ??= new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red, PropertyCardColoursEnum.Green };
+            targetColors ??= new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red, PropertyCardColoursEnum.Cyan };
             return new TributeCard(CardTypesEnum.TributeCard, value, targetColors, description);
         }
 

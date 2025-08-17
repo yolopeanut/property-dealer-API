@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Core;
+using property_dealer_API.Core.Entities;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
 using property_dealer_API.Models.Enums.Cards;
@@ -148,7 +149,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var playerHand = this._gamePlayService.GetPlayerHand(gameRoomId, userId);
-                await this.Clients.Caller.PlayerHand(playerHand);
+                await this.Clients.Group(gameRoomId).PlayerHand(userId, playerHand);
             }
             catch (Exception e)
             {
@@ -174,7 +175,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var discardedCard = this._gamePlayService.GetMostRecentDiscardedCard(gameRoomId);
-                if (discardedCard!= null)
+                if (discardedCard != null)
                 {
                     await this.Clients.Group(gameRoomId).LatestDiscardPileCard(discardedCard);
                 }
@@ -208,7 +209,7 @@ namespace property_dealer_API.Hubs.GamePlay
                 }
 
                 bool includeDiscardPile = cardDestination == CardDestinationEnum.CommandPile;
-                await this.RefreshFullGameState(gameRoomId, includeDiscardPile, userId);
+                await this.RefreshFullGameState(result.AllPlayersToRefreshState, gameRoomId, includeDiscardPile);
             }
             catch (Exception e)
             {
@@ -234,6 +235,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var result = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
+                await this.RefreshGameState(gameRoomId, result.AllPlayersToRefreshState);
 
                 // Check if someone won
                 if (result.GameEnded)
@@ -242,7 +244,6 @@ namespace property_dealer_API.Hubs.GamePlay
                     return; // Don't continue with normal flow if game ended
                 }
 
-                await this.RefreshGameState(gameRoomId, actionContext.ActionInitiatingPlayerId, userId);
 
                 // If there's a new dialog to open, send it to clients
                 if (result.ActionContext != null)
@@ -283,25 +284,25 @@ namespace property_dealer_API.Hubs.GamePlay
             await this.Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
         }
 
-        private async Task RefreshGameState(string gameRoomId, params string[] userIds)
+        private async Task RefreshGameState(string gameRoomId, List<Player> allPlayerIds)
         {
             // Always refresh shared state
             await this.GetAllTableCard(gameRoomId);
             await this.GetCurrentPlayerTurn(gameRoomId);
 
             // Refresh specific player hands if provided
-            foreach (var userId in userIds)
+            foreach (var player in allPlayerIds)
             {
-                if (!string.IsNullOrEmpty(userId))
+                if (!string.IsNullOrEmpty(player.UserId))
                 {
-                    await this.GetPlayerHand(gameRoomId, userId);
+                    await this.GetPlayerHand(gameRoomId, player.UserId);
                 }
             }
         }
 
-        private async Task RefreshFullGameState(string gameRoomId, bool includeDiscardPile = false, params string[] userIds)
+        private async Task RefreshFullGameState(List<Player> allPlayerIds, string gameRoomId, bool includeDiscardPile = false)
         {
-            await this.RefreshGameState(gameRoomId, userIds);
+            await this.RefreshGameState(gameRoomId, allPlayerIds);
 
             if (includeDiscardPile)
             {

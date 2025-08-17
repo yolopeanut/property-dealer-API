@@ -11,7 +11,7 @@ namespace property_dealer_API.Models.Cards
         public int? BankValue { get; set; }
         public string? Description { get; set; }
 
-        public Card(CardTypesEnum cardType, string? name, int? bankValue, string? description)
+        protected Card(CardTypesEnum cardType, string? name, int? bankValue, string? description)
         {
             this.CardGuid = Guid.NewGuid();
             this.CardType = cardType;

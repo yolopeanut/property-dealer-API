@@ -7,6 +7,7 @@
     <RootNamespace>property_dealer_API</RootNamespace>
     <UserSecretsId>4f83d418-e808-477e-ba97-0e96dff126d7</UserSecretsId>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+	<PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>

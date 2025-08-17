@@ -2,6 +2,7 @@
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -36,6 +37,7 @@ namespace property_dealer_API.Core
         private readonly IDebugManager _debugManager;
         private readonly ITurnExecutionManager _turnExecutionManager;
         private readonly IDialogManager _dialogManager;
+        private readonly IServiceScope _scope; // TODO dispose of scope on game end
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -55,7 +57,8 @@ namespace property_dealer_API.Core
             ITurnManager turnManager,
             IDebugManager debugManager,
             ITurnExecutionManager turnExecutionManager,
-            IDialogManager dialogManager)
+            IDialogManager dialogManager,
+            IServiceScope scope)
         {
             this.RoomId = roomId;
             this.RoomName = roomName;
@@ -70,6 +73,7 @@ namespace property_dealer_API.Core
             this._debugManager = debugManager;
             this._turnExecutionManager = turnExecutionManager;
             this._dialogManager = dialogManager;
+            this._scope = scope;
         }
 
         // Adding players, validating game rules for player to join will be done here
@@ -127,6 +131,7 @@ namespace property_dealer_API.Core
             // Validating player turn and if they exceed their turn amount
             this._rulesManager.ValidatePlayerCanPlayCard(this.GameState, userId, this._turnManager.GetCurrentUserTurn(), this._turnManager.GetCurrentUserActionCount());
             var cardInPlayerHand = this._playerHandManager.GetCardFromPlayerHandById(userId, cardId);
+            var allPlayers = this._playerManager.GetAllPlayers();
 
             try
             {
@@ -137,9 +142,9 @@ namespace property_dealer_API.Core
                 {
                     this.HandleRemoveFromHand(userId, cardId);
                     var winningPlayer = this.CompleteTurn();
-                    return new TurnResult(null, winningPlayer);
+                    return new TurnResult(allPlayers, null, winningPlayer);
                 }
-                return new TurnResult(actionContext, null);
+                return new TurnResult(allPlayers, actionContext, null);
             }
             catch (Exception)
             {
@@ -155,6 +160,7 @@ namespace property_dealer_API.Core
         {
             var player = this._playerManager.GetPlayerByUserId(userId);
             Console.WriteLine($"[DEBUG] RegisterActionResponse called by {userId} for CardId: {actionContext.CardId}");
+            var allPlayers = this._playerManager.GetAllPlayers();
 
             var dialogProcessingResult = this._dialogManager.RegisterActionResponse(player, actionContext);
 
@@ -164,10 +170,10 @@ namespace property_dealer_API.Core
                 this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
                 Console.WriteLine($"[DEBUG] Successfully removed original command card");
                 var winningPlayer = this.CompleteTurn();
-                return new TurnResult(null, winningPlayer);
+                return new TurnResult(allPlayers, null, winningPlayer);
             }
 
-            return new TurnResult(dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
+            return new TurnResult(allPlayers, dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
         }
 
         public void NextPlayerTurn(string userId)

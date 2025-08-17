@@ -10,21 +10,13 @@ namespace property_dealer_API.Core.Logic.TurnManager
         private int MaxNumAction = 2; // 3-1
         private readonly object _queueLock = new();
 
-        private readonly string _roomId; // used only for error throwing
-
-        public TurnManager(string roomId)
-        {
-            this._roomId = roomId;
-
-        }
-
         public string GetCurrentUserTurn()
         {
             if (this._turnKeeper.TryPeek(out string? user))
             {
                 return user;
             }
-            throw new NoPlayersFoundException(this._roomId);
+            throw new InvalidOperationException("Cannot retrieve current user turn for user");
         }
 
         public void SetNextUsersTurn()
@@ -35,7 +27,7 @@ namespace property_dealer_API.Core.Logic.TurnManager
 
                 if (userId == null)
                 {
-                    throw new NoPlayersFoundException(this._roomId);
+                    throw new InvalidOperationException("Cannot set next user turn");
                 }
 
                 this._turnKeeper.Enqueue(userId);
