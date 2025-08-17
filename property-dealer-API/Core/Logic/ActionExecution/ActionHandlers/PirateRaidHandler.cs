@@ -41,6 +41,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         public void ProcessResponse(Player responder, ActionContext currentContext)
         {
+            var isNotActionInitiatingPlayer = responder.UserId != currentContext.ActionInitiatingPlayerId;
+            var isNotTargetPlayer = responder.UserId != currentContext.TargetPlayerId;
+
+            // For this action, only the initiator should be responding after the first step unless for shields up.
+            if (isNotActionInitiatingPlayer && isNotTargetPlayer)
+            {
+                throw new InvalidOperationException("Only the action initiator and target player can respond during a Pirate Raid.");
+            }
+
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PlayerSelection:

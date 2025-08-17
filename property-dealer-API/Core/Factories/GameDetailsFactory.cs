@@ -38,9 +38,7 @@ namespace property_dealer_API.Core.Factories
                 var turnExecutionManager = scopedProvider.GetRequiredService<ITurnExecutionManager>();
                 var dialogManager = scopedProvider.GetRequiredService<IDialogManager>();
                 var actionHandlerResolver = scopedProvider.GetRequiredService<IActionHandlerResolver>();
-
-                // Regular dependency injection for turn manager since it uses room id
-                var turnManager = new TurnManager(roomId);
+                var turnManager = scopedProvider.GetRequiredService<ITurnManager>();
 
                 return new GameDetails(
                     roomId,

@@ -126,7 +126,7 @@ app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
 
 app.Urls.Add("http://*:5200");
-app.Urls.Add("https://*:7200");
+//app.Urls.Add("https://*:7200");
 
 app.Run();
 

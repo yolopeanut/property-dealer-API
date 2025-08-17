@@ -93,17 +93,20 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         private void ValidateRentTarget(string actionInitiatingPlayer, ActionContext currentContext)
         {
+            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
+                throw new ActionContextParameterNullException(currentContext, "A rent card must be selected.");
+
             if (!currentContext.TargetSetColor.HasValue)
                 throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during tribute action!");
 
+            var tributeCardId = currentContext.OwnTargetCardId.First();
             var targetColor = currentContext.TargetSetColor.Value;
 
             try
             {
-                var tributeCard = this.PlayerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayer, currentContext.CardId);
+                var tributeCard = base.PlayerHandManager.GetCardFromPlayerHandById(currentContext.ActionInitiatingPlayerId, tributeCardId);
                 base.RulesManager.ValidateTributeCardTarget(targetColor, tributeCard);
                 var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(actionInitiatingPlayer, targetColor);
-
             }
             catch (Exception)
             {

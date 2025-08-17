@@ -400,7 +400,6 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
 
             var rentCard = CardTestHelpers.CreateTributeCard(); // Rent card to double
             GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 2);
-            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Red, 2);
             GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target.UserId, 20);
             var tradeEmbargoCard = CardTestHelpers.CreateCommandCard(ActionTypes.TradeEmbargo);
 
