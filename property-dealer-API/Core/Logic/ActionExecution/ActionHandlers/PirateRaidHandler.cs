@@ -139,7 +139,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             base.CompleteAction();
         }
 
-
         private void ValidateActionPrerequisites(PendingAction pendingAction, Player targetPlayer, Card targetCard)
         {
             if (targetCard is not StandardSystemCard systemCard) return;

@@ -41,7 +41,7 @@
     },
     "Console": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "swagger",
       "nativeDebugging": true,
       "applicationUrl": "http://localhost:5200"

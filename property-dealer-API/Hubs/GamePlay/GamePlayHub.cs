@@ -82,10 +82,8 @@ namespace property_dealer_API.Hubs.GamePlay
             await this.Groups.AddToGroupAsync(this.Context.ConnectionId, gameRoomId);
 
             // 5. Notify the group that a player has joined
-            var player = this._gamePlayService.GetPlayerByUserId(gameRoomId, userId);
-            await this.GetAllTableCard(gameRoomId);
-            await this.GetLatestDiscardPileCard(gameRoomId);
-
+            var allPlayersInGroup = this._gamePlayService.GetAllPlayers(gameRoomId);
+            await this.RefreshFullGameState(allPlayersInGroup, gameRoomId, true);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -140,8 +138,6 @@ namespace property_dealer_API.Hubs.GamePlay
             {
                 await this.ExceptionHandler(e);
             }
-
-
         }
 
         public async Task GetPlayerHand(string gameRoomId, string userId)

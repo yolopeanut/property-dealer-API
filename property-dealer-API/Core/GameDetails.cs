@@ -118,6 +118,8 @@ namespace property_dealer_API.Core
             this.InitializePlayerHands();                           // Instantiate blank hand and table hand
             this.AssignHands();                                     // Assigning hand to blank hands
 
+            var firstPlayer = this._turnManager.GetCurrentUserTurn();
+            this.AssignCardToPlayer(firstPlayer, 2);
             this.GameState = GameStateEnum.GameStarted;
         }
 
@@ -141,7 +143,7 @@ namespace property_dealer_API.Core
                 if (actionContext == null)
                 {
                     this.HandleRemoveFromHand(userId, cardId);
-                    var winningPlayer = this.CompleteTurn();
+                    var winningPlayer = this.CompleteTurn(); // Null if no winning players found
                     return new TurnResult(allPlayers, null, winningPlayer);
                 }
                 return new TurnResult(allPlayers, actionContext, null);
@@ -275,14 +277,7 @@ namespace property_dealer_API.Core
 
             for (int i = 0; i < playerList.Count; i++)
             {
-                if (i == 0)
-                {
-                    this.AssignCardToPlayer(playerList[i].UserId, 7);
-                }
-                else
-                {
-                    this.AssignCardToPlayer(playerList[i].UserId, 5);
-                }
+                this.AssignCardToPlayer(playerList[i].UserId, 5);
             }
         }
 
