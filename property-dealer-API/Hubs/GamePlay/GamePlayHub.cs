@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
@@ -82,8 +83,7 @@ namespace property_dealer_API.Hubs.GamePlay
             await this.Groups.AddToGroupAsync(this.Context.ConnectionId, gameRoomId);
 
             // 5. Notify the group that a player has joined
-            var allPlayersInGroup = this._gamePlayService.GetAllPlayers(gameRoomId);
-            await this.RefreshFullGameState(allPlayersInGroup, gameRoomId, true);
+            await this.RefreshFullGameState(gameRoomId, true);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -205,7 +205,7 @@ namespace property_dealer_API.Hubs.GamePlay
                 }
 
                 bool includeDiscardPile = cardDestination == CardDestinationEnum.CommandPile;
-                await this.RefreshFullGameState(result.AllPlayersToRefreshState, gameRoomId, includeDiscardPile);
+                await this.RefreshFullGameState(gameRoomId, includeDiscardPile);
             }
             catch (Exception e)
             {
@@ -231,7 +231,7 @@ namespace property_dealer_API.Hubs.GamePlay
             try
             {
                 var result = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
-                await this.RefreshGameState(gameRoomId, result.AllPlayersToRefreshState);
+                await this.RefreshFullGameState(gameRoomId, true);
 
                 // Check if someone won
                 if (result.GameEnded)
@@ -253,22 +253,16 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
-        public async Task DebugManager(string gameRoomId, string userId, DebugOptionsEnum debugOption)
-        {
-            try
-            {
-                this._gamePlayService.SendDebugCommand(gameRoomId, userId, debugOption);
-            }
-            catch (Exception e)
-            {
-                await this.ExceptionHandler(e);
-            }
-        }
-
         public async Task CheckIfAnyPlayersWon(string gameRoomId)
         {
             var player = this._gamePlayService.CheckIfAnyPlayersWon(gameRoomId);
             await this.Clients.Group(gameRoomId).PlayerWon(player);
+        }
+
+        public async Task EndPlayerTurnEarlier(string gameRoomId, string userId)
+        {
+            this._gamePlayService.EndPlayerTurnEarlier(gameRoomId, userId);
+            await this.RefreshFullGameState(gameRoomId, true);
         }
 
         #endregion
@@ -296,8 +290,9 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
-        private async Task RefreshFullGameState(List<Player> allPlayerIds, string gameRoomId, bool includeDiscardPile = false)
+        private async Task RefreshFullGameState(string gameRoomId, bool includeDiscardPile = false)
         {
+            var allPlayerIds = this._gamePlayService.GetAllPlayers(gameRoomId);
             await this.RefreshGameState(gameRoomId, allPlayerIds);
 
             if (includeDiscardPile)
@@ -306,5 +301,10 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
         #endregion
+
+        public async Task SendDebugCommand(string gameRoomId, DebugOptionsEnum debugCommand, DebugContext debugContext)
+        {
+            this._gamePlayService.SendDebugCommand(gameRoomId, debugCommand, debugContext);
+        }
     }
 }

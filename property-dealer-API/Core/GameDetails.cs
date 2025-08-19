@@ -37,7 +37,7 @@ namespace property_dealer_API.Core
         private readonly IDebugManager _debugManager;
         private readonly ITurnExecutionManager _turnExecutionManager;
         private readonly IDialogManager _dialogManager;
-        private readonly IServiceScope _scope; // TODO dispose of scope on game end
+        private readonly IServiceScope _scope;
 
         public required string RoomId { get; set; }
         public required string RoomName { get; set; }
@@ -144,9 +144,9 @@ namespace property_dealer_API.Core
                 {
                     this.HandleRemoveFromHand(userId, cardId);
                     var winningPlayer = this.CompleteTurn(); // Null if no winning players found
-                    return new TurnResult(allPlayers, null, winningPlayer);
+                    return new TurnResult(null, winningPlayer);
                 }
-                return new TurnResult(allPlayers, actionContext, null);
+                return new TurnResult(actionContext, null);
             }
             catch (Exception)
             {
@@ -172,10 +172,10 @@ namespace property_dealer_API.Core
                 this._playerHandManager.RemoveFromPlayerHand(actionContext.ActionInitiatingPlayerId, actionContext.CardId);
                 Console.WriteLine($"[DEBUG] Successfully removed original command card");
                 var winningPlayer = this.CompleteTurn();
-                return new TurnResult(allPlayers, null, winningPlayer);
+                return new TurnResult(null, winningPlayer);
             }
 
-            return new TurnResult(allPlayers, dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
+            return new TurnResult(dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
         }
 
         public void NextPlayerTurn(string userId)
@@ -226,14 +226,9 @@ namespace property_dealer_API.Core
             return this._deckManager.GetMostRecentDiscardedCard()?.ToDto();
         }
 
-        public void ExecuteDebugCommand(string userId, DebugOptionsEnum debugOption)
+        public void ExecuteDebugCommand(DebugOptionsEnum debugCommand, DebugContext debugContext)
         {
-            switch (debugOption)
-            {
-                case DebugOptionsEnum.SpawnCard:
-                    this._debugManager.GiveAllCardsInDeck();
-                    break;
-            }
+            this._debugManager.ProcessCommand(debugCommand, debugContext);
         }
 
         public Player? CheckIfAnyPlayersWon()
@@ -250,6 +245,7 @@ namespace property_dealer_API.Core
                     }
 
                     this.GameState = GameStateEnum.GameOver;
+                    this._scope.Dispose();
                     return player.Player;
                 }
             }
@@ -265,6 +261,7 @@ namespace property_dealer_API.Core
             foreach (var player in playerList)
             {
                 this._playerHandManager.AddPlayerHand(player.UserId);
+                this._debugManager.ProcessCommand(DebugOptionsEnum.SpawnFullSet, new DebugContext { UserId = player.UserId });
             }
         }
 

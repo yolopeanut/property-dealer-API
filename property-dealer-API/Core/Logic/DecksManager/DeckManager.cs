@@ -95,7 +95,10 @@ namespace property_dealer_API.Core.Logic.DecksManager
         {
             if (this._discardPile.TryPeek(out Card? card))
             {
-                return card;
+                if (card is CommandCard)
+                {
+                    return card;
+                }
             }
             return null;
         }

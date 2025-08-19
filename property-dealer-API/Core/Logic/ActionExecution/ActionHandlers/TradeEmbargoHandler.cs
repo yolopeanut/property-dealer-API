@@ -63,16 +63,53 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 case DialogTypeEnum.PayValue:
                     if (responder.UserId == currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("The action initiator cannot pay themselves rent.");
-                    this.ProcessPaymentResponse(currentContext, responder);
-                    base.CompleteAction();
+                    this.ProcessPaymentAndCompleteAction(currentContext, responder);
                     break;
+
                 case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
-                    base.CompleteAction();
+                    if (responder.UserId == currentContext.ActionInitiatingPlayerId)
+                        throw new InvalidOperationException("The action initiator cannot be the one responding to shields up.");
+
+                    this.HandleShieldsUpResponse(currentContext, responder);
                     break;
                 default:
                     throw new InvalidOperationException($"Invalid state for TradeEmbargo action: {currentContext.DialogToOpen}");
             }
+        }
+
+        private void HandleShieldsUpResponse(ActionContext currentContext, Player responder)
+        {
+            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
+            {
+                base.HandleShieldsUp(responder);
+                this.RemoveTributeAndCompleteAction(currentContext);
+            }
+            else if (currentContext.DialogResponse == CommandResponseEnum.Accept)
+            {
+                this.ProcessPaymentAndCompleteAction(currentContext, responder);
+            }
+        }
+
+        private void ProcessPaymentAndCompleteAction(ActionContext currentContext, Player responder)
+        {
+            this.ProcessPaymentResponse(currentContext, responder);
+            this.RemoveTributeAndCompleteAction(currentContext);
+        }
+
+        private void RemoveTributeAndCompleteAction(ActionContext currentContext)
+        {
+            this.RemoveTributeCardFromPlayerHand(currentContext); // Is fine to remove here because trade embargo only targets 1 person
+            base.CompleteAction();
+        }
+
+        private void RemoveTributeCardFromPlayerHand(ActionContext currentContext)
+        {
+            if (currentContext.SupportingCardIdToRemove == null || currentContext.SupportingCardIdToRemove.Count <= 0)
+            {
+                throw new ActionContextParameterNullException(currentContext, "Cannot remove tribute card from action initiating player when OwnTargetCardId is null");
+            }
+
+            base.PlayerHandManager.RemoveFromPlayerHand(currentContext.ActionInitiatingPlayerId, currentContext.SupportingCardIdToRemove.First());
         }
 
         private void ProcessRentCardSelection(ActionContext currentContext)

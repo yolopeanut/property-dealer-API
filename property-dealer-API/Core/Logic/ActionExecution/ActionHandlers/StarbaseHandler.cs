@@ -67,7 +67,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
             var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
 
-            base.RulesManager.ValidateSpaceStationPlacement(playerTableHand, currentContext.TargetSetColor.Value);
+            base.RulesManager.ValidateStarbasePlacement(playerTableHand, currentContext.TargetSetColor.Value);
         }
 
         private void ProcessPropertySetSelection(ActionContext currentContext)

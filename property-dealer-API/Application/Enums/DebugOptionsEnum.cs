@@ -2,6 +2,7 @@
 {
     public enum DebugOptionsEnum
     {
+        SpawnFullSet,
         SpawnCard,
         DeleteCard,
         ClearPendingContext,

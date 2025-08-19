@@ -65,11 +65,11 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
             var removalStatus = gameInstance.RemovePlayerByUserId(userId);
 
-            // // If no players are left (response by game instance), remove the game from game manager.
-            // if (removalStatus?.Response == RemovePlayerResponse.NoPlayersRemaining)
-            // {
-            //     this._gameManagerService.RemoveGame(gameRoomId);
-            // }
+            //// If no players are left (response by game instance), remove the game from game manager.
+            //if (removalStatus?.Response == RemovePlayerResponse.NoPlayersRemaining)
+            //{
+            //    this._gameManagerService.RemoveGame(gameRoomId);
+            //}
 
             return removalStatus?.PlayerName ?? "Server: Cannot find player";
         }
@@ -121,17 +121,22 @@ namespace property_dealer_API.Hubs.GamePlay.Service
 
         }
 
-        public void SendDebugCommand(string gameRoomId, string userId, DebugOptionsEnum debugOption)
+        public void SendDebugCommand(string gameRoomId, DebugOptionsEnum debugCommand, DebugContext debugContext)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
-            gameInstance.ExecuteDebugCommand(userId, debugOption);
+            gameInstance.ExecuteDebugCommand(debugCommand, debugContext);
         }
 
         public Player? CheckIfAnyPlayersWon(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             return gameInstance.CheckIfAnyPlayersWon();
+        }
+
+        public void EndPlayerTurnEarlier(string gameRoomId, string userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

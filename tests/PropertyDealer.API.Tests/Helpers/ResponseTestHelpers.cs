@@ -65,6 +65,7 @@ namespace PropertyDealer.API.Tests.TestHelpers
         {
             var response = originalContext.Clone();
             response.OwnTargetCardId = [cardId];
+            response.SupportingCardIdToRemove = [cardId];
             response.DialogResponse = CommandResponseEnum.Accept;
             return response;
         }

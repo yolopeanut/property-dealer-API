@@ -187,13 +187,18 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             var target1 = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user2", "Target1");
             var target2 = GameStateTestHelpers.SetupPlayerInGame(this._playerManager, this._playerHandManager, "user3", "Target2");
 
-            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan, 3); // Complete set
             var tributeCard = CardTestHelpers.CreateTributeCard();
+            var starbase = CardTestHelpers.CreateCommandCard(ActionTypes.Starbase);
+            var spaceStation = CardTestHelpers.CreateCommandCard(ActionTypes.SpaceStation);
+
+            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan, 3); // Complete set
+            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan, starbase); // Add starbase command card
+            GameStateTestHelpers.GivePlayerPropertySet(this._playerHandManager, initiator.UserId, PropertyCardColoursEnum.Cyan, spaceStation); // Add starbase command card
             GameStateTestHelpers.GivePlayerCards(this._playerHandManager, initiator.UserId, [tributeCard]);
 
             // Give targets money
-            GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target1.UserId, 10);
-            GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target2.UserId, 10);
+            GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target1.UserId, 11);
+            GameStateTestHelpers.GivePlayerMoney(this._playerHandManager, target2.UserId, 11);
 
             // Act - Step 1: Execute action
             var actionContext = this._actionExecutionManager.ExecuteAction(initiator.UserId, tributeCard, initiator, this._playerManager.GetAllPlayers());
@@ -209,7 +214,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.Integration
             Assert.Equal(DialogTypeEnum.PayValue, step2Result.NewActionContexts[0].DialogToOpen);
 
             // Act - Step 3: Players pay rent
-            var rentAmount = step2Result.NewActionContexts[0].PaymentAmount ?? 6;
+            var rentAmount = step2Result.NewActionContexts[0].PaymentAmount ?? -1;
+            Assert.Equal(11, rentAmount);
             var payResponse1 = ResponseTestHelpers.CreatePayValueResponse(step2Result.NewActionContexts[0], this._playerHandManager, target1.UserId, rentAmount);
             var payResponse2 = ResponseTestHelpers.CreatePayValueResponse(step2Result.NewActionContexts[0], this._playerHandManager, target2.UserId, rentAmount);
 

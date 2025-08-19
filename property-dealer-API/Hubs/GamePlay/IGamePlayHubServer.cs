@@ -17,5 +17,6 @@ namespace property_dealer_API.Hubs.GameLobby
         Task GetCurrentPlayerTurn(string gameRoomId);
         Task SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
         Task CheckIfAnyPlayersWon(string gameRoomId);
+        Task EndPlayerTurnEarlier(string gameRoomId, string userId);
     }
 }

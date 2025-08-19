@@ -145,7 +145,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                     throw;
                 }
             }
-
         }
 
         public void ExecutePlayToTable(string actionInitiatingPlayerId, string cardId, PropertyCardColoursEnum targetSetColor)

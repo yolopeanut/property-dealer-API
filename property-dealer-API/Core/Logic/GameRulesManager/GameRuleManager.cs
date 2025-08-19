@@ -104,14 +104,14 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         public void ValidateSpaceStationPlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
         {
             this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.SpaceStation);
+            this.ValidateNoDuplicateCard(playerTableHand, targetColor, ActionTypes.SpaceStation);
         }
 
         public void ValidateStarbasePlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
         {
             this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.Starbase);
-
-            // Additional rule: Starbase requires Space Station first
-            // TODO: Add logic to check if Space Station exists on the property set
+            this.ValidateHasCardPresent(playerTableHand, targetColor, ActionTypes.Starbase);
+            this.ValidateNoDuplicateCard(playerTableHand, targetColor, ActionTypes.Starbase);
         }
 
         public void ValidateTradeEmbargoTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
@@ -229,19 +229,45 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         public int CalculateRentAmount(PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards)
         {
-            int cardCount = playerPropertyCards.Count(card =>
-                card is StandardSystemCard systemCard && systemCard.CardColoursEnum == targetColor);
+            var representativeCard = playerPropertyCards
+                .OfType<StandardSystemCard>()
+                .FirstOrDefault(sc => sc.CardColoursEnum == targetColor);
 
-            var systemCard = playerPropertyCards.FirstOrDefault(card =>
-                card is StandardSystemCard sc && sc.CardColoursEnum == targetColor) as StandardSystemCard;
-
-            if (systemCard == null || cardCount == 0)
+            if (representativeCard == null)
             {
                 return 0;
             }
 
-            int rentalIndex = Math.Min(cardCount - 1, systemCard.RentalValues.Count - 1);
-            return systemCard.RentalValues[rentalIndex];
+            int propertyCount = playerPropertyCards.Count(card =>
+                (card is StandardSystemCard sc && sc.CardColoursEnum == targetColor) ||
+                (card is SystemWildCard)
+            );
+
+            if (propertyCount == 0)
+            {
+                return 0;
+            }
+
+            // Use Math.Min to prevent an index out-of-bounds error if they have more properties than rent tiers.
+            int rentalIndex = Math.Min(propertyCount - 1, representativeCard.RentalValues.Count - 1);
+            int baseRent = representativeCard.RentalValues[rentalIndex];
+            int additionalRent = 0;
+
+            const int starbaseRentValue = 3;
+            const int spaceStationRentValue = 4;
+
+            int starbaseCount = playerPropertyCards
+                .OfType<CommandCard>()
+                .Count(cc => cc.Command == ActionTypes.Starbase);
+
+            int spaceStationCount = playerPropertyCards
+                .OfType<CommandCard>()
+                .Count(cc => cc.Command == ActionTypes.SpaceStation);
+
+            additionalRent = (starbaseCount >= 1 ? starbaseRentValue : 0) + (spaceStationCount >= 1 ? spaceStationRentValue : 0);
+
+            // Return the total rent.
+            return baseRent + additionalRent;
         }
 
         public int? GetPaymentAmount(ActionTypes actionType)
@@ -355,6 +381,24 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                     default:
                         throw new InvalidOperationException($"{actionType} cannot target completed property sets. The {targetColor} set is already complete.");
                 }
+            }
+        }
+
+        private void ValidateHasCardPresent(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        {
+            if (!propertySet.Exists(card => card is CommandCard command && command.Command == actionType))
+            {
+                // A duplicate command card was found. Handle the error.
+                throw new InvalidOperationException($"Cannot place card without {actionType} present first!");
+            }
+        }
+
+        private void ValidateNoDuplicateCard(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        {
+            if (propertySet.Exists(card => card is CommandCard command && command.Command == actionType))
+            {
+                // A duplicate command card was found. Handle the error.
+                throw new InvalidOperationException($"A duplicate card with action type '{actionType}' already exists in the set.");
             }
         }
 

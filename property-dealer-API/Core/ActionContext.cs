@@ -15,6 +15,7 @@ namespace property_dealer_API.Core
         // E.g P1 sends Hostile Takeover, dialog target will be P1 (select player)
         // P1 then selects P2.
         // P2 will be new dialog target (notification/shields up)
+        public List<string>? SupportingCardIdToRemove { get; set; }
         public required List<Player> DialogTargetList { get; set; }
         public required DialogTypeEnum DialogToOpen { get; set; }
 

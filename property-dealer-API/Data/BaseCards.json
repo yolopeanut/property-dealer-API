@@ -286,7 +286,7 @@
       {
         "name": "System Wildcard",
         "value": 0,
-        "count": 10,
+        "count": 3,
         "description": "This card can be placed on any set!"
       }
     ],
@@ -302,7 +302,7 @@
         "type": "ShieldsUp",
         "name": "Shields Up",
         "value": 4,
-        "count": 3,
+        "count": 10,
         "description": "Cancel any command card played against you."
       },
       {
@@ -337,14 +337,14 @@
         "type": "ExploreNewSector",
         "name": "Explore a New Sector",
         "value": 1,
-        "count": 10,
+        "count": 5,
         "description": "Draw 2 extra cards from the deck."
       },
       {
         "type": "SpaceStation",
         "name": "Space Station",
         "value": 3,
-        "count": 3,
+        "count": 2,
         "description": "Add 3M Credits to the tribute value of a completed system set. Can only be played on a full set."
       },
       {
@@ -358,7 +358,7 @@
         "type": "TradeEmbargo",
         "name": "Trade Embargo",
         "value": 1,
-        "count": 2,
+        "count": 3,
         "description": "Play with a Tribute card to double the amount owed."
       }
     ],
