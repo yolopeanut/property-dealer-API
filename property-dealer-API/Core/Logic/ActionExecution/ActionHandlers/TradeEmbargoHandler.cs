@@ -60,45 +60,29 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                         throw new InvalidOperationException("Only the action initiator can select a player.");
                     this.ProcessPlayerSelection(currentContext);
                     break;
+                case DialogTypeEnum.ShieldsUp:
+                    base.HandleShieldsUp(responder, currentContext, this.ProcessPaymentAndCompleteAction);
+                    this.RemoveTributeCardFromPlayerHand(currentContext);
+                    break;
                 case DialogTypeEnum.PayValue:
                     if (responder.UserId == currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException("The action initiator cannot pay themselves rent.");
                     this.ProcessPaymentAndCompleteAction(currentContext, responder);
+                    this.RemoveTributeCardFromPlayerHand(currentContext);
                     break;
-
-                case DialogTypeEnum.ShieldsUp:
-                    if (responder.UserId == currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException("The action initiator cannot be the one responding to shields up.");
-
-                    this.HandleShieldsUpResponse(currentContext, responder);
-                    break;
+                // Shields up is already part of pay value dialog on the UI
                 default:
                     throw new InvalidOperationException($"Invalid state for TradeEmbargo action: {currentContext.DialogToOpen}");
             }
         }
 
-        private void HandleShieldsUpResponse(ActionContext currentContext, Player responder)
+        private void ProcessPaymentAndCompleteAction(ActionContext currentContext, Player responder, Boolean _ = true)
         {
-            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
-            {
-                base.HandleShieldsUp(responder);
-                this.RemoveTributeAndCompleteAction(currentContext);
-            }
-            else if (currentContext.DialogResponse == CommandResponseEnum.Accept)
-            {
-                this.ProcessPaymentAndCompleteAction(currentContext, responder);
-            }
-        }
 
-        private void ProcessPaymentAndCompleteAction(ActionContext currentContext, Player responder)
-        {
             this.ProcessPaymentResponse(currentContext, responder);
-            this.RemoveTributeAndCompleteAction(currentContext);
-        }
 
-        private void RemoveTributeAndCompleteAction(ActionContext currentContext)
-        {
-            this.RemoveTributeCardFromPlayerHand(currentContext); // Is fine to remove here because trade embargo only targets 1 person
+            // Is fine to remove here because trade embargo only targets 1 person
+
             base.CompleteAction();
         }
 
@@ -186,21 +170,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
         {
             if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
                 throw new ActionContextParameterNullException(currentContext, "A response (payment or shield) must be provided.");
-
-            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
-            {
-                var targetPlayer = base.PlayerManager.GetPlayerByUserId(responder.UserId);
-                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-                if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                {
-                    base.HandleShieldsUp(responder);
-                }
-                else
-                {
-                    throw new CardNotFoundException("Shields up was not found in players deck!");
-                }
-                return;
-            }
 
             base.ActionExecutor.ExecutePayment(
                 currentContext.ActionInitiatingPlayerId,

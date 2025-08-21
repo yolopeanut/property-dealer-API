@@ -191,6 +191,12 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         public bool CheckIfPlayerWon(List<PropertyCardGroup> tableHand)
         {
             var completeSets = 0;
+
+            if (tableHand.Count >= 11)
+            {
+                return true;
+            }
+
             foreach (var propertyGroup in tableHand)
             {
                 var groupedPropertyCards = propertyGroup.groupedPropertyCards;

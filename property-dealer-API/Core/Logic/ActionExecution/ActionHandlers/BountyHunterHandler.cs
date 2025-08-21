@@ -49,6 +49,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     this.ProcessPlayerSelection(currentContext);
                     break;
 
+                case DialogTypeEnum.ShieldsUp:
+                    base.HandleShieldsUp(responder, currentContext, this.ProcessPayment);
+                    break;
+
                 case DialogTypeEnum.PayValue:
                     // Only the target can respond with payment.
                     if (responder.UserId != currentContext.TargetPlayerId)
@@ -57,9 +61,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     this.ProcessPayment(currentContext, responder);
                     break;
 
-                case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
-                    break;
 
                 default:
                     throw new InvalidOperationException($"Invalid state for BountyHunter action: {currentContext.DialogToOpen}");
@@ -85,7 +86,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
         }
 
-        private void ProcessPayment(ActionContext currentContext, Player responder)
+        private void ProcessPayment(ActionContext currentContext, Player responder, Boolean _ = true)
         {
             if (currentContext.OwnTargetCardId == null || currentContext.OwnTargetCardId.Count < 1)
             {

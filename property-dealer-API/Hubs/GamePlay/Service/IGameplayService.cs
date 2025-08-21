@@ -3,6 +3,7 @@ using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay.Service
@@ -24,5 +25,6 @@ namespace property_dealer_API.Hubs.GamePlay.Service
         void SendDebugCommand(string gameRoomId, DebugOptionsEnum debugCommand, DebugContext debugContext);
         Player? CheckIfAnyPlayersWon(string gameRoomId);
         void EndPlayerTurnEarlier(string gameRoomId, string userId);
+        void DisposeExtraCards(string gameRoomId, string userId, List<Card> cardsToDispose);
     }
 }

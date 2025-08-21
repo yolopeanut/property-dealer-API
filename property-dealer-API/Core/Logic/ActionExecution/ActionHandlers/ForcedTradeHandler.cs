@@ -69,12 +69,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     this.ProcessTableHandSelection(currentContext, responder);
                     break;
 
-                case DialogTypeEnum.WildcardColor:
-                    this.ProcessWildcardColorSelection(currentContext, responder);
+                case DialogTypeEnum.ShieldsUp:
+                    base.HandleShieldsUp(responder, currentContext, this.ProcessTableHandSelection);
                     break;
 
-                case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
+                case DialogTypeEnum.WildcardColor:
+                    this.ProcessWildcardColorSelection(currentContext, responder);
                     break;
 
                 default:
@@ -89,7 +89,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             base.SetNextDialog(currentContext, DialogTypeEnum.TableHandSelector, initiator, targetPlayer);
         }
 
-        private void ProcessTableHandSelection(ActionContext currentContext, Player responder)
+        private void ProcessTableHandSelection(ActionContext currentContext, Player responder, Boolean includeShieldsUpChecking = true)
         {
             var pendingAction = base.PendingActionManager.CurrPendingAction;
             if (pendingAction == null) throw new InvalidOperationException("No pending action found.");
@@ -112,7 +112,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
 
             this.ValidateActionPrerequisites(pendingAction, targetPlayer, cardFromTarget);
-            bool specialConditionHandled = this.TryHandleSpecialConditions(currentContext, responder, targetPlayer, cardFromTarget, targetPlayerHand);
+            bool specialConditionHandled = false;
+
+            if (includeShieldsUpChecking)
+            {
+                specialConditionHandled = this.TryHandleSpecialConditions(currentContext, responder, targetPlayer, cardFromTarget, targetPlayerHand);
+            }
 
             if (!specialConditionHandled)
             {

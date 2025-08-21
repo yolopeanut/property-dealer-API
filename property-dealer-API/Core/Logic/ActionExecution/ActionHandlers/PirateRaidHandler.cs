@@ -60,11 +60,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     this.ProcessTableHandSelection(currentContext, responder);
                     break;
 
+                case DialogTypeEnum.ShieldsUp:
+                    base.HandleShieldsUp(responder, currentContext, this.ProcessTableHandSelection);
+                    break;
+
                 case DialogTypeEnum.WildcardColor:
                     this.ProcessWildcardColorSelection(currentContext, responder);
-                    break;
-                case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
                     break;
 
                 default:
@@ -79,7 +80,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             base.SetNextDialog(currentContext, DialogTypeEnum.TableHandSelector, initiator, targetPlayer);
         }
 
-        private void ProcessTableHandSelection(ActionContext currentContext, Player responder)
+        private void ProcessTableHandSelection(ActionContext currentContext, Player responder, Boolean includeShieldsUpChecking = true)
         {
             var pendingAction = base.PendingActionManager.CurrPendingAction;
             if (pendingAction == null) throw new InvalidOperationException("No pending action found.");
@@ -95,7 +96,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
             this.ValidateActionPrerequisites(pendingAction, targetPlayer, targetCard);
 
-            bool specialConditionHandled = this.TryHandleSpecialConditions(currentContext, responder, targetPlayer, targetCard, targetPlayerHand);
+            bool specialConditionHandled = false;
+            if (includeShieldsUpChecking)
+            {
+                specialConditionHandled = this.TryHandleSpecialConditions(currentContext, responder, targetPlayer, targetCard, targetPlayerHand);
+            }
 
             if (!specialConditionHandled)
             {

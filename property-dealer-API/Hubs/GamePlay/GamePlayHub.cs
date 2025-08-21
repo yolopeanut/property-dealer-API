@@ -1,18 +1,18 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
+using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
-
     public class GamePlayHub : Hub<IGamePlayHubClient>, IGamePlayHubServer
     {
-
         #region States
         private readonly IGameplayService _gamePlayService;
         private readonly ILogger<GamePlayHub> _logger;
@@ -62,14 +62,18 @@ namespace property_dealer_API.Hubs.GamePlay
 
             if (!roomExists)
             {
-                await this.Clients.Caller.ErrorMsg("The game room you are trying to join does not exist.");
+                await this.Clients.Caller.ErrorMsg(
+                    "The game room you are trying to join does not exist."
+                );
                 this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
             }
             if (!this._gamePlayService.DoesPlayerExist(userId, gameRoomId))
             {
-                await this.Clients.Caller.ErrorMsg("Your player object does not exist, please retry.");
+                await this.Clients.Caller.ErrorMsg(
+                    "Your player object does not exist, please retry."
+                );
                 this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
@@ -93,7 +97,6 @@ namespace property_dealer_API.Hubs.GamePlay
 
             var gameRoomId = gameRoomIdObj as string;
             var userId = userIdObj as string;
-
 
             //if (!String.IsNullOrEmpty(gameRoomId) && !String.IsNullOrEmpty(userId))
             //{
@@ -182,43 +185,47 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
-        public async Task PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum)
+        public async Task PlayCard(
+            string gameRoomId,
+            string userId,
+            string cardId,
+            CardDestinationEnum cardDestination,
+            PropertyCardColoursEnum? cardColorDestinationEnum
+        )
         {
             this._logger.LogInformation(
-                   "--> PlayCard called with params: GameRoomId={GameRoomId}, UserId={UserId}, CardId={CardId}, Destination={Destination}, ColorDestination={ColorDestination}",
-                   gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
+                "--> PlayCard called with params: GameRoomId={GameRoomId}, UserId={UserId}, CardId={CardId}, Destination={Destination}, ColorDestination={ColorDestination}",
+                gameRoomId,
+                userId,
+                cardId,
+                cardDestination,
+                cardColorDestinationEnum
+            );
             //Play user card (send to discard pile, show up on all players screen, remove from user hand, draw card)
             try
             {
-                var result = this._gamePlayService.PlayCard(gameRoomId, userId, cardId, cardDestination, cardColorDestinationEnum);
-
-                // Check if someone won
-                if (result.GameEnded)
-                {
-                    await this.Clients.Group(gameRoomId).PlayerWon(result.WinningPlayer);
-                    return; // Don't continue with normal flow if game ended
-                }
-
-                if (result.ActionContext != null)
-                {
-                    await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
-                }
-
-                bool includeDiscardPile = cardDestination == CardDestinationEnum.CommandPile;
-                await this.RefreshFullGameState(gameRoomId, includeDiscardPile);
+                var result = this._gamePlayService.PlayCard(
+                    gameRoomId,
+                    userId,
+                    cardId,
+                    cardDestination,
+                    cardColorDestinationEnum
+                );
+                await this.HandlePlayerSideEffect(gameRoomId, result);
             }
             catch (Exception e)
             {
                 await this.ExceptionHandler(e);
             }
         }
-
 
         public async Task GetCurrentPlayerTurn(string gameRoomId)
         {
             try
             {
-                await this.Clients.Group(gameRoomId).CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
+                await this
+                    .Clients.Group(gameRoomId)
+                    .CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
             }
             catch (Exception e)
             {
@@ -226,26 +233,20 @@ namespace property_dealer_API.Hubs.GamePlay
             }
         }
 
-        public async Task SendActionResponse(string gameRoomId, string userId, ActionContext actionContext)
+        public async Task SendActionResponse(
+            string gameRoomId,
+            string userId,
+            ActionContext actionContext
+        )
         {
             try
             {
-                var result = this._gamePlayService.SendActionResponse(gameRoomId, userId, actionContext);
-                await this.RefreshFullGameState(gameRoomId, true);
-
-                // Check if someone won
-                if (result.GameEnded)
-                {
-                    await this.Clients.Group(gameRoomId).PlayerWon(result.WinningPlayer);
-                    return; // Don't continue with normal flow if game ended
-                }
-
-
-                // If there's a new dialog to open, send it to clients
-                if (result.ActionContext != null)
-                {
-                    await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
-                }
+                var result = this._gamePlayService.SendActionResponse(
+                    gameRoomId,
+                    userId,
+                    actionContext
+                );
+                await this.HandlePlayerSideEffect(gameRoomId, result);
             }
             catch (Exception e)
             {
@@ -262,6 +263,16 @@ namespace property_dealer_API.Hubs.GamePlay
         public async Task EndPlayerTurnEarlier(string gameRoomId, string userId)
         {
             this._gamePlayService.EndPlayerTurnEarlier(gameRoomId, userId);
+            await this.RefreshFullGameState(gameRoomId, true);
+        }
+
+        public async Task SendDisposeExtraCardsResponse(
+            string gameRoomId,
+            string userId,
+            List<Card> cardsToDispose
+        )
+        {
+            this._gamePlayService.DisposeExtraCards(gameRoomId, userId, cardsToDispose);
             await this.RefreshFullGameState(gameRoomId, true);
         }
 
@@ -300,9 +311,38 @@ namespace property_dealer_API.Hubs.GamePlay
                 await this.GetLatestDiscardPileCard(gameRoomId);
             }
         }
+
+        private async Task HandlePlayerSideEffect(string gameRoomId, TurnResult result)
+        {
+            // Check if someone won
+            if (result.GameEnded)
+            {
+                await this.Clients.Group(gameRoomId).PlayerWon(result.WinningPlayer);
+                return; // Don't continue with normal flow if game ended
+            }
+
+            // If there's a new dialog to open, send it to clients
+            if (result.ActionContext != null)
+            {
+                await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
+            }
+
+            if (result.NeedToRemoveCardPlayer != null)
+            {
+                await this
+                    .Clients.Group(gameRoomId)
+                    .DisposeExtraCards(result.NeedToRemoveCardPlayer);
+            }
+
+            await this.RefreshFullGameState(gameRoomId, true);
+        }
         #endregion
 
-        public async Task SendDebugCommand(string gameRoomId, DebugOptionsEnum debugCommand, DebugContext debugContext)
+        public async Task SendDebugCommand(
+            string gameRoomId,
+            DebugOptionsEnum debugCommand,
+            DebugContext debugContext
+        )
         {
             this._gamePlayService.SendDebugCommand(gameRoomId, debugCommand, debugContext);
         }

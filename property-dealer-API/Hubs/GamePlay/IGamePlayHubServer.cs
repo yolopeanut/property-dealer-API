@@ -1,5 +1,6 @@
 ﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Core;
+using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 using TypedSignalR.Client;
 
@@ -12,10 +13,21 @@ namespace property_dealer_API.Hubs.GameLobby
         Task GetAllPlayerList(string gameRoomId);
         Task GetPlayerHand(string gameRoomId, string userId);
         Task GetAllTableCard(string gameRoomId);
-        Task PlayCard(string gameRoomId, string userId, string cardId, CardDestinationEnum cardDestination, PropertyCardColoursEnum? cardColorDestinationEnum);
+        Task PlayCard(
+            string gameRoomId,
+            string userId,
+            string cardId,
+            CardDestinationEnum cardDestination,
+            PropertyCardColoursEnum? cardColorDestinationEnum
+        );
         Task GetLatestDiscardPileCard(string gameRoomId);
         Task GetCurrentPlayerTurn(string gameRoomId);
         Task SendActionResponse(string gameRoomId, string userId, ActionContext actionContext);
+        Task SendDisposeExtraCardsResponse(
+            string gameRoomId,
+            string userId,
+            List<Card> cardsToDispose
+        );
         Task CheckIfAnyPlayersWon(string gameRoomId);
         Task EndPlayerTurnEarlier(string gameRoomId, string userId);
     }

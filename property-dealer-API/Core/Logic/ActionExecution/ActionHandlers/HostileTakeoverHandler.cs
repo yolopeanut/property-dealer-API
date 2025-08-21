@@ -50,6 +50,37 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         public void ProcessResponse(Player responder, ActionContext currentContext)
         {
+            var pendingAction = base.PendingActionManager.CurrPendingAction;
+            if (pendingAction == null) throw new InvalidOperationException("No pending action found.");
+
+            switch (currentContext.DialogToOpen)
+            {
+                case DialogTypeEnum.PlayerSelection:
+                    this.ProcessPlayerSelection(currentContext);
+                    break;
+
+                case DialogTypeEnum.PropertySetSelection:
+                    this.HandlePropertySetSelection(currentContext, responder);
+                    break;
+
+                case DialogTypeEnum.ShieldsUp:
+                    base.HandleShieldsUp(responder, currentContext, this.HandlePropertySetSelection);
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"Invalid state for HostileTakeover action: {currentContext.DialogToOpen}");
+            }
+        }
+
+        private void ProcessPlayerSelection(ActionContext currentContext)
+        {
+            var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);
+            var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId!);
+            base.SetNextDialog(currentContext, DialogTypeEnum.PropertySetSelection, initiator, targetPlayer);
+        }
+
+        private void HandlePropertySetSelection(ActionContext currentContext, Player responder, Boolean includeShieldsUpChecking = true)
+        {
             var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);
             Player? targetPlayer = null;
             if (currentContext.TargetPlayerId != null)
@@ -57,48 +88,35 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId);
             }
 
-            var pendingAction = base.PendingActionManager.CurrPendingAction;
-            if (pendingAction == null) throw new InvalidOperationException("No pending action found.");
-
-            switch (currentContext.DialogToOpen)
+            if (targetPlayer == null)
             {
-                case DialogTypeEnum.PlayerSelection:
-                    base.SetNextDialog(currentContext, DialogTypeEnum.PropertySetSelection, initiator, targetPlayer);
-                    break;
-
-                case DialogTypeEnum.PropertySetSelection:
-
-                    if (targetPlayer == null)
-                    {
-                        throw new InvalidOperationException("Target player cannot be null when doing hostile takeover!");
-                    }
-                    if (!currentContext.TargetSetColor.HasValue)
-                    {
-                        throw new ActionContextParameterNullException(currentContext, "TargetSetColor was found to be null for hostile takeover!");
-                    }
-                    var targetPlayerSelectedPropertySet = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(targetPlayer.UserId, currentContext.TargetSetColor.Value);
-
-                    base.RulesManager.ValidateHostileTakeoverTarget(targetPlayerSelectedPropertySet, currentContext.TargetSetColor.Value);
-
-                    var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-
-                    bool specialConditionHandled = this.TryHandleSpecialConditions(currentContext, initiator, targetPlayer, targetPlayerHand);
-                    if (!specialConditionHandled)
-                    {
-                        base.ActionExecutor.ExecuteHostileTakeover(currentContext.ActionInitiatingPlayerId, targetPlayer.UserId, currentContext.TargetSetColor!.Value);
-                        base.CompleteAction();
-                    }
-
-                    break;
-
-                case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Invalid state for HostileTakeover action: {currentContext.DialogToOpen}");
+                throw new InvalidOperationException("Target player cannot be null when doing hostile takeover!");
             }
+            if (!currentContext.TargetSetColor.HasValue)
+            {
+                throw new ActionContextParameterNullException(currentContext, "TargetSetColor was found to be null for hostile takeover!");
+            }
+            var targetPlayerSelectedPropertySet = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(targetPlayer.UserId, currentContext.TargetSetColor.Value);
+
+            base.RulesManager.ValidateHostileTakeoverTarget(targetPlayerSelectedPropertySet, currentContext.TargetSetColor.Value);
+
+            var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
+
+            bool specialConditionHandled = false;
+
+            if (includeShieldsUpChecking)
+            {
+                specialConditionHandled = this.TryHandleSpecialConditions(currentContext, initiator, targetPlayer, targetPlayerHand);
+            }
+
+            if (!specialConditionHandled)
+            {
+                base.ActionExecutor.ExecuteHostileTakeover(currentContext.ActionInitiatingPlayerId, targetPlayer.UserId, currentContext.TargetSetColor!.Value);
+                base.CompleteAction();
+            }
+
         }
+
         private bool TryHandleSpecialConditions(ActionContext currentContext, Player initiator, Player targetPlayer, List<Card> targetPlayerHand)
         {
             if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))

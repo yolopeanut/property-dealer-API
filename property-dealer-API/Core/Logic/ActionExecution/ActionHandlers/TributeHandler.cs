@@ -59,15 +59,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
                     this.ProcessPaymentResponse(currentContext, responder);
                     // Each payment increments the counter. The manager will handle final completion.
-                    base.CompleteAction();
                     break;
-
-                case DialogTypeEnum.ShieldsUp:
-                    // This case is needed if a shield is played, as it's a separate dialog.
-                    base.HandleShieldsUp(responder);
-                    base.CompleteAction();
-                    break;
-
                 default:
                     throw new InvalidOperationException($"Invalid state for Tribute action: {currentContext.DialogToOpen}");
             }
@@ -85,7 +77,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 var tributeCard = this.PlayerHandManager.GetCardFromPlayerHandById(actionInitiatingPlayer, currentContext.CardId);
                 base.RulesManager.ValidateTributeCardTarget(targetColor, tributeCard);
                 var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(actionInitiatingPlayer, targetColor);
-
             }
             catch (Exception)
             {
@@ -117,14 +108,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             {
                 var targetPlayer = base.PlayerManager.GetPlayerByUserId(responder.UserId);
                 var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-                if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                {
-                    base.HandleShieldsUp(responder);
-                }
-                else
+                if (!base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                 {
                     throw new CardNotFoundException("Shields up was not found in players deck!");
                 }
+
+                base.HandleShieldsUp(responder, currentContext, null);
                 return; // Exit after handling the shield.
             }
 
@@ -133,6 +122,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 responder.UserId,
                 currentContext.OwnTargetCardId
             );
+
+            base.CompleteAction();
         }
 
         private void CalculateTributeAmount(ActionContext currentContext)

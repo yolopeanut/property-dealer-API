@@ -1,12 +1,10 @@
-﻿
-using property_dealer_API.Application.DTOs.Responses;
+﻿using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using TypedSignalR.Client;
 
 namespace property_dealer_API.Hubs.GamePlay
 {
-
     [Receiver]
     public interface IGamePlayHubClient
     {
@@ -18,6 +16,7 @@ namespace property_dealer_API.Hubs.GamePlay
         Task LatestDiscardPileCard(CardDto discardedCard);
         Task OpenCommandDialog(ActionContext actionContext);
         Task CurrentPlayerTurn(Player player);
+        Task DisposeExtraCards(Player player);
         Task PlayerWon(Player? player);
     }
 }

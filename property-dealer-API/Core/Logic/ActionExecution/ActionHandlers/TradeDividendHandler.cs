@@ -58,7 +58,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
         }
 
-        private void ProcessPaymentResponse(ActionContext currentContext, Player responder)
+        private void ProcessPaymentResponse(ActionContext currentContext, Player responder, Boolean _ = true)
         {
             // The player must have submitted cards, either as payment or as a 'Shields Up'.
             if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
@@ -76,7 +76,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
                 if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                 {
-                    base.HandleShieldsUp(responder);
+                    base.HandleShieldsUp(responder, currentContext, this.ProcessPaymentResponse);
                 }
                 else
                 {

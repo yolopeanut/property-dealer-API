@@ -1,4 +1,5 @@
 ﻿using property_dealer_API.Application.Enums;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -69,18 +70,36 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             PendingActionManager.IncrementProcessedActions();
         }
 
-        protected void HandleShieldsUp(Player responder)
+        protected virtual void HandleShieldsUp(Player responder, ActionContext currentContext, Action<ActionContext, Player, Boolean>? callbackIfShieldsUpRejected)
         {
-            var playerHand = this.PlayerHandManager.GetPlayerHand(responder.UserId);
-
-            var shieldsUpCard = playerHand.FirstOrDefault(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
-            if (shieldsUpCard != null)
+            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
             {
-                this.ActionExecutor.HandleRemoveFromHand(responder.UserId, shieldsUpCard.CardGuid.ToString());
+                var targetPlayer = this.PlayerManager.GetPlayerByUserId(responder.UserId);
+                var targetPlayerHand = this.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
+                if (!this.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+                {
+                    throw new CardNotFoundException("Shields up was not found in players deck!");
+                }
+                var playerHand = this.PlayerHandManager.GetPlayerHand(responder.UserId);
+
+                var shieldsUpCard = playerHand.FirstOrDefault(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
+                if (shieldsUpCard != null)
+                {
+                    this.ActionExecutor.HandleRemoveFromHand(responder.UserId, shieldsUpCard.CardGuid.ToString());
+                }
+                this.CompleteAction();
+            }
+            else if (currentContext.DialogResponse == CommandResponseEnum.Accept)
+            {
+                if (callbackIfShieldsUpRejected == null)
+                {
+                    throw new InvalidOperationException("Cannot do accept response when callback action is null!");
+                }
+                callbackIfShieldsUpRejected(currentContext, responder, false); // Will handle the complete action in the called function
             }
 
-            this.CompleteAction();
         }
+
         protected void BuildShieldsUpContext(ActionContext context, Player initiator, Player target)
         {
             this.SetNextDialog(context, DialogTypeEnum.ShieldsUp, initiator, target);

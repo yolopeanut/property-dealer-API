@@ -63,7 +63,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     break;
 
                 case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder);
+                    //base.HandleShieldsUp(responder);
                     base.CompleteAction();
                     break;
 
@@ -95,7 +95,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
                 if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
                 {
-                    base.HandleShieldsUp(responder);
+                    //base.HandleShieldsUp(responder);
                 }
                 else
                 {
