@@ -1,19 +1,20 @@
-﻿using property_dealer_API.Application.Exceptions;
+﻿using System.Collections.Concurrent;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
-using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.PlayerHandsManager
 {
     public class PlayersHandManager : IPlayerHandManager, IReadOnlyPlayerHandManager
     {
         private readonly ConcurrentDictionary<string, List<Card>> _playerHands = new(); // All cards
-        private readonly ConcurrentDictionary<string, Dictionary<PropertyCardColoursEnum, List<Card>>> _playerTableHands = new(); // Can be system card or wildcard
+        private readonly ConcurrentDictionary<
+            string,
+            Dictionary<PropertyCardColoursEnum, List<Card>>
+        > _playerTableHands = new(); // Can be system card or wildcard
         private readonly ConcurrentDictionary<string, List<Card>> _playerMoneyHands = new(); // Can be tribute, command, or money card
 
-        public PlayersHandManager()
-        {
-        }
+        public PlayersHandManager() { }
 
         public List<Card> GetPlayerHand(string userId)
         {
@@ -34,12 +35,18 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         {
             var card = this.GetPlayerHand(userId).Find(card => card.CardGuid.ToString() == cardId);
 
-            if (card == null) { throw new CardNotFoundException(cardId, userId); }
+            if (card == null)
+            {
+                throw new CardNotFoundException(cardId, userId);
+            }
 
             return card;
         }
 
-        public (int handGroup, PropertyCardColoursEnum? propertyGroup) FindCardInWhichHand(string userId, string cardId)
+        public (int handGroup, PropertyCardColoursEnum? propertyGroup) FindCardInWhichHand(
+            string userId,
+            string cardId
+        )
         {
             // Try money hand first
             try
@@ -67,7 +74,13 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             throw new CardNotFoundException(cardId, userId);
         }
 
-        public void ProcessAllTableHandsSafely(Action<string, IReadOnlyDictionary<PropertyCardColoursEnum, IReadOnlyList<Card>>, IReadOnlyList<Card>> processAction)
+        public void ProcessAllTableHandsSafely(
+            Action<
+                string,
+                IReadOnlyDictionary<PropertyCardColoursEnum, IReadOnlyList<Card>>,
+                IReadOnlyList<Card>
+            > processAction
+        )
         {
             foreach (var playerTableHand in this._playerTableHands)
             {
@@ -97,10 +110,14 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         // Method used to assign player hands e.g game start (5 cards), draw hand (2 cards), pass go (2 cards), etc
         public void AssignPlayerHand(string userId, List<Card> cards)
         {
-            Console.WriteLine($"[DEBUG] AssignPlayerHand called: userId={userId}, adding {cards.Count} cards");
+            Console.WriteLine(
+                $"[DEBUG] AssignPlayerHand called: userId={userId}, adding {cards.Count} cards"
+            );
             foreach (var card in cards)
             {
-                Console.WriteLine($"[DEBUG]   Adding card: {card.CardGuid} (Type: {card.GetType().Name}, Command: {(card is CommandCard cmd ? cmd.Command.ToString() : "N/A")})");
+                Console.WriteLine(
+                    $"[DEBUG]   Adding card: {card.CardGuid} (Type: {card.GetType().Name}, Command: {(card is CommandCard cmd ? cmd.Command.ToString() : "N/A")})"
+                );
             }
 
             var hand = this._playerHands.GetOrAdd(userId, (key) => new List<Card>());
@@ -116,24 +133,35 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         public void AddPlayerHand(string userId)
         {
             this._playerHands.TryAdd(userId, new List<Card>());
-            this._playerTableHands.TryAdd(userId, new Dictionary<PropertyCardColoursEnum, List<Card>>());
+            this._playerTableHands.TryAdd(
+                userId,
+                new Dictionary<PropertyCardColoursEnum, List<Card>>()
+            );
             this._playerMoneyHands.TryAdd(userId, new List<Card>());
         }
+
         public Card RemoveFromPlayerHand(string userId, string cardId)
         {
-            Console.WriteLine($"[DEBUG] RemoveFromPlayerHand called: userId={userId}, cardId={cardId}");
+            Console.WriteLine(
+                $"[DEBUG] RemoveFromPlayerHand called: userId={userId}, cardId={cardId}"
+            );
 
             Card? foundCard = null;
             this._playerHands.AddOrUpdate(
                 userId,
-                (key) => { throw new HandNotFoundException(key); },
+                (key) =>
+                {
+                    throw new HandNotFoundException(key);
+                },
                 (key, existingHand) =>
                 {
                     Console.WriteLine($"[DEBUG] Existing hand count: {existingHand.Count}");
 
                     // Find the card within the existing hand.
                     foundCard = existingHand.Find(card => card.CardGuid.ToString() == cardId);
-                    Console.WriteLine($"[DEBUG] Found card in hand: {foundCard?.CardGuid} (Type: {foundCard?.GetType().Name})");
+                    Console.WriteLine(
+                        $"[DEBUG] Found card in hand: {foundCard?.CardGuid} (Type: {foundCard?.GetType().Name})"
+                    );
 
                     if (foundCard == null)
                     {
@@ -146,12 +174,15 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                     Console.WriteLine($"[DEBUG] New hand count before removal: {newHand.Count}");
 
                     // Remove by GUID instead of by reference to avoid reference equality issues
-                    var removedCount = newHand.RemoveAll(card => card.CardGuid.ToString() == cardId);
+                    var removedCount = newHand.RemoveAll(card =>
+                        card.CardGuid.ToString() == cardId
+                    );
                     Console.WriteLine($"[DEBUG] RemoveAll removed {removedCount} cards");
                     Console.WriteLine($"[DEBUG] New hand count after removal: {newHand.Count}");
 
                     return newHand;
-                });
+                }
+            );
 
             Console.WriteLine($"[DEBUG] Final foundCard: {foundCard?.CardGuid}");
 
@@ -166,16 +197,26 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         public void RemovePlayerByUserId(string userId)
         {
             var playerHandRemovalSuccess = this._playerHands.TryRemove(userId, out List<Card>? _);
-            var playerMoneyHandRemovalSuccess = this._playerMoneyHands.TryRemove(userId, out List<Card>? _);
-            var playerTableHandRemovalSuccess = this._playerTableHands.TryRemove(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? _);
+            var playerMoneyHandRemovalSuccess = this._playerMoneyHands.TryRemove(
+                userId,
+                out List<Card>? _
+            );
+            var playerTableHandRemovalSuccess = this._playerTableHands.TryRemove(
+                userId,
+                out Dictionary<PropertyCardColoursEnum, List<Card>>? _
+            );
 
-            if (!playerHandRemovalSuccess && !playerTableHandRemovalSuccess && !playerMoneyHandRemovalSuccess)
+            if (
+                !playerHandRemovalSuccess
+                && !playerTableHandRemovalSuccess
+                && !playerMoneyHandRemovalSuccess
+            )
             {
                 throw new PlayerRemovalFailedException(
                     userId,
-                    $"PlayerHand: {playerHandRemovalSuccess} | " +
-                    $"PlayerTableHand: {playerTableHandRemovalSuccess} | " +
-                    $"PlayerMoneyHand: {playerMoneyHandRemovalSuccess}"
+                    $"PlayerHand: {playerHandRemovalSuccess} | "
+                        + $"PlayerTableHand: {playerTableHandRemovalSuccess} | "
+                        + $"PlayerMoneyHand: {playerMoneyHandRemovalSuccess}"
                 );
             }
         }
@@ -202,7 +243,12 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
         public Card RemoveCardFromPlayerTableHand(string userId, string cardId)
         {
-            if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict))
+            if (
+                !this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict
+                )
+            )
             {
                 throw new HandNotFoundException(userId);
             }
@@ -240,7 +286,6 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 {
                     propertyGroupDict.Remove(groupKeyToRemove.Value);
                 }
-
             }
 
             if (cardToRemove != null)
@@ -253,16 +298,40 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             }
         }
 
-        public (PropertyCardColoursEnum propertyGroup, List<Card> cardsInPropertyGroup) RemovePropertyGroupFromPlayerTableHand(string userId, PropertyCardColoursEnum propertyCardColoursEnum)
+        public void MoveCardsBetweenTableHands(
+            string userId,
+            string cardId,
+            PropertyCardColoursEnum destinationPropertyGroup
+        )
         {
-            if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroups))
+            var removedCard = this.RemoveCardFromPlayerTableHand(userId, cardId);
+            this.AddCardToPlayerTableHand(userId, removedCard, destinationPropertyGroup);
+        }
+
+        public (
+            PropertyCardColoursEnum propertyGroup,
+            List<Card> cardsInPropertyGroup
+        ) RemovePropertyGroupFromPlayerTableHand(
+            string userId,
+            PropertyCardColoursEnum propertyCardColoursEnum
+        )
+        {
+            if (
+                !this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroups
+                )
+            )
             {
                 throw new TableHandNotFoundException(userId);
             }
 
             lock (propertyGroups)
             {
-                var groupExists = propertyGroups.TryGetValue(propertyCardColoursEnum, out List<Card>? cards);
+                var groupExists = propertyGroups.TryGetValue(
+                    propertyCardColoursEnum,
+                    out List<Card>? cards
+                );
 
                 if (groupExists && cards != null)
                 {
@@ -273,16 +342,28 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
             throw new InvalidOperationException("Property group selected does not exist");
         }
-        public List<Card> GetPropertyGroupInPlayerTableHand(string userId, PropertyCardColoursEnum propertyCardColoursEnum)
+
+        public List<Card> GetPropertyGroupInPlayerTableHand(
+            string userId,
+            PropertyCardColoursEnum propertyCardColoursEnum
+        )
         {
-            if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroups))
+            if (
+                !this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroups
+                )
+            )
             {
                 throw new TableHandNotFoundException(userId);
             }
 
             lock (propertyGroups)
             {
-                var groupExists = propertyGroups.TryGetValue(propertyCardColoursEnum, out List<Card>? cards);
+                var groupExists = propertyGroups.TryGetValue(
+                    propertyCardColoursEnum,
+                    out List<Card>? cards
+                );
 
                 if (groupExists && cards != null)
                 {
@@ -307,13 +388,28 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 throw new TableHandNotFoundException(userId);
             }
         }
-        public void AddCardToPlayerTableHand(string userId, Card cardToAdd, PropertyCardColoursEnum cardColorDestinationGroup)
+
+        public void AddCardToPlayerTableHand(
+            string userId,
+            Card cardToAdd,
+            PropertyCardColoursEnum cardColorDestinationGroup
+        )
         {
-            if (this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? playerTableHand))
+            if (
+                this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? playerTableHand
+                )
+            )
             {
                 lock (playerTableHand)
                 {
-                    if (!playerTableHand.TryGetValue(cardColorDestinationGroup, out List<Card>? cardList))
+                    if (
+                        !playerTableHand.TryGetValue(
+                            cardColorDestinationGroup,
+                            out List<Card>? cardList
+                        )
+                    )
                     {
                         cardList = new List<Card>();
                         playerTableHand.TryAdd(cardColorDestinationGroup, cardList);
@@ -327,6 +423,7 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 throw new TableHandNotFoundException(userId);
             }
         }
+
         public void AddCardToPlayerMoneyHand(string userId, Card cardToAdd)
         {
             if (cardToAdd is not (CommandCard or MoneyCard or TributeCard))
@@ -346,9 +443,18 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 throw new TableHandNotFoundException(userId);
             }
         }
-        public (Card card, PropertyCardColoursEnum propertyGroup) GetCardInTableHand(string userId, string cardId)
+
+        public (Card card, PropertyCardColoursEnum propertyGroup) GetCardInTableHand(
+            string userId,
+            string cardId
+        )
         {
-            if (!this._playerTableHands.TryGetValue(userId, out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict))
+            if (
+                !this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroupDict
+                )
+            )
             {
                 throw new HandNotFoundException(userId);
             }
@@ -368,10 +474,10 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                         }
                     }
                 }
-
             }
             throw new CardNotFoundException(cardId, userId);
         }
+
         public Card GetCardInMoneyHand(string userId, string cardId)
         {
             if (!this._playerMoneyHands.TryGetValue(userId, out List<Card>? cards))

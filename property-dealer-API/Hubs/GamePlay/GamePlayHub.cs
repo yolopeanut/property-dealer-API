@@ -262,17 +262,33 @@ namespace property_dealer_API.Hubs.GamePlay
 
         public async Task EndPlayerTurnEarlier(string gameRoomId, string userId)
         {
-            this._gamePlayService.EndPlayerTurnEarlier(gameRoomId, userId);
-            await this.RefreshFullGameState(gameRoomId, true);
+            var result = this._gamePlayService.EndPlayerTurnEarlier(gameRoomId, userId);
+            await this.HandlePlayerSideEffect(gameRoomId, result);
         }
 
         public async Task SendDisposeExtraCardsResponse(
             string gameRoomId,
             string userId,
-            List<Card> cardsToDispose
+            List<string> cardsIdsToDispose
         )
         {
-            this._gamePlayService.DisposeExtraCards(gameRoomId, userId, cardsToDispose);
+            this._gamePlayService.DisposeExtraCards(gameRoomId, userId, cardsIdsToDispose);
+            await this.RefreshFullGameState(gameRoomId, true);
+        }
+
+        public async Task MovePropertySetModifierBetweenSets(
+            string gameRoomId,
+            string userId,
+            string selectedCardId,
+            PropertyCardColoursEnum destinationColor
+        )
+        {
+            this._gamePlayService.MovePropertySetModifierBetweenSets(
+                gameRoomId,
+                userId,
+                selectedCardId,
+                destinationColor
+            );
             await this.RefreshFullGameState(gameRoomId, true);
         }
 

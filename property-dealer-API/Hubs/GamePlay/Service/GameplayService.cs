@@ -159,18 +159,38 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return gameInstance.CheckIfAnyPlayersWon();
         }
 
-        public void EndPlayerTurnEarlier(string gameRoomId, string userId)
+        public TurnResult EndPlayerTurnEarlier(string gameRoomId, string userId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
-            gameInstance.EndPlayerTurnEarlier(userId);
+            return gameInstance.EndPlayerTurnEarlier(userId);
         }
 
-        public void DisposeExtraCards(string gameRoomId, string userId, List<Card> cardsToDispose)
+        public void DisposeExtraCards(
+            string gameRoomId,
+            string userId,
+            List<string> cardIdsToDispose
+        )
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
 
-            gameInstance.DisposeExtraCards(userId, cardsToDispose);
+            gameInstance.DisposeExtraCards(userId, cardIdsToDispose);
+        }
+
+        public void MovePropertySetModifierBetweenSets(
+            string gameRoomId,
+            string userId,
+            string selectedCardId,
+            PropertyCardColoursEnum destinationColor
+        )
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+
+            gameInstance.MovePropertySetModifierBetweenSets(
+                userId,
+                selectedCardId,
+                destinationColor
+            );
         }
     }
 }

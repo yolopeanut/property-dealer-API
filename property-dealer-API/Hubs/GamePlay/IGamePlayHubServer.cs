@@ -26,9 +26,15 @@ namespace property_dealer_API.Hubs.GameLobby
         Task SendDisposeExtraCardsResponse(
             string gameRoomId,
             string userId,
-            List<Card> cardsToDispose
+            List<string> cardsIdsToDispose
         );
         Task CheckIfAnyPlayersWon(string gameRoomId);
         Task EndPlayerTurnEarlier(string gameRoomId, string userId);
+        Task MovePropertySetModifierBetweenSets(
+            string gameRoomId,
+            string userId,
+            string selectedCardId,
+            PropertyCardColoursEnum destinationColor
+        );
     }
 }

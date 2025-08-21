@@ -11,9 +11,24 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         void AssignPlayerHand(string userId, List<Card> cards);
         void AddCardToPlayerHand(string userId, Card card);
         void AddCardToPlayerMoneyHand(string userId, Card card);
-        void AddCardToPlayerTableHand(string userId, Card card, PropertyCardColoursEnum targetColor);
+        void AddCardToPlayerTableHand(
+            string userId,
+            Card card,
+            PropertyCardColoursEnum targetColor
+        );
         Card RemoveCardFromPlayerMoneyHand(string userId, string cardId);
         Card RemoveCardFromPlayerTableHand(string userId, string cardId);
-        (PropertyCardColoursEnum propertyGroup, List<Card> cardsInPropertyGroup) RemovePropertyGroupFromPlayerTableHand(string userId, PropertyCardColoursEnum targetColor);
+        void MoveCardsBetweenTableHands(
+            string userId,
+            string cardId,
+            PropertyCardColoursEnum destinationPropertyGroup
+        );
+        (
+            PropertyCardColoursEnum propertyGroup,
+            List<Card> cardsInPropertyGroup
+        ) RemovePropertyGroupFromPlayerTableHand(
+            string userId,
+            PropertyCardColoursEnum targetColor
+        );
     }
 }

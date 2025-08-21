@@ -4,9 +4,7 @@ namespace property_dealer_API.Models.Cards
 {
     public class MoneyCard : Card
     {
-        public MoneyCard(CardTypesEnum cardType, int value) : base(cardType, $"${value}M", value, null)
-        {
-
-        }
+        public MoneyCard(CardTypesEnum cardType, int value)
+            : base(cardType, $"${value}T", value, null) { }
     }
 }

@@ -3,7 +3,6 @@ using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
-using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -224,17 +223,6 @@ namespace property_dealer_API.Core
         {
             var currPlayerHand = this._playerHandManager.GetPlayerHand(currPlayerId);
 
-            try
-            {
-                this._rulesManager.ValidateEndOfTurnCardLimit(currPlayerHand);
-            }
-            catch (Exception)
-            {
-                var currPlayer = this._playerManager.GetPlayerByUserId(currPlayerId);
-                return new TurnResult(null, null, currPlayer); // current player needs to dispose
-                throw;
-            }
-
             // Check for win condition before moving to next turn
             var winningPlayer = this.CheckIfAnyPlayersWon();
             if (winningPlayer != null)
@@ -247,6 +235,16 @@ namespace property_dealer_API.Core
             var nextUserTurn = this._turnManager.IncrementUserActionCount();
             if (nextUserTurn != null)
             {
+                try
+                {
+                    this._rulesManager.ValidateEndOfTurnCardLimit(currPlayerHand);
+                }
+                catch (Exception)
+                {
+                    var currPlayer = this._playerManager.GetPlayerByUserId(currPlayerId);
+                    return new TurnResult(null, null, currPlayer); // current player needs to dispose
+                    throw;
+                }
                 this.NextPlayerTurn(nextUserTurn);
             }
 
@@ -303,14 +301,46 @@ namespace property_dealer_API.Core
             return null;
         }
 
-        public void EndPlayerTurnEarlier(string userId)
+        public TurnResult EndPlayerTurnEarlier(string userId)
         {
-            this.CompleteTurn(userId);
+            if (this.GetCurrentPlayerTurn().UserId == userId)
+            {
+                try
+                {
+                    var currPlayerHand = this._playerHandManager.GetPlayerHand(userId);
+                    this._rulesManager.ValidateEndOfTurnCardLimit(currPlayerHand);
+                }
+                catch (Exception)
+                {
+                    var currPlayer = this._playerManager.GetPlayerByUserId(userId);
+                    return new TurnResult(null, null, currPlayer); // current player needs to dispose
+                }
+                var nextUserTurn = this._turnManager.PrematurelyEndCurrentUserTurn();
+                this.NextPlayerTurn(nextUserTurn);
+            }
+            return new TurnResult(null, null, null);
         }
 
-        public void DisposeExtraCards(string userId, List<Card> cardsToDispose)
+        public void DisposeExtraCards(string userId, List<string> cardIdsToDispose)
         {
-            cardsToDispose.ForEach(card => this.HandleRemoveFromHand(userId, card.CardGuid.ToString()));
+            cardIdsToDispose.ForEach(cardId => this.HandleRemoveFromHand(userId, cardId));
+            var nextUserTurn = this._turnManager.PrematurelyEndCurrentUserTurn();
+            this.NextPlayerTurn(nextUserTurn);
+        }
+
+        public void MovePropertySetModifierBetweenSets(
+            string userId,
+            string selectedCardId,
+            PropertyCardColoursEnum destinationColor
+        )
+        {
+            var currentPlayerTurn = this._turnManager.GetCurrentUserTurn();
+            this._rulesManager.ValidateTurn(userId, currentPlayerTurn);
+            this._playerHandManager.MoveCardsBetweenTableHands(
+                userId,
+                selectedCardId,
+                destinationColor
+            );
         }
 
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.

@@ -7,6 +7,7 @@
         void AddPlayer(string userId);
         void RemovePlayerFromQueue(string userId);
         string? IncrementUserActionCount();
+        string PrematurelyEndCurrentUserTurn();
         int GetCurrentUserActionCount();
     }
 }

@@ -43,6 +43,14 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             this.ValidateActionLimit(playerId, noOfActionPlayed);
         }
 
+        public void ValidateTurn(string userId, string currentUserIdTurn)
+        {
+            if (userId != currentUserIdTurn)
+            {
+                throw new NotPlayerTurnException(userId, currentUserIdTurn);
+            }
+        }
+
         #endregion
 
         #region Card Placement Validation
@@ -323,13 +331,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return tableHand.FirstOrDefault(group => group.cardColorEnum == color);
         }
 
-        private void ValidateTurn(string userId, string currentUserIdTurn)
-        {
-            if (userId != currentUserIdTurn)
-            {
-                throw new NotPlayerTurnException(userId, currentUserIdTurn);
-            }
-        }
+
 
         private void ValidateActionLimit(string userId, int noOfActionsPlayed)
         {
