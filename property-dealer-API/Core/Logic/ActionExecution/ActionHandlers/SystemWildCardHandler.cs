@@ -1,5 +1,6 @@
 ﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -21,9 +22,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
-            : base(playerManager, playerHandManager, rulesManager, pendingActionManager, actionExecutor)
-        { }
+            IActionExecutor actionExecutor
+        )
+            : base(
+                playerManager,
+                playerHandManager,
+                rulesManager,
+                pendingActionManager,
+                actionExecutor
+            ) { }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -33,19 +40,32 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
 
             // The pending action type helps identify what's happening.
-            var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = ActionTypes.SystemWildCard };
-            var newActionContext = base.CreateActionContext(card.CardGuid.ToString(), DialogTypeEnum.WildcardColor, initiator, null, allPlayers, pendingAction);
+            var pendingAction = new PendingAction
+            {
+                InitiatorUserId = initiator.UserId,
+                ActionType = ActionTypes.SystemWildCard,
+            };
+            var newActionContext = base.CreateActionContext(
+                card.CardGuid.ToString(),
+                DialogTypeEnum.WildcardColor,
+                initiator,
+                null,
+                allPlayers,
+                pendingAction
+            );
 
             // The first and only dialog needed is for the initiator to choose a color.
             base.SetNextDialog(newActionContext, DialogTypeEnum.WildcardColor, initiator, null);
             return newActionContext;
         }
 
-        public void ProcessResponse(Player responder, ActionContext currentContext)
+        public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
             // Only the initiator of the card play can respond.
             if (responder.UserId != currentContext.ActionInitiatingPlayerId)
-                throw new InvalidOperationException("Only the player who played the SystemWildCard can choose its color.");
+                throw new InvalidOperationException(
+                    "Only the player who played the SystemWildCard can choose its color."
+                );
 
             switch (currentContext.DialogToOpen)
             {
@@ -54,15 +74,22 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Invalid state for SystemWildCard action: {currentContext.DialogToOpen}");
+                    throw new InvalidOperationException(
+                        $"Invalid state for SystemWildCard action: {currentContext.DialogToOpen}"
+                    );
             }
+
+            return null;
         }
 
         private void ProcessColorSelection(ActionContext currentContext)
         {
             if (currentContext.TargetSetColor == null)
             {
-                throw new ActionContextParameterNullException(currentContext, "TargetSetColor must be provided when choosing a wildcard color.");
+                throw new ActionContextParameterNullException(
+                    currentContext,
+                    "TargetSetColor must be provided when choosing a wildcard color."
+                );
             }
 
             base.ActionExecutor.ExecutePlayToTable(

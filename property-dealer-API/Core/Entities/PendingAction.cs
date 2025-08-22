@@ -1,6 +1,5 @@
-﻿using property_dealer_API.Application.Enums;
+﻿using System.Collections.Concurrent;
 using property_dealer_API.Models.Enums.Cards;
-using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Entities
 {
@@ -11,8 +10,13 @@ namespace property_dealer_API.Core.Entities
 
         // Thread-safe collections for multi-player responses
         public ConcurrentBag<Player> RequiredResponders { get; set; } = new();
-        public ConcurrentQueue<(Player player, ActionContext Response)> ResponseQueue { get; set; } = new();
+        public ConcurrentQueue<(
+            Player player,
+            ActionContext Response
+        )> ResponseQueue { get; set; } = new();
         public int NumProcessedResponses { get; set; } = 0;
-        public bool IsWaitingForResponses => this.RequiredResponders.Count > this.ResponseQueue.Count;
+        public ActionContext? CurrentActionContext { get; set; }
+        public bool IsWaitingForResponses =>
+            this.RequiredResponders.Count > this.ResponseQueue.Count;
     }
 }

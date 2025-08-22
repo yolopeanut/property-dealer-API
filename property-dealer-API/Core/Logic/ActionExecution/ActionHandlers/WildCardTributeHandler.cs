@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using property_dealer_API.Application.Enums;
+﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -22,33 +22,63 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
-            : base(playerManager, playerHandManager, rulesManager, pendingActionManager, actionExecutor)
-        { }
+            IActionExecutor actionExecutor
+        )
+            : base(
+                playerManager,
+                playerHandManager,
+                rulesManager,
+                pendingActionManager,
+                actionExecutor
+            ) { }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
-            if (card is not CommandCard commandCard || commandCard.Command != ActionTypes.TributeWildCard)
+            if (
+                card is not CommandCard commandCard
+                || commandCard.Command != ActionTypes.TributeWildCard
+            )
             {
                 throw new CardMismatchException(initiator.UserId, card.CardGuid.ToString());
             }
 
-            var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = commandCard.Command };
-            var newActionContext = base.CreateActionContext(card.CardGuid.ToString(), DialogTypeEnum.PropertySetSelection, initiator, null, allPlayers, pendingAction);
+            var pendingAction = new PendingAction
+            {
+                InitiatorUserId = initiator.UserId,
+                ActionType = commandCard.Command,
+            };
+            var newActionContext = base.CreateActionContext(
+                card.CardGuid.ToString(),
+                DialogTypeEnum.PropertySetSelection,
+                initiator,
+                null,
+                allPlayers,
+                pendingAction
+            );
 
-            base.SetNextDialog(newActionContext, DialogTypeEnum.PropertySetSelection, initiator, null);
+            base.SetNextDialog(
+                newActionContext,
+                DialogTypeEnum.PropertySetSelection,
+                initiator,
+                null
+            );
             return newActionContext;
         }
 
-        public void ProcessResponse(Player responder, ActionContext currentContext)
+        public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PropertySetSelection:
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException("Only the action initiator can select a property set.");
+                        throw new InvalidOperationException(
+                            "Only the action initiator can select a property set."
+                        );
                     if (!currentContext.TargetSetColor.HasValue)
-                        throw new ActionContextParameterNullException(currentContext, "Cannot have null target set color during wildcard tribute action!");
+                        throw new ActionContextParameterNullException(
+                            currentContext,
+                            "Cannot have null target set color during wildcard tribute action!"
+                        );
 
                     // No need to validate color as wildcard can be applied to any color
                     this.ProcessPropertySetSelection(currentContext);
@@ -56,7 +86,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
                 case DialogTypeEnum.PayValue:
                     if (responder.UserId == currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException("The action initiator cannot pay themselves rent.");
+                        throw new InvalidOperationException(
+                            "The action initiator cannot pay themselves rent."
+                        );
 
                     this.ProcessPaymentResponse(currentContext, responder);
                     base.CompleteAction();
@@ -68,18 +100,27 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Invalid state for WildCardTribute action: {currentContext.DialogToOpen}");
+                    throw new InvalidOperationException(
+                        $"Invalid state for WildCardTribute action: {currentContext.DialogToOpen}"
+                    );
             }
+
+            return null;
         }
 
         private void ProcessPropertySetSelection(ActionContext currentContext)
         {
             if (!currentContext.TargetSetColor.HasValue)
-                throw new ActionContextParameterNullException(currentContext, "A property set must be selected.");
+                throw new ActionContextParameterNullException(
+                    currentContext,
+                    "A property set must be selected."
+                );
 
             this.CalculateTributeAmount(currentContext);
 
-            var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);
+            var initiator = base.PlayerManager.GetPlayerByUserId(
+                currentContext.ActionInitiatingPlayerId
+            );
 
             base.SetNextDialog(currentContext, DialogTypeEnum.PayValue, initiator, null);
         }
@@ -87,7 +128,18 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
         private void ProcessPaymentResponse(ActionContext currentContext, Player responder)
         {
             if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-                throw new ActionContextParameterNullException(currentContext, "A response (payment or shield) must be provided.");
+            {
+                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
+                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
+                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
+                {
+                    throw new ActionContextParameterNullException(
+                        currentContext,
+                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
+                    );
+                }
+                return;
+            }
 
             if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
             {
@@ -115,8 +167,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
         {
             if (currentContext.TargetSetColor.HasValue)
             {
-                var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
-                currentContext.PaymentAmount = base.RulesManager.CalculateRentAmount(currentContext.TargetSetColor.Value, playerTableHand);
+                var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
+                    currentContext.ActionInitiatingPlayerId,
+                    currentContext.TargetSetColor.Value
+                );
+                currentContext.PaymentAmount = base.RulesManager.CalculateRentAmount(
+                    currentContext.TargetSetColor.Value,
+                    playerTableHand
+                );
             }
         }
     }

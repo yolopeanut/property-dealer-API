@@ -5,6 +5,7 @@
         Cancel,
         Accept,
         ShieldsUp,
-        SendIt
+        RejectShieldsUp,
+        SendIt,
     }
 }

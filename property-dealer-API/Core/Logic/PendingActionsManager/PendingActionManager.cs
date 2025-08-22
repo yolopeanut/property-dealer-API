@@ -10,7 +10,10 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
         {
             get
             {
-                if (this.CurrPendingAction.NumProcessedResponses >= this.CurrPendingAction.RequiredResponders.Count)
+                if (
+                    this.CurrPendingAction.NumProcessedResponses
+                    >= this.CurrPendingAction.RequiredResponders.Count
+                )
                 {
                     return true;
                 }
@@ -33,7 +36,9 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
             {
                 if (this._currPendingAction != null)
                 {
-                    //throw new InvalidOperationException("Cannot set new pending action when current one has not ended");
+                    throw new InvalidOperationException(
+                        "Cannot set new pending action when current one has not ended"
+                    );
                 }
 
                 this._currPendingAction = value;
@@ -62,6 +67,32 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
         public void IncrementProcessedActions()
         {
             this.CurrPendingAction.NumProcessedResponses += 1;
+        }
+
+        public List<Player> GetRemainingResponders()
+        {
+            // Get the players who have already responded from the ResponseQueue.
+            var playersWhoHaveResponded = this.CurrPendingAction.ResponseQueue.Select(
+                responseTuple => responseTuple.player
+            );
+
+            // Find the players in RequiredResponders that are NOT in the list of players who have already responded.
+            var remainingResponders = this.CurrPendingAction.RequiredResponders.Except(
+                playersWhoHaveResponded
+            );
+
+            // Return the result as a new list.
+            return [.. remainingResponders];
+        }
+
+        public ActionContext GetCurrentActionContext()
+        {
+            var currActionContext = this.CurrPendingAction.CurrentActionContext;
+            if (currActionContext == null)
+            {
+                throw new InvalidOperationException("Cannot retrieve action context when null!");
+            }
+            return currActionContext;
         }
     }
 }

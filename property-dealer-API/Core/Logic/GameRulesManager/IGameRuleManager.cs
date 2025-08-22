@@ -9,6 +9,8 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 {
     public interface IGameRuleManager
     {
+        int MAX_CARDS_IN_HAND { get; set; }
+
         // ===== JOINING & GAME STATE VALIDATION =====
         JoinGameResponseEnum? ValidatePlayerJoining(
             GameStateEnum gameState,
@@ -74,6 +76,10 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         // ===== QUERIES =====
         bool DoesPlayerHaveShieldsUp(Player player, List<Card> playerHand);
         bool IsPlayerHandEmpty(List<Card> cards);
+        bool IsPlayerBroke(
+            Dictionary<PropertyCardColoursEnum, List<Card>> propertyGroups,
+            List<Card> moneyCards
+        );
         bool CheckIfPlayerWon(List<PropertyCardGroup> tableHand);
         bool IsPropertySetComplete(
             List<PropertyCardGroup> tableHand,

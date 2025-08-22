@@ -1,4 +1,5 @@
 ﻿using property_dealer_API.Application.DTOs.Responses;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using TypedSignalR.Client;
@@ -18,5 +19,7 @@ namespace property_dealer_API.Hubs.GamePlay
         Task CurrentPlayerTurn(Player player);
         Task DisposeExtraCards(Player player);
         Task PlayerWon(Player? player);
+        Task NotifyActionResult(ActionResult actionResult);
+        Task PendingActionPlayers(List<Player> pendingPlayers);
     }
 }

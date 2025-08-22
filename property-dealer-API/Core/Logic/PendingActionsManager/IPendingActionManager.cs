@@ -9,5 +9,7 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
         void ClearPendingAction();
         Boolean AddResponseToQueue(Player player, ActionContext actionContext);
         void IncrementProcessedActions();
+        List<Player> GetRemainingResponders();
+        ActionContext GetCurrentActionContext();
     }
 }

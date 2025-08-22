@@ -192,5 +192,17 @@ namespace property_dealer_API.Hubs.GamePlay.Service
                 destinationColor
             );
         }
+
+        public List<Player> GetPendingActionPlayers(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            return gameInstance.GetPendingActionPlayers();
+        }
+
+        public TurnResult GetCurrentPendingAction(string gameRoomId)
+        {
+            var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
+            return gameInstance.GetCurrentPendingAction();
+        }
     }
 }

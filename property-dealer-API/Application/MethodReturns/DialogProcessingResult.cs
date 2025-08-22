@@ -7,6 +7,6 @@ namespace property_dealer_API.Application.MethodReturns
         public List<ActionContext>? NewActionContexts { get; set; }
         public bool ShouldClearPendingAction { get; set; }
         public ActionContext? ActionContext { get; set; }
+        public ActionResult? ActionResult { get; set; }
     }
-
 }

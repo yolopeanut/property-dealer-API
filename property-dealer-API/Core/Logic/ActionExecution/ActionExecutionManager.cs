@@ -1,6 +1,4 @@
-﻿
-
-
+﻿using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers;
@@ -13,13 +11,17 @@ namespace property_dealer_API.Core.Logic.ActionExecution
     {
         private readonly IActionHandlerResolver _actionHandlerResolver;
 
-        public ActionExecutionManager(
-            IActionHandlerResolver actionHandlerResolver)
+        public ActionExecutionManager(IActionHandlerResolver actionHandlerResolver)
         {
             this._actionHandlerResolver = actionHandlerResolver;
         }
 
-        public ActionContext? ExecuteAction(string userId, Card card, Player currentUser, List<Player> allPlayers)
+        public ActionContext? ExecuteAction(
+            string userId,
+            Card card,
+            Player currentUser,
+            List<Player> allPlayers
+        )
         {
             IActionHandler actionHandler;
             switch (card)
@@ -37,16 +39,18 @@ namespace property_dealer_API.Core.Logic.ActionExecution
                 //    actionHandler = _actionHandlerResolver.GetHandler(ActionTypes.TributeWildCard);
                 //    break;
                 default:
-                    throw new InvalidOperationException($"Unsupported card type: {card.GetType().Name}");
+                    throw new InvalidOperationException(
+                        $"Unsupported card type: {card.GetType().Name}"
+                    );
             }
             return actionHandler.Initialize(currentUser, card, allPlayers);
         }
 
-        public void HandleDialogResponse(Player responder, ActionContext actionContext)
+        public ActionResult? HandleDialogResponse(Player responder, ActionContext actionContext)
         {
             IActionHandler actionHandler;
             actionHandler = _actionHandlerResolver.GetHandler(actionContext.ActionType);
-            actionHandler.ProcessResponse(responder, actionContext);
+            return actionHandler.ProcessResponse(responder, actionContext);
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using property_dealer_API.Application.Enums;
+﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -20,9 +20,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
-            : base(playerManager, playerHandManager, rulesManager, pendingActionManager, actionExecutor)
-        { }
+            IActionExecutor actionExecutor
+        )
+            : base(
+                playerManager,
+                playerHandManager,
+                rulesManager,
+                pendingActionManager,
+                actionExecutor
+            ) { }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -31,19 +37,37 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 throw new CardMismatchException(initiator.UserId, card.CardGuid.ToString());
             }
 
-            var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = commandCard.Command };
-            var newActionContext = base.CreateActionContext(card.CardGuid.ToString(), DialogTypeEnum.PropertySetSelection, initiator, null, allPlayers, pendingAction);
+            var pendingAction = new PendingAction
+            {
+                InitiatorUserId = initiator.UserId,
+                ActionType = commandCard.Command,
+            };
+            var newActionContext = base.CreateActionContext(
+                card.CardGuid.ToString(),
+                DialogTypeEnum.PropertySetSelection,
+                initiator,
+                null,
+                allPlayers,
+                pendingAction
+            );
 
             // The first step is for the initiator to choose one of their own complete sets.
-            base.SetNextDialog(newActionContext, DialogTypeEnum.PropertySetSelection, initiator, null);
+            base.SetNextDialog(
+                newActionContext,
+                DialogTypeEnum.PropertySetSelection,
+                initiator,
+                null
+            );
             return newActionContext;
         }
 
-        public void ProcessResponse(Player responder, ActionContext currentContext)
+        public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
             // Only the player who played the card can choose where to build.
             if (responder.UserId != currentContext.ActionInitiatingPlayerId)
-                throw new InvalidOperationException("Only the action initiator can choose which set to build on.");
+                throw new InvalidOperationException(
+                    "Only the action initiator can choose which set to build on."
+                );
 
             switch (currentContext.DialogToOpen)
             {
@@ -53,8 +77,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Invalid state for Starbase action: {currentContext.DialogToOpen}");
+                    throw new InvalidOperationException(
+                        $"Invalid state for Starbase action: {currentContext.DialogToOpen}"
+                    );
             }
+
+            return null;
         }
 
         private void ValidateProcess(ActionContext currentContext)
@@ -62,12 +90,21 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             var pendingAction = base.PendingActionManager.CurrPendingAction;
             if (!currentContext.TargetSetColor.HasValue)
             {
-                throw new ActionContextParameterNullException(currentContext, "TargetSetColor must be provided when building a Starbase.");
+                throw new ActionContextParameterNullException(
+                    currentContext,
+                    "TargetSetColor must be provided when building a Starbase."
+                );
             }
 
-            var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(currentContext.ActionInitiatingPlayerId, currentContext.TargetSetColor.Value);
+            var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
+                currentContext.ActionInitiatingPlayerId,
+                currentContext.TargetSetColor.Value
+            );
 
-            base.RulesManager.ValidateStarbasePlacement(playerTableHand, currentContext.TargetSetColor.Value);
+            base.RulesManager.ValidateStarbasePlacement(
+                playerTableHand,
+                currentContext.TargetSetColor.Value
+            );
         }
 
         private void ProcessPropertySetSelection(ActionContext currentContext)

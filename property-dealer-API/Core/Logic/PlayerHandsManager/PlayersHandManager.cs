@@ -31,6 +31,41 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
             }
         }
 
+        public Dictionary<PropertyCardColoursEnum, List<Card>> GetPlayerTableHand(string userId)
+        {
+            if (
+                this._playerTableHands.TryGetValue(
+                    userId,
+                    out Dictionary<PropertyCardColoursEnum, List<Card>>? propertyGroup
+                )
+            )
+            {
+                lock (propertyGroup) // Lock while making the copy
+                {
+                    return new Dictionary<PropertyCardColoursEnum, List<Card>>(propertyGroup); // Return a safe copy
+                }
+            }
+            else
+            {
+                throw new HandNotFoundException(userId);
+            }
+        }
+
+        public List<Card> GetPlayerMoneyHand(string userId)
+        {
+            if (this._playerMoneyHands.TryGetValue(userId, out List<Card>? hand))
+            {
+                lock (hand) // Lock while making the copy
+                {
+                    return new List<Card>(hand); // Return a safe copy
+                }
+            }
+            else
+            {
+                throw new HandNotFoundException(userId);
+            }
+        }
+
         public Card GetCardFromPlayerHandById(string userId, string cardId)
         {
             var card = this.GetPlayerHand(userId).Find(card => card.CardGuid.ToString() == cardId);
@@ -107,26 +142,13 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
         }
 
         // Method used to assign player hands e.g game start (5 cards), draw hand (2 cards), pass go (2 cards), etc
-        // Method used to assign player hands e.g game start (5 cards), draw hand (2 cards), pass go (2 cards), etc
         public void AssignPlayerHand(string userId, List<Card> cards)
         {
-            Console.WriteLine(
-                $"[DEBUG] AssignPlayerHand called: userId={userId}, adding {cards.Count} cards"
-            );
-            foreach (var card in cards)
-            {
-                Console.WriteLine(
-                    $"[DEBUG]   Adding card: {card.CardGuid} (Type: {card.GetType().Name}, Command: {(card is CommandCard cmd ? cmd.Command.ToString() : "N/A")})"
-                );
-            }
-
             var hand = this._playerHands.GetOrAdd(userId, (key) => new List<Card>());
             lock (hand)
             {
                 hand.AddRange(cards);
             }
-
-            Console.WriteLine($"[DEBUG] Final hand count after AssignPlayerHand: {hand.Count}");
         }
 
         // Method used only for adding to player hands and table hands (instantiating on game start)
@@ -142,10 +164,6 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
 
         public Card RemoveFromPlayerHand(string userId, string cardId)
         {
-            Console.WriteLine(
-                $"[DEBUG] RemoveFromPlayerHand called: userId={userId}, cardId={cardId}"
-            );
-
             Card? foundCard = null;
             this._playerHands.AddOrUpdate(
                 userId,
@@ -155,36 +173,23 @@ namespace property_dealer_API.Core.Logic.PlayerHandsManager
                 },
                 (key, existingHand) =>
                 {
-                    Console.WriteLine($"[DEBUG] Existing hand count: {existingHand.Count}");
-
                     // Find the card within the existing hand.
                     foundCard = existingHand.Find(card => card.CardGuid.ToString() == cardId);
-                    Console.WriteLine(
-                        $"[DEBUG] Found card in hand: {foundCard?.CardGuid} (Type: {foundCard?.GetType().Name})"
-                    );
-
                     if (foundCard == null)
                     {
-                        Console.WriteLine("[DEBUG] Card not found, returning original hand");
                         // If not found, return the original hand unmodified.
                         return existingHand;
                     }
 
                     var newHand = new List<Card>(existingHand);
-                    Console.WriteLine($"[DEBUG] New hand count before removal: {newHand.Count}");
 
                     // Remove by GUID instead of by reference to avoid reference equality issues
                     var removedCount = newHand.RemoveAll(card =>
                         card.CardGuid.ToString() == cardId
                     );
-                    Console.WriteLine($"[DEBUG] RemoveAll removed {removedCount} cards");
-                    Console.WriteLine($"[DEBUG] New hand count after removal: {newHand.Count}");
-
                     return newHand;
                 }
             );
-
-            Console.WriteLine($"[DEBUG] Final foundCard: {foundCard?.CardGuid}");
 
             if (foundCard == null)
             {

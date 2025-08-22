@@ -7,7 +7,6 @@ using property_dealer_API.Models.Enums;
 
 namespace property_dealer_API.Hubs.GameLobby
 {
-
     public class GameLobbyHub : Hub<IGameLobbyHubClient>, IGameLobbyHubServer
     {
         private readonly IGameLobbyHubService _gameLobbyHubService;
@@ -17,44 +16,42 @@ namespace property_dealer_API.Hubs.GameLobby
             this._gameLobbyHubService = gameLobbyHubService;
         }
 
+        public override async Task OnConnectedAsync()
+        {
+            await this.GetAllGameLobbySummaries();
+        }
+
         public async Task GetAllGameLobbySummaries()
         {
             var summaries = this._gameLobbyHubService.GetGameListSummary();
 
-            await this.Clients.Caller.GetAllLobbySummary(summaries);
+            await this.Clients.All.GetAllLobbySummary(summaries);
         }
 
-        public async Task CreateGameRoom(string userId, string playerName, string roomName, GameConfig createGameConfig)
+        public async Task CreateGameRoom(
+            string userId,
+            string playerName,
+            string roomName,
+            GameConfig createGameConfig
+        )
         {
             try
             {
                 // Create Room
-                Console.WriteLine("About to call CreateRoom");
-                var roomIdCreated = this._gameLobbyHubService.CreateRoom(userId, playerName, roomName, createGameConfig);
-
-                Console.WriteLine($"=== ROOM CREATED ===");
-                Console.WriteLine($"Room ID: '{roomIdCreated}'");
-                Console.WriteLine($"User ID: '{userId}'");
-                Console.WriteLine($"Player Name: '{playerName}'");
-
+                var roomIdCreated = this._gameLobbyHubService.CreateRoom(
+                    userId,
+                    playerName,
+                    roomName,
+                    createGameConfig
+                );
                 await this.Clients.Caller.CreateGameRoomId(roomIdCreated);
 
-                Console.WriteLine("CreateRoom completed");
-
                 // Broadcast summaries
-                Console.WriteLine("About to get summaries");
                 var summaries = this._gameLobbyHubService.GetGameListSummary();
-                Console.WriteLine($"Got {summaries.Count()} summaries");
                 await this.Clients.All.GetAllLobbySummary(summaries);
-
-                Console.WriteLine("Broadcast completed");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"=== EXCEPTION IN CreateGameRoom ===");
-                Console.WriteLine($"Message: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                Console.WriteLine($"InnerException: {ex.InnerException?.Message}");
                 throw; // Important: re-throw so client gets the error
             }
         }
@@ -65,7 +62,9 @@ namespace property_dealer_API.Hubs.GameLobby
             {
                 // Joining room
                 var response = this._gameLobbyHubService.JoinRoom(gameRoomId, userId, playerName);
-                await this.Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(response, gameRoomId));
+                await this.Clients.Caller.JoinGameRoomStatus(
+                    new JoinGameResponse(response, gameRoomId)
+                );
 
                 // Broadcasting to all lobby status
                 var summaries = this._gameLobbyHubService.GetGameListSummary();
@@ -73,10 +72,10 @@ namespace property_dealer_API.Hubs.GameLobby
             }
             catch (GameNotFoundException)
             {
-                await this.Clients.Caller.JoinGameRoomStatus(new JoinGameResponse(JoinGameResponseEnum.FailedToJoin, gameRoomId));
+                await this.Clients.Caller.JoinGameRoomStatus(
+                    new JoinGameResponse(JoinGameResponseEnum.FailedToJoin, gameRoomId)
+                );
             }
         }
-
-
     }
 }

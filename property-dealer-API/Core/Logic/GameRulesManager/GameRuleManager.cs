@@ -15,9 +15,21 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
     /// </summary>
     public class GameRuleManager : IGameRuleManager
     {
+        private int MAX_CARDS_IN_PLAYER_HAND = 7;
+        private int PROPERTY_SETS_NEEDED_TO_WIN = 10;
+        int IGameRuleManager.MAX_CARDS_IN_HAND
+        {
+            get => this.MAX_CARDS_IN_PLAYER_HAND;
+            set => this.MAX_CARDS_IN_PLAYER_HAND = value;
+        }
+
         #region Game State & Player Validation
 
-        public JoinGameResponseEnum? ValidatePlayerJoining(GameStateEnum gameState, List<Player> players, string? maxNumPlayers)
+        public JoinGameResponseEnum? ValidatePlayerJoining(
+            GameStateEnum gameState,
+            List<Player> players,
+            string? maxNumPlayers
+        )
         {
             if (gameState != GameStateEnum.WaitingRoom)
             {
@@ -32,11 +44,20 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return null;
         }
 
-        public void ValidatePlayerCanPlayCard(GameStateEnum gameState, string playerId, string currentTurnPlayerId, int noOfActionPlayed)
+        public void ValidatePlayerCanPlayCard(
+            GameStateEnum gameState,
+            string playerId,
+            string currentTurnPlayerId,
+            int noOfActionPlayed
+        )
         {
             if (gameState != GameStateEnum.GameStarted)
             {
-                throw new InvalidGameStateException(gameState, GameStateEnum.GameStarted, "play cards");
+                throw new InvalidGameStateException(
+                    gameState,
+                    GameStateEnum.GameStarted,
+                    "play cards"
+                );
             }
 
             this.ValidateTurn(playerId, currentTurnPlayerId);
@@ -59,32 +80,49 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
         {
             if (cardRemoved is not StandardSystemCard)
             {
-                throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the property section. Only property cards are allowed.");
+                throw new InvalidOperationException(
+                    $"Cannot play a {cardRemoved.CardType} card on the property section. Only property cards are allowed."
+                );
             }
         }
 
         public void ValidateCommandPileCardType(Card cardRemoved)
         {
-            if (cardRemoved is not CommandCard && cardRemoved is not SystemWildCard && cardRemoved is not TributeCard)
+            if (
+                cardRemoved is not CommandCard
+                && cardRemoved is not SystemWildCard
+                && cardRemoved is not TributeCard
+            )
             {
-                throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the command section. Only comamnd cards are allowed.");
+                throw new InvalidOperationException(
+                    $"Cannot play a {cardRemoved.CardType} card on the command section. Only comamnd cards are allowed."
+                );
             }
-
         }
 
         public void ValidateMoneyPileCardType(Card cardRemoved)
         {
-            if (cardRemoved is not CommandCard && cardRemoved is not TributeCard && cardRemoved is not MoneyCard)
+            if (
+                cardRemoved is not CommandCard
+                && cardRemoved is not TributeCard
+                && cardRemoved is not MoneyCard
+            )
             {
-                throw new InvalidOperationException($"Cannot play a {cardRemoved.CardType} card on the money section. Only money cards are allowed.");
+                throw new InvalidOperationException(
+                    $"Cannot play a {cardRemoved.CardType} card on the money section. Only money cards are allowed."
+                );
             }
         }
 
-        public PropertyCardColoursEnum ValidateStandardPropertyCardDestination(PropertyCardColoursEnum? cardColoursDestinationEnum)
+        public PropertyCardColoursEnum ValidateStandardPropertyCardDestination(
+            PropertyCardColoursEnum? cardColoursDestinationEnum
+        )
         {
             if (cardColoursDestinationEnum == null)
             {
-                throw new InvalidOperationException("Property card destination color cannot be null. Please select a valid color.");
+                throw new InvalidOperationException(
+                    "Property card destination color cannot be null. Please select a valid color."
+                );
             }
 
             return cardColoursDestinationEnum.Value;
@@ -94,50 +132,107 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #region Card Specific Rule Validation
 
-        public void ValidateHostileTakeoverTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateHostileTakeoverTarget(
+            List<Card> targetPlayerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: true, ActionTypes.HostileTakeover);
+            this.ValidatePropertySetCompletion(
+                targetPlayerTableHand,
+                targetColor,
+                shouldBeComplete: true,
+                ActionTypes.HostileTakeover
+            );
         }
 
-        public void ValidatePirateRaidTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidatePirateRaidTarget(
+            List<Card> targetPlayerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: false, ActionTypes.PirateRaid);
+            this.ValidatePropertySetCompletion(
+                targetPlayerTableHand,
+                targetColor,
+                shouldBeComplete: false,
+                ActionTypes.PirateRaid
+            );
         }
 
-        public void ValidateForcedTradeTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateForcedTradeTarget(
+            List<Card> targetPlayerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetCompletion(targetPlayerTableHand, targetColor, shouldBeComplete: false, ActionTypes.ForcedTrade);
+            this.ValidatePropertySetCompletion(
+                targetPlayerTableHand,
+                targetColor,
+                shouldBeComplete: false,
+                ActionTypes.ForcedTrade
+            );
         }
 
-        public void ValidateSpaceStationPlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateSpaceStationPlacement(
+            List<Card> playerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.SpaceStation);
+            this.ValidatePropertySetCompletion(
+                playerTableHand,
+                targetColor,
+                shouldBeComplete: true,
+                ActionTypes.SpaceStation
+            );
             this.ValidateNoDuplicateCard(playerTableHand, targetColor, ActionTypes.SpaceStation);
         }
 
-        public void ValidateStarbasePlacement(List<Card> playerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateStarbasePlacement(
+            List<Card> playerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetCompletion(playerTableHand, targetColor, shouldBeComplete: true, ActionTypes.Starbase);
-            this.ValidateHasCardPresent(playerTableHand, targetColor, ActionTypes.Starbase);
+            this.ValidatePropertySetCompletion(
+                playerTableHand,
+                targetColor,
+                shouldBeComplete: true,
+                ActionTypes.Starbase
+            );
+            this.ValidateHasCardPresent(playerTableHand, targetColor, ActionTypes.SpaceStation);
             this.ValidateNoDuplicateCard(playerTableHand, targetColor, ActionTypes.Starbase);
         }
 
-        public void ValidateTradeEmbargoTarget(List<Card> targetPlayerTableHand, PropertyCardColoursEnum targetColor)
+        public void ValidateTradeEmbargoTarget(
+            List<Card> targetPlayerTableHand,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            this.ValidatePropertySetExists(targetPlayerTableHand, targetColor, ActionTypes.TradeEmbargo);
+            this.ValidatePropertySetExists(
+                targetPlayerTableHand,
+                targetColor,
+                ActionTypes.TradeEmbargo
+            );
         }
 
-        public void ValidateRentTarget(PropertyCardColoursEnum targetColor, List<Card> targetPlayerProperties)
+        public void ValidateRentTarget(
+            PropertyCardColoursEnum targetColor,
+            List<Card> targetPlayerProperties
+        )
         {
             var hasTargetColorProperties = targetPlayerProperties.Any(card =>
-                card is StandardSystemCard systemCard && systemCard.CardColoursEnum == targetColor);
+                card is StandardSystemCard systemCard && systemCard.CardColoursEnum == targetColor
+            );
 
             if (!hasTargetColorProperties)
             {
-                throw new InvalidOperationException($"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties.");
+                throw new InvalidOperationException(
+                    $"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties."
+                );
             }
         }
-        public void ValidateTributeCardTarget(PropertyCardColoursEnum targetColor, Card cardToValidate)
+
+        public void ValidateTributeCardTarget(
+            PropertyCardColoursEnum targetColor,
+            Card cardToValidate
+        )
         {
             if (cardToValidate is not TributeCard)
             {
@@ -149,36 +244,48 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                 var result = tributeCard.TargetColorsToApplyRent.Any(color => color == targetColor);
                 if (!result)
                 {
-                    throw new InvalidOperationException($"Target color selected it not a available color on the tribute card!");
+                    throw new InvalidOperationException(
+                        $"Target color selected it not a available color on the tribute card!"
+                    );
                 }
             }
         }
 
-        public void ValidateRentCardColors(PropertyCardColoursEnum rentCardColor, PropertyCardColoursEnum targetColor)
+        public void ValidateRentCardColors(
+            PropertyCardColoursEnum rentCardColor,
+            PropertyCardColoursEnum targetColor
+        )
         {
             // For specific color rent cards, target must match
             if (rentCardColor != PropertyCardColoursEnum.OmniSector && rentCardColor != targetColor)
             {
-                throw new InvalidOperationException($"Cannot use {rentCardColor} rent card to charge rent on {targetColor} properties. Colors must match.");
+                throw new InvalidOperationException(
+                    $"Cannot use {rentCardColor} rent card to charge rent on {targetColor} properties. Colors must match."
+                );
             }
         }
 
-        public void ValidateWildcardRentTarget(List<PropertyCardColoursEnum> availableColors, PropertyCardColoursEnum selectedColor)
+        public void ValidateWildcardRentTarget(
+            List<PropertyCardColoursEnum> availableColors,
+            PropertyCardColoursEnum selectedColor
+        )
         {
             if (!availableColors.Contains(selectedColor))
             {
-                throw new InvalidOperationException($"Cannot charge rent for {selectedColor} properties. Available colors are: {string.Join(", ", availableColors)}.");
+                throw new InvalidOperationException(
+                    $"Cannot charge rent for {selectedColor} properties. Available colors are: {string.Join(", ", availableColors)}."
+                );
             }
         }
 
         public void ValidateEndOfTurnCardLimit(List<Card> playerHand)
         {
-            const int MAX_CARDS_IN_HAND = 7;
-
-            if (playerHand.Count > MAX_CARDS_IN_HAND)
+            if (playerHand.Count > MAX_CARDS_IN_PLAYER_HAND)
             {
-                var excessCards = playerHand.Count - MAX_CARDS_IN_HAND;
-                throw new InvalidOperationException($"You must discard {excessCards} card(s) to end your turn. Hand limit is {MAX_CARDS_IN_HAND} cards.");
+                var excessCards = playerHand.Count - MAX_CARDS_IN_PLAYER_HAND;
+                throw new InvalidOperationException(
+                    $"You must discard {excessCards} card(s) to end your turn. Hand limit is {MAX_CARDS_IN_PLAYER_HAND} cards."
+                );
             }
         }
 
@@ -188,7 +295,9 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         public bool DoesPlayerHaveShieldsUp(Player player, List<Card> playerHand)
         {
-            return playerHand.Any(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
+            return playerHand.Any(card =>
+                card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp
+            );
         }
 
         public bool IsPlayerHandEmpty(List<Card> cards)
@@ -196,11 +305,20 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return cards.Count == 0;
         }
 
+        public bool IsPlayerBroke(
+            Dictionary<PropertyCardColoursEnum, List<Card>> propertyGroups,
+            List<Card> moneyCards
+        )
+        {
+            return !moneyCards.Any()
+                && !propertyGroups.Values.SelectMany(cardList => cardList).Any();
+        }
+
         public bool CheckIfPlayerWon(List<PropertyCardGroup> tableHand)
         {
             var completeSets = 0;
 
-            if (tableHand.Count >= 11)
+            if (tableHand.Count >= this.PROPERTY_SETS_NEEDED_TO_WIN)
             {
                 return true;
             }
@@ -219,10 +337,14 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return completeSets >= 3;
         }
 
-        public bool IsPropertySetComplete(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color)
+        public bool IsPropertySetComplete(
+            List<PropertyCardGroup> tableHand,
+            PropertyCardColoursEnum color
+        )
         {
             var propertyGroup = this.GetPropertyGroup(tableHand, color);
-            if (propertyGroup == null) return false;
+            if (propertyGroup == null)
+                return false;
 
             var maxCards = propertyGroup.groupedPropertyCards.First().MaxCards;
             return propertyGroup.groupedPropertyCards.Count >= maxCards;
@@ -241,7 +363,10 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #region Calculations
 
-        public int CalculateRentAmount(PropertyCardColoursEnum targetColor, List<Card> playerPropertyCards)
+        public int CalculateRentAmount(
+            PropertyCardColoursEnum targetColor,
+            List<Card> playerPropertyCards
+        )
         {
             var representativeCard = playerPropertyCards
                 .OfType<StandardSystemCard>()
@@ -253,8 +378,8 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             }
 
             int propertyCount = playerPropertyCards.Count(card =>
-                (card is StandardSystemCard sc && sc.CardColoursEnum == targetColor) ||
-                (card is SystemWildCard)
+                (card is StandardSystemCard sc && sc.CardColoursEnum == targetColor)
+                || (card is SystemWildCard)
             );
 
             if (propertyCount == 0)
@@ -263,7 +388,10 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             }
 
             // Use Math.Min to prevent an index out-of-bounds error if they have more properties than rent tiers.
-            int rentalIndex = Math.Min(propertyCount - 1, representativeCard.RentalValues.Count - 1);
+            int rentalIndex = Math.Min(
+                propertyCount - 1,
+                representativeCard.RentalValues.Count - 1
+            );
             int baseRent = representativeCard.RentalValues[rentalIndex];
             int additionalRent = 0;
 
@@ -278,7 +406,9 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                 .OfType<CommandCard>()
                 .Count(cc => cc.Command == ActionTypes.SpaceStation);
 
-            additionalRent = (starbaseCount >= 1 ? starbaseRentValue : 0) + (spaceStationCount >= 1 ? spaceStationRentValue : 0);
+            additionalRent =
+                (starbaseCount >= 1 ? starbaseRentValue : 0)
+                + (spaceStationCount >= 1 ? spaceStationRentValue : 0);
 
             // Return the total rent.
             return baseRent + additionalRent;
@@ -290,7 +420,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             {
                 ActionTypes.BountyHunter => 5,
                 ActionTypes.TradeDividend => 2,
-                _ => null
+                _ => null,
             };
         }
 
@@ -298,7 +428,12 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #region UI Logic
 
-        public List<Player> IdentifyWhoSeesDialog(Player callerUser, Player? targetUser, List<Player> playerList, DialogTypeEnum dialogToOpen)
+        public List<Player> IdentifyWhoSeesDialog(
+            Player callerUser,
+            Player? targetUser,
+            List<Player> playerList,
+            DialogTypeEnum dialogToOpen
+        )
         {
             var playerListCopy = new List<Player>(playerList);
 
@@ -308,30 +443,34 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                     ? playerListCopy.Where(p => p.UserId != callerUser.UserId).ToList()
                     : [targetUser],
 
-                DialogTypeEnum.PlayerSelection or
-                DialogTypeEnum.PropertySetSelection or
-                DialogTypeEnum.TableHandSelector or
-                DialogTypeEnum.OwnHandSelection or
-                DialogTypeEnum.WildcardColor => [callerUser],
-
+                DialogTypeEnum.PlayerSelection
+                or DialogTypeEnum.PropertySetSelection
+                or DialogTypeEnum.TableHandSelector
+                or DialogTypeEnum.OwnHandSelection
+                or DialogTypeEnum.WildcardColor => [callerUser],
 
                 DialogTypeEnum.ShieldsUp => targetUser != null
                     ? [targetUser]
-                    : throw new InvalidOperationException("Cannot give ShieldsUp dialog if target user is null"),
+                    : throw new InvalidOperationException(
+                        "Cannot give ShieldsUp dialog if target user is null"
+                    ),
 
-                _ => throw new InvalidOperationException($"No dialog handling defined for {dialogToOpen}")
+                _ => throw new InvalidOperationException(
+                    $"No dialog handling defined for {dialogToOpen}"
+                ),
             };
         }
 
         #endregion
 
         #region Private Helper Methods
-        private PropertyCardGroup? GetPropertyGroup(List<PropertyCardGroup> tableHand, PropertyCardColoursEnum color)
+        private PropertyCardGroup? GetPropertyGroup(
+            List<PropertyCardGroup> tableHand,
+            PropertyCardColoursEnum color
+        )
         {
             return tableHand.FirstOrDefault(group => group.cardColorEnum == color);
         }
-
-
 
         private void ValidateActionLimit(string userId, int noOfActionsPlayed)
         {
@@ -345,27 +484,48 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         #region Property Set Validation Helpers
 
-        private void ValidatePropertySetExists(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        private void ValidatePropertySetExists(
+            List<Card> propertySet,
+            PropertyCardColoursEnum targetColor,
+            ActionTypes actionType
+        )
         {
             if (propertySet == null || propertySet.Count == 0)
             {
-                throw new InvalidTargetException(actionType.ToString(), targetColor, "target", "player doesn't own any properties of this color");
+                throw new InvalidTargetException(
+                    actionType.ToString(),
+                    targetColor,
+                    "target",
+                    "player doesn't own any properties of this color"
+                );
             }
         }
 
-        private StandardSystemCard GetPropertySetSystemCard(List<Card> propertySet, PropertyCardColoursEnum targetColor)
+        private StandardSystemCard GetPropertySetSystemCard(
+            List<Card> propertySet,
+            PropertyCardColoursEnum targetColor
+        )
         {
-            var systemCard = propertySet.FirstOrDefault(card => card is StandardSystemCard) as StandardSystemCard;
+            var systemCard =
+                propertySet.FirstOrDefault(card => card is StandardSystemCard)
+                as StandardSystemCard;
 
             if (systemCard == null)
             {
-                throw new InvalidOperationException($"No valid property cards found in the {targetColor} property set.");
+                throw new InvalidOperationException(
+                    $"No valid property cards found in the {targetColor} property set."
+                );
             }
 
             return systemCard;
         }
 
-        private void ValidatePropertySetCompletion(List<Card> propertySet, PropertyCardColoursEnum targetColor, bool shouldBeComplete, ActionTypes actionType)
+        private void ValidatePropertySetCompletion(
+            List<Card> propertySet,
+            PropertyCardColoursEnum targetColor,
+            bool shouldBeComplete,
+            ActionTypes actionType
+        )
         {
             this.ValidatePropertySetExists(propertySet, targetColor, actionType);
 
@@ -376,7 +536,9 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
             if (shouldBeComplete && !isComplete)
             {
-                throw new InvalidOperationException($"{actionType} can only be used on completed property sets. The {targetColor} set has {currentCount}/{maxCards} properties.");
+                throw new InvalidOperationException(
+                    $"{actionType} can only be used on completed property sets. The {targetColor} set has {currentCount}/{maxCards} properties."
+                );
             }
             else if (!shouldBeComplete && isComplete)
             {
@@ -385,28 +547,52 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
                     case ActionTypes.PirateRaid:
                         throw new CompletePropertySetException(targetColor);
                     case ActionTypes.ForcedTrade:
-                        throw new InvalidOperationException($"Forced Trade cannot target completed property sets. The {targetColor} set is already complete and protected.");
+                        throw new InvalidOperationException(
+                            $"Forced Trade cannot target completed property sets. The {targetColor} set is already complete and protected."
+                        );
                     default:
-                        throw new InvalidOperationException($"{actionType} cannot target completed property sets. The {targetColor} set is already complete.");
+                        throw new InvalidOperationException(
+                            $"{actionType} cannot target completed property sets. The {targetColor} set is already complete."
+                        );
                 }
             }
         }
 
-        private void ValidateHasCardPresent(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        private void ValidateHasCardPresent(
+            List<Card> propertySet,
+            PropertyCardColoursEnum targetColor,
+            ActionTypes actionType
+        )
         {
-            if (!propertySet.Exists(card => card is CommandCard command && command.Command == actionType))
+            if (
+                !propertySet.Exists(card =>
+                    card is CommandCard command && command.Command == actionType
+                )
+            )
             {
                 // A duplicate command card was found. Handle the error.
-                throw new InvalidOperationException($"Cannot place card without {actionType} present first!");
+                throw new InvalidOperationException(
+                    $"Cannot place card without {actionType} present first!"
+                );
             }
         }
 
-        private void ValidateNoDuplicateCard(List<Card> propertySet, PropertyCardColoursEnum targetColor, ActionTypes actionType)
+        private void ValidateNoDuplicateCard(
+            List<Card> propertySet,
+            PropertyCardColoursEnum targetColor,
+            ActionTypes actionType
+        )
         {
-            if (propertySet.Exists(card => card is CommandCard command && command.Command == actionType))
+            if (
+                propertySet.Exists(card =>
+                    card is CommandCard command && command.Command == actionType
+                )
+            )
             {
                 // A duplicate command card was found. Handle the error.
-                throw new InvalidOperationException($"A duplicate card with action type '{actionType}' already exists in the set.");
+                throw new InvalidOperationException(
+                    $"A duplicate card with action type '{actionType}' already exists in the set."
+                );
             }
         }
 

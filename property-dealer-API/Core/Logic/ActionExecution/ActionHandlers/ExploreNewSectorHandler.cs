@@ -1,4 +1,6 @@
 ﻿using property_dealer_API.Application.Enums;
+using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -6,7 +8,6 @@ using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
-using property_dealer_API.Application.Exceptions;
 
 namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
@@ -19,15 +20,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
+            IActionExecutor actionExecutor
+        )
             : base(
-                  playerManager,
-                  playerHandManager,
-                  rulesManager,
-                  pendingActionManager,
-                  actionExecutor
-                  )
-        { }
+                playerManager,
+                playerHandManager,
+                rulesManager,
+                pendingActionManager,
+                actionExecutor
+            ) { }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -37,10 +38,16 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
             if (commandCard.Command != this.ActionType)
             {
-                throw new InvalidOperationException($"Wrong command card found for Explore New Sector! Expected {ActionTypes.ExploreNewSector} but got {commandCard.Command}");
+                throw new InvalidOperationException(
+                    $"Wrong command card found for Explore New Sector! Expected {ActionTypes.ExploreNewSector} but got {commandCard.Command}"
+                );
             }
 
-            var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = commandCard.Command };
+            var pendingAction = new PendingAction
+            {
+                InitiatorUserId = initiator.UserId,
+                ActionType = commandCard.Command,
+            };
             base.PendingActionManager.CurrPendingAction = pendingAction;
 
             // The core logic of the action is delegated to the ActionExecutor.
@@ -50,11 +57,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
             // This is an immediate action that is now complete.
             base.CompleteAction();
+            base.PendingActionManager.ClearPendingAction();
             return null;
         }
-        public void ProcessResponse(Player responder, ActionContext currentContext)
+
+        public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
-            throw new InvalidOperationException("ExploreNewSector is an immediate action and does not have response steps to process.");
+            return null;
         }
     }
 }

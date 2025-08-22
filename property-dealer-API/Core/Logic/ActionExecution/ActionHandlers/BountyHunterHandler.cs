@@ -1,5 +1,6 @@
 ﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -19,78 +20,130 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
-            : base(playerManager, playerHandManager, rulesManager, pendingActionManager, actionExecutor)
-        { }
+            IActionExecutor actionExecutor
+        )
+            : base(
+                playerManager,
+                playerHandManager,
+                rulesManager,
+                pendingActionManager,
+                actionExecutor
+            ) { }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
-            if (card is not CommandCard commandCard || commandCard.Command != ActionTypes.BountyHunter)
+            if (
+                card is not CommandCard commandCard
+                || commandCard.Command != ActionTypes.BountyHunter
+            )
             {
                 throw new CardMismatchException(initiator.UserId, card.CardGuid.ToString());
             }
 
-            var pendingAction = new PendingAction { InitiatorUserId = initiator.UserId, ActionType = commandCard.Command };
-            var newActionContext = base.CreateActionContext(card.CardGuid.ToString(), DialogTypeEnum.PlayerSelection, initiator, null, allPlayers, pendingAction);
+            var pendingAction = new PendingAction
+            {
+                InitiatorUserId = initiator.UserId,
+                ActionType = commandCard.Command,
+            };
+            var newActionContext = base.CreateActionContext(
+                card.CardGuid.ToString(),
+                DialogTypeEnum.PlayerSelection,
+                initiator,
+                null,
+                allPlayers,
+                pendingAction
+            );
 
             base.SetNextDialog(newActionContext, DialogTypeEnum.PlayerSelection, initiator, null);
             return newActionContext;
         }
 
-        public void ProcessResponse(Player responder, ActionContext currentContext)
+        public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PlayerSelection:
                     // Only the initiator can select a player.
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException("Only the action initiator can select a player.");
+                        throw new InvalidOperationException(
+                            "Only the action initiator can select a player."
+                        );
 
                     this.ProcessPlayerSelection(currentContext);
-                    break;
-
-                case DialogTypeEnum.ShieldsUp:
-                    base.HandleShieldsUp(responder, currentContext, this.ProcessPayment);
                     break;
 
                 case DialogTypeEnum.PayValue:
                     // Only the target can respond with payment.
                     if (responder.UserId != currentContext.TargetPlayerId)
-                        throw new InvalidOperationException("Only the target player can respond with payment.");
+                        throw new InvalidOperationException(
+                            "Only the target player can respond with payment."
+                        );
 
                     this.ProcessPayment(currentContext, responder);
                     break;
 
-
                 default:
-                    throw new InvalidOperationException($"Invalid state for BountyHunter action: {currentContext.DialogToOpen}");
+                    throw new InvalidOperationException(
+                        $"Invalid state for BountyHunter action: {currentContext.DialogToOpen}"
+                    );
             }
+
+            return null;
         }
 
         private void ProcessPlayerSelection(ActionContext currentContext)
         {
-            var initiator = base.PlayerManager.GetPlayerByUserId(currentContext.ActionInitiatingPlayerId);
+            var initiator = base.PlayerManager.GetPlayerByUserId(
+                currentContext.ActionInitiatingPlayerId
+            );
             var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId!);
             var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
 
-            // Before asking for payment, check if the target can block the action.
-            if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-            {
-                // Present the target with the option to use their shield.
-                base.BuildShieldsUpContext(currentContext, initiator, targetPlayer);
-            }
-            else
-            {
-                // If they cannot block, proceed to the payment step.
-                base.SetNextDialog(currentContext, DialogTypeEnum.PayValue, initiator, targetPlayer);
-            }
+            // If they cannot block, proceed to the payment step.
+            base.SetNextDialog(currentContext, DialogTypeEnum.PayValue, initiator, targetPlayer);
         }
 
-        private void ProcessPayment(ActionContext currentContext, Player responder, Boolean _ = true)
+        private ActionResult? ProcessPayment(
+            ActionContext currentContext,
+            Player responder,
+            Boolean _ = true
+        )
         {
-            if (currentContext.OwnTargetCardId == null || currentContext.OwnTargetCardId.Count < 1)
+            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
             {
-                throw new ActionContextParameterNullException(currentContext, $"Payment cards were not provided for {currentContext.ActionType}!");
+                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
+                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
+                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
+                {
+                    throw new ActionContextParameterNullException(
+                        currentContext,
+                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
+                    );
+                }
+
+                return null;
+            }
+
+            // Check if the response was a "Shields Up" card.
+            // This assumes a shield play consists of submitting just the single shield card.
+            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
+            {
+                var targetPlayer = base.PlayerManager.GetPlayerByUserId(
+                    currentContext.TargetPlayerId!
+                );
+                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
+                var initiator = base.PlayerManager.GetPlayerByUserId(
+                    currentContext.ActionInitiatingPlayerId
+                );
+
+                if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+                {
+                    return base.HandleShieldsUp(responder, currentContext, this.ProcessPayment);
+                }
+                else
+                {
+                    throw new CardNotFoundException("Shields up was not found in players deck!");
+                }
             }
 
             // The 'responder' is the player paying. The initiator is receiving the payment.
@@ -101,6 +154,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             );
 
             base.CompleteAction();
+
+            return null;
         }
     }
 }
