@@ -40,31 +40,25 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             }
 
             // Further validation to see if the room and player actually exists
-            Console.WriteLine($"=== WAITING ROOM CONNECTION ===");
-            Console.WriteLine($"Room ID from query: '{gameRoomId}'");
-            Console.WriteLine($"User ID from query: '{userId}'");
-
-            // Further validation to see if the room and player actually exists
             var roomExists = this._waitingRoomService.DoesRoomExist(gameRoomId);
-            Console.WriteLine($"Room exists check: {roomExists}");
 
             if (!roomExists)
             {
-                Console.WriteLine($"=== ROOM NOT FOUND ===");
-                Console.WriteLine($"Looking for room ID: '{gameRoomId}'");
-
                 // Let's also check what rooms DO exist
                 var allRooms = this._waitingRoomService.GetAllExistingRoomIds(); // We'll need to add this method
-                Console.WriteLine($"Existing rooms: {string.Join(", ", allRooms)}");
 
-                await this.Clients.Caller.ErrorMsg("The game room you are trying to join does not exist.");
+                await this.Clients.Caller.ErrorMsg(
+                    "The game room you are trying to join does not exist."
+                );
                 this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
             }
             if (!this._waitingRoomService.DoesPlayerExist(userId, gameRoomId))
             {
-                await this.Clients.Caller.ErrorMsg("Your player object does not exist, please retry.");
+                await this.Clients.Caller.ErrorMsg(
+                    "Your player object does not exist, please retry."
+                );
                 this.Context.Abort();
                 await base.OnConnectedAsync();
                 return;
@@ -108,7 +102,6 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             var gameRoomId = gameRoomIdObj as string;
             var userId = userIdObj as string;
 
-
             if (!String.IsNullOrEmpty(gameRoomId) && !String.IsNullOrEmpty(userId))
             {
                 await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, gameRoomId);
@@ -128,8 +121,6 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
                     await this.Clients.Caller.ErrorMsg("No players found in game room");
                     return;
                 }
-
-                Console.WriteLine(gameRoomId, allPlayers);
                 await this.Clients.Group(gameRoomId).AllGameRoomPlayerList(allPlayers);
             }
             catch (GameNotFoundException)
@@ -161,7 +152,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             try
             {
                 this._waitingRoomService.StartGame(gameRoomId);
-                //Send a message to all those who are in the group 
+                //Send a message to all those who are in the group
                 await this.Clients.Group(gameRoomId).GameStarted(gameRoomId);
             }
             catch (GameNotFoundException)
@@ -191,7 +182,9 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             }
             catch (PlayerRemovalFailedException e)
             {
-                await this.Clients.Caller.ErrorMsg("Could not remove player table hand: " + $"{e.Message}");
+                await this.Clients.Caller.ErrorMsg(
+                    "Could not remove player table hand: " + $"{e.Message}"
+                );
             }
         }
     }

@@ -9,7 +9,8 @@ namespace property_dealer_API.Application.DTOs.Responses
         public ActionTypes? ActionCardToSpawnType { get; set; }
         public PropertyCardColoursEnum? SetColorToSpawn { get; set; }
         public List<PropertyCardColoursEnum>? TributeTargetColors { get; set; }
-        public int NumberOfDummyPlayersToSpawn { get; set; }
+        public int? NumberOfDummyPlayersToSpawn { get; set; }
         public string? CardIdToDelete { get; set; }
+        public int? NewHandLimit { get; set; }
     }
 }

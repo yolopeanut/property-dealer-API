@@ -16,23 +16,25 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
         // Use FULL write interfaces for admin powers
         private readonly IPlayerHandManager _playerHandManager;
         private readonly IPlayerManager _playerManager;
-        private readonly IGameRuleManager _rulesManager;
         private readonly IPendingActionManager _pendingActionManager;
+        private readonly IGameRuleManager _rulesManager;
         private readonly IDeckManager _deckManager;
 
         public DebugManager(
             IPlayerHandManager playerHandManager,
             IPlayerManager playerManager,
-            IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IDeckManager deckManager)
+            IGameRuleManager gameRuleManager,
+            IDeckManager deckManager
+        )
         {
             this._playerHandManager = playerHandManager;
             this._playerManager = playerManager;
-            this._rulesManager = rulesManager;
+            this._rulesManager = gameRuleManager;
             this._pendingActionManager = pendingActionManager;
             this._deckManager = deckManager;
         }
+
         public void ProcessCommand(DebugOptionsEnum debugCommand, DebugContext debugContext)
         {
             switch (debugCommand)
@@ -48,7 +50,37 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
                 case DebugOptionsEnum.SpawnDummyPlayer:
                     this.SpawnDummyPlayer(debugContext);
                     break;
+
+                case DebugOptionsEnum.SpawnAllCommandCard:
+                    this.SpawnAllCommandCards(debugContext);
+                    break;
+
+                case DebugOptionsEnum.ChangeHandLimit:
+                    this.ChangeHandLimits(debugContext);
+                    break;
             }
+        }
+
+        private void ChangeHandLimits(DebugContext debugContext)
+        {
+            var newHandLimit = debugContext.NewHandLimit;
+            if (newHandLimit == null)
+            {
+                throw new InvalidOperationException(
+                    "Cannot set new max card in hand limit when value is null!"
+                );
+            }
+
+            this._rulesManager.MAX_CARDS_IN_HAND = (int)newHandLimit;
+        }
+
+        private void SpawnAllCommandCards(DebugContext debugContext)
+        {
+            var cardsSpawned = this.CreateAllActionTypeCards();
+
+            cardsSpawned.ForEach(card =>
+                this._playerHandManager.AddCardToPlayerHand(debugContext.UserId, card)
+            );
         }
 
         private void SpawnDummyPlayer(DebugContext debugContext)
@@ -73,7 +105,13 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
                 cardsToSpawn = this.CreatePropertyCardSet(PropertyCardColoursEnum.Red, 3);
             }
 
-            cardsToSpawn.ForEach(card => this._playerHandManager.AddCardToPlayerTableHand(debugContext.UserId, card, card.CardColoursEnum));
+            cardsToSpawn.ForEach(card =>
+                this._playerHandManager.AddCardToPlayerTableHand(
+                    debugContext.UserId,
+                    card,
+                    card.CardColoursEnum
+                )
+            );
         }
 
         private void SpawnCard(DebugContext debugContext)
@@ -90,7 +128,9 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
                 case CardTypesEnum.CommandCard:
                     if (!debugContext.ActionCardToSpawnType.HasValue)
                     {
-                        throw new InvalidOperationException("Cannot spawn command card when ActionCardToSpawnType is null!");
+                        throw new InvalidOperationException(
+                            "Cannot spawn command card when ActionCardToSpawnType is null!"
+                        );
                     }
 
                     spawnedCard = this.CreateCommandCard(debugContext.ActionCardToSpawnType.Value);
@@ -99,7 +139,9 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
                 case CardTypesEnum.SystemCard:
                     if (!debugContext.SetColorToSpawn.HasValue)
                     {
-                        throw new InvalidOperationException("Cannot spawn system card when SetColorToSpawn is null!");
+                        throw new InvalidOperationException(
+                            "Cannot spawn system card when SetColorToSpawn is null!"
+                        );
                     }
 
                     spawnedCard = this.CreateStandardSystemCard(debugContext.SetColorToSpawn.Value);
@@ -114,22 +156,90 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
                     break;
 
                 case CardTypesEnum.TributeCard:
-                    if (debugContext.TributeTargetColors == null || debugContext.TributeTargetColors.Count < 0)
+                    if (
+                        debugContext.TributeTargetColors == null
+                        || debugContext.TributeTargetColors.Count < 0
+                    )
                     {
-                        throw new InvalidOperationException("Cannot spawn tribute card when TributeTargetColors is null!");
+                        throw new InvalidOperationException(
+                            "Cannot spawn tribute card when TributeTargetColors is null!"
+                        );
                     }
 
-                    spawnedCard = this.CreateTributeCard(targetColors: debugContext.TributeTargetColors);
+                    spawnedCard = this.CreateTributeCard(
+                        targetColors: debugContext.TributeTargetColors
+                    );
                     break;
             }
         }
 
-        private CommandCard CreateCommandCard(
-           ActionTypes command = ActionTypes.HostileTakeover,
-           string name = "Test Command Card",
-           int value = 1,
-           string description = "Test command card description")
+        private CommandCard CreateCommandCard(ActionTypes command)
         {
+            var (name, value, description) = command switch
+            {
+                ActionTypes.HostileTakeover => (
+                    "Hostile Takeover",
+                    5,
+                    "Steal a full set of systems from any player."
+                ),
+                ActionTypes.ShieldsUp => (
+                    "Shields Up",
+                    4,
+                    "Cancel any command card played against you."
+                ),
+                ActionTypes.PirateRaid => (
+                    "Pirate Raid",
+                    3,
+                    "Steal any single system from another player (cannot be from a completed set)."
+                ),
+                ActionTypes.ForcedTrade => (
+                    "Forced Trade",
+                    3,
+                    "Force another player to trade one of their systems for one of yours."
+                ),
+                ActionTypes.BountyHunter => (
+                    "Bounty Hunter",
+                    3,
+                    "Force any one player to pay you 5M Credits."
+                ),
+                ActionTypes.TradeDividend => (
+                    "Trade Dividend",
+                    2,
+                    "All players must pay you 2M Credits."
+                ),
+                ActionTypes.ExploreNewSector => (
+                    "Explore a New Sector",
+                    1,
+                    "Draw 2 extra cards from the deck."
+                ),
+                ActionTypes.SpaceStation => (
+                    "Space Station",
+                    3,
+                    "Add 3M Credits to the tribute value of a completed system set. Can only be played on a full set."
+                ),
+                ActionTypes.Starbase => (
+                    "Starbase",
+                    4,
+                    "Add 4M Credits to the tribute value of a completed system set. Requires a Space Station to be on the set first."
+                ),
+                ActionTypes.TradeEmbargo => (
+                    "Trade Embargo",
+                    1,
+                    "Play with a Tribute card to double the amount owed."
+                ),
+                ActionTypes.TributeWildCard => (
+                    "TributeWildCard",
+                    5,
+                    "Use this tribute card on any property set"
+                ),
+
+                // Add a default case to handle any undefined ActionTypes
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(command),
+                    $"No definition found for command card type: {command}"
+                ),
+            };
+
             return new CommandCard(CardTypesEnum.CommandCard, command, name, value, description);
         }
 
@@ -144,25 +254,40 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
             int value = 2,
             string description = "Test property description",
             int maxCards = 3,
-            List<int>? rentalValues = null)
+            List<int>? rentalValues = null
+        )
         {
             rentalValues ??= new List<int> { 1, 2, 4 };
-            return new StandardSystemCard(CardTypesEnum.SystemCard, name, value, color, description, maxCards, rentalValues);
+            return new StandardSystemCard(
+                CardTypesEnum.SystemCard,
+                name,
+                value,
+                color,
+                description,
+                maxCards,
+                rentalValues
+            );
         }
 
         private TributeCard CreateTributeCard(
             int value = 2,
             List<PropertyCardColoursEnum>? targetColors = null,
-            string description = "Test tribute card")
+            string description = "Test tribute card"
+        )
         {
-            targetColors ??= new List<PropertyCardColoursEnum> { PropertyCardColoursEnum.Red, PropertyCardColoursEnum.Cyan };
+            targetColors ??= new List<PropertyCardColoursEnum>
+            {
+                PropertyCardColoursEnum.Red,
+                PropertyCardColoursEnum.Cyan,
+            };
             return new TributeCard(CardTypesEnum.TributeCard, value, targetColors, description);
         }
 
         private SystemWildCard CreateSystemWildCard(
             string name = "Test Wild Card",
             int value = 0,
-            string description = "Test wild card description")
+            string description = "Test wild card description"
+        )
         {
             return new SystemWildCard(CardTypesEnum.SystemWildCard, name, value, description);
         }
@@ -180,7 +305,7 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
             {
                 ActionTypes.Tribute => CreateTributeCard(),
                 ActionTypes.SystemWildCard => CreateSystemWildCard(),
-                _ => CreateCommandCard(actionType)
+                _ => CreateCommandCard(actionType),
             };
         }
 
@@ -201,7 +326,8 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
             PropertyCardColoursEnum color,
             int cardCount,
             int maxCards = 3,
-            List<int>? rentalValues = null)
+            List<int>? rentalValues = null
+        )
         {
             var cards = new List<StandardSystemCard>();
             rentalValues ??= new List<int> { 1, 2, 4 };

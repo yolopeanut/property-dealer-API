@@ -1,5 +1,7 @@
-﻿using property_dealer_API.Application.Enums;
+﻿using System.Collections.Concurrent;
+using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.Exceptions;
+using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -7,7 +9,6 @@ using property_dealer_API.Core.Logic.PlayerHandsManager;
 using property_dealer_API.Core.Logic.PlayersManager;
 using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
-using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
@@ -24,7 +25,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor)
+            IActionExecutor actionExecutor
+        )
         {
             PlayerManager = playerManager;
             PlayerHandManager = playerHandManager;
@@ -32,36 +34,64 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             PendingActionManager = pendingActionManager;
             ActionExecutor = actionExecutor;
         }
-        protected ActionContext CreateActionContext(string cardId, DialogTypeEnum dialogType, Player currentUser, Player? targetUser, List<Player> allPlayers, PendingAction pendingAction)
+
+        protected ActionContext CreateActionContext(
+            string cardId,
+            DialogTypeEnum dialogType,
+            Player currentUser,
+            Player? targetUser,
+            List<Player> allPlayers,
+            PendingAction pendingAction
+        )
         {
-            var dialogTargetList = this.RulesManager.IdentifyWhoSeesDialog(currentUser, targetUser, allPlayers, dialogType);
+            var dialogTargetList = this.RulesManager.IdentifyWhoSeesDialog(
+                currentUser,
+                targetUser,
+                allPlayers,
+                dialogType
+            );
             var amountToPay = this.RulesManager.GetPaymentAmount(pendingAction.ActionType);
             pendingAction.RequiredResponders = new ConcurrentBag<Player>(dialogTargetList);
 
             // Set the pending action
-            this.PendingActionManager.CurrPendingAction = pendingAction;
-
-            return new ActionContext
+            var actionContext = new ActionContext
             {
                 CardId = cardId,
                 ActionInitiatingPlayerId = currentUser.UserId,
                 ActionType = pendingAction.ActionType,
                 DialogTargetList = dialogTargetList,
                 DialogToOpen = dialogType,
-                PaymentAmount = amountToPay
+                PaymentAmount = amountToPay,
             };
+
+            pendingAction.CurrentActionContext = actionContext;
+            this.PendingActionManager.CurrPendingAction = pendingAction;
+            return actionContext;
         }
 
-        protected void SetNextDialog(ActionContext currentContext, DialogTypeEnum nextDialog, Player initiator, Player? target)
+        protected void SetNextDialog(
+            ActionContext currentContext,
+            DialogTypeEnum nextDialog,
+            Player initiator,
+            Player? target
+        )
         {
             var allPlayers = PlayerManager.GetAllPlayers();
             currentContext.DialogToOpen = nextDialog;
-            currentContext.DialogTargetList = RulesManager.IdentifyWhoSeesDialog(initiator, target, allPlayers, nextDialog);
+            currentContext.DialogTargetList = RulesManager.IdentifyWhoSeesDialog(
+                initiator,
+                target,
+                allPlayers,
+                nextDialog
+            );
 
             var pendingAction = PendingActionManager.CurrPendingAction;
+            pendingAction.CurrentActionContext = currentContext;
             if (pendingAction != null)
             {
-                pendingAction.RequiredResponders = new ConcurrentBag<Player>(currentContext.DialogTargetList);
+                pendingAction.RequiredResponders = new ConcurrentBag<Player>(
+                    currentContext.DialogTargetList
+                );
             }
         }
 
@@ -70,7 +100,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             PendingActionManager.IncrementProcessedActions();
         }
 
-        protected virtual void HandleShieldsUp(Player responder, ActionContext currentContext, Action<ActionContext, Player, Boolean>? callbackIfShieldsUpRejected)
+        protected virtual ActionResult? HandleShieldsUp(
+            Player responder,
+            ActionContext currentContext,
+            Func<ActionContext, Player, Boolean, ActionResult?>? callbackIfShieldsUpRejected
+        )
         {
             if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
             {
@@ -82,22 +116,37 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 }
                 var playerHand = this.PlayerHandManager.GetPlayerHand(responder.UserId);
 
-                var shieldsUpCard = playerHand.FirstOrDefault(card => card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp);
+                var shieldsUpCard = playerHand.FirstOrDefault(card =>
+                    card is CommandCard commandCard && commandCard.Command == ActionTypes.ShieldsUp
+                );
                 if (shieldsUpCard != null)
                 {
-                    this.ActionExecutor.HandleRemoveFromHand(responder.UserId, shieldsUpCard.CardGuid.ToString());
+                    this.ActionExecutor.HandleRemoveFromHand(
+                        responder.UserId,
+                        shieldsUpCard.CardGuid.ToString()
+                    );
                 }
                 this.CompleteAction();
+
+                // ActionInitiating player for shields up is the target player because they reject the action
+                return new ActionResult
+                {
+                    ActionInitiatingPlayerId = targetPlayer.UserId,
+                    AffectedPlayerId = currentContext.ActionInitiatingPlayerId,
+                    ActionType = ActionTypes.ShieldsUp,
+                };
             }
-            else if (currentContext.DialogResponse == CommandResponseEnum.Accept)
+            else if (currentContext.DialogResponse == CommandResponseEnum.RejectShieldsUp)
             {
                 if (callbackIfShieldsUpRejected == null)
                 {
-                    throw new InvalidOperationException("Cannot do accept response when callback action is null!");
+                    throw new InvalidOperationException(
+                        "Cannot do accept response when callback action is null!"
+                    );
                 }
-                callbackIfShieldsUpRejected(currentContext, responder, false); // Will handle the complete action in the called function
+                return callbackIfShieldsUpRejected(currentContext, responder, false); // Will handle the complete action in the called function
             }
-
+            return null;
         }
 
         protected void BuildShieldsUpContext(ActionContext context, Player initiator, Player target)

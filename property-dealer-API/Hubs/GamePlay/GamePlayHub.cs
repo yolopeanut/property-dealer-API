@@ -88,6 +88,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
             // 5. Notify the group that a player has joined
             await this.RefreshFullGameState(gameRoomId, true);
+            await this.GetCurrentPendingActionContext(gameRoomId);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -298,7 +299,7 @@ namespace property_dealer_API.Hubs.GamePlay
 
         private async Task ExceptionHandler(Exception e)
         {
-            await this.Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message + e.StackTrace);
+            await this.Clients.Caller.ErrorMsg("SERVER ERROR: " + e.Message);
         }
 
         private async Task RefreshGameState(string gameRoomId, List<Player> allPlayerIds)
@@ -306,6 +307,7 @@ namespace property_dealer_API.Hubs.GamePlay
             // Always refresh shared state
             await this.GetAllTableCard(gameRoomId);
             await this.GetCurrentPlayerTurn(gameRoomId);
+            await this.GetPendingActionPlayers(gameRoomId);
 
             // Refresh specific player hands if provided
             foreach (var player in allPlayerIds)
@@ -337,7 +339,11 @@ namespace property_dealer_API.Hubs.GamePlay
                 return; // Don't continue with normal flow if game ended
             }
 
-            // If there's a new dialog to open, send it to clients
+            if (result.ActionResults != null)
+            {
+                await this.Clients.Group(gameRoomId).NotifyActionResult(result.ActionResults);
+            }
+
             if (result.ActionContext != null)
             {
                 await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
@@ -351,6 +357,37 @@ namespace property_dealer_API.Hubs.GamePlay
             }
 
             await this.RefreshFullGameState(gameRoomId, true);
+        }
+
+        private async Task GetPendingActionPlayers(string gameRoomId)
+        {
+            try
+            {
+                var pendingPlayers = this._gamePlayService.GetPendingActionPlayers(gameRoomId);
+                await this.Clients.Group(gameRoomId).PendingActionPlayers(pendingPlayers);
+            }
+            // Fail silently, expected to fail when running
+            catch (Exception e)
+            {
+                await this.Clients.Group(gameRoomId).PendingActionPlayers([]);
+            }
+        }
+
+        private async Task GetCurrentPendingActionContext(string gameRoomId)
+        {
+            try
+            {
+                var result = this._gamePlayService.GetCurrentPendingAction(gameRoomId);
+                if (result?.ActionContext != null)
+                {
+                    await this.Clients.Group(gameRoomId).OpenCommandDialog(result.ActionContext);
+                }
+            }
+            // Fail silently, expected to fail when running. Will be called oninit
+            catch (Exception e)
+            {
+                await this.ExceptionHandler(e);
+            }
         }
         #endregion
 

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
 using property_dealer_API.Application.MethodReturns;
@@ -120,7 +121,6 @@ namespace property_dealer_API.Core
 
         public void StartGame(List<Card> initialDeck)
         {
-            Console.WriteLine("CALLING START GAME");
             this._deckManager.PopulateInitialDeck(initialDeck); // Populating initial decks
             this.InitializePlayerHands(); // Instantiate blank hand and table hand
             this.AssignHands(); // Assigning hand to blank hands
@@ -168,7 +168,8 @@ namespace property_dealer_API.Core
                 if (actionContext == null)
                 {
                     this.HandleRemoveFromHand(userId, cardId);
-                    var turnResult = this.CompleteTurn(userId); // Null if no winning players found
+                    var turnResult = new TurnResult(null, null, null, null);
+                    turnResult = this.CompleteTurn(userId, turnResult); // Null if no winning players found
                     return turnResult;
                 }
                 return new TurnResult(actionContext, null);
@@ -185,10 +186,14 @@ namespace property_dealer_API.Core
 
         public TurnResult RegisterActionResponse(string userId, ActionContext actionContext)
         {
+            TurnResult turnResult;
+            if (actionContext.DialogResponse == CommandResponseEnum.Cancel)
+            {
+                this._dialogManager.ClearPendingAction();
+                return new TurnResult(); // return empty turn result because no turn was made
+            }
+
             var player = this._playerManager.GetPlayerByUserId(userId);
-            Console.WriteLine(
-                $"[DEBUG] RegisterActionResponse called by {userId} for CardId: {actionContext.CardId}"
-            );
             var allPlayers = this._playerManager.GetAllPlayers();
 
             var dialogProcessingResult = this._dialogManager.RegisterActionResponse(
@@ -196,21 +201,21 @@ namespace property_dealer_API.Core
                 actionContext
             );
 
+            turnResult = new TurnResult(null, null, null, dialogProcessingResult.ActionResult);
+
             if (dialogProcessingResult.ShouldClearPendingAction)
             {
-                Console.WriteLine(
-                    $"[DEBUG] About to remove original command card {actionContext.CardId} from {actionContext.ActionInitiatingPlayerId}"
-                );
                 this._playerHandManager.RemoveFromPlayerHand(
                     actionContext.ActionInitiatingPlayerId,
                     actionContext.CardId
                 );
-                Console.WriteLine($"[DEBUG] Successfully removed original command card");
-                var turnResult = this.CompleteTurn(actionContext.ActionInitiatingPlayerId);
+                turnResult = this.CompleteTurn(actionContext.ActionInitiatingPlayerId, turnResult);
+
                 return turnResult;
             }
 
-            return new TurnResult(dialogProcessingResult.NewActionContexts?.FirstOrDefault(), null);
+            turnResult.ActionContext = dialogProcessingResult.NewActionContexts?.FirstOrDefault();
+            return turnResult;
         }
 
         private void NextPlayerTurn(string userId)
@@ -219,8 +224,16 @@ namespace property_dealer_API.Core
             this.AssignCardToPlayer(userId, 2);
         }
 
-        private TurnResult CompleteTurn(string currPlayerId)
+        private TurnResult CompleteTurn(string currPlayerId, TurnResult turnResult)
         {
+            var newTurnResult = new TurnResult
+            {
+                ActionContext = turnResult.ActionContext,
+                ActionResults = turnResult.ActionResults,
+                NeedToRemoveCardPlayer = turnResult.NeedToRemoveCardPlayer,
+                WinningPlayer = turnResult.WinningPlayer,
+            };
+
             var currPlayerHand = this._playerHandManager.GetPlayerHand(currPlayerId);
 
             // Check for win condition before moving to next turn
@@ -228,8 +241,8 @@ namespace property_dealer_API.Core
             if (winningPlayer != null)
             {
                 // Game is over, don't proceed with next turn
-                Console.WriteLine($"[GAME] Player {winningPlayer.PlayerName} has won the game!");
-                return new TurnResult(null, winningPlayer);
+                newTurnResult.WinningPlayer = winningPlayer;
+                return newTurnResult;
             }
 
             var nextUserTurn = this._turnManager.IncrementUserActionCount();
@@ -242,13 +255,13 @@ namespace property_dealer_API.Core
                 catch (Exception)
                 {
                     var currPlayer = this._playerManager.GetPlayerByUserId(currPlayerId);
-                    return new TurnResult(null, null, currPlayer); // current player needs to dispose
-                    throw;
+                    newTurnResult.NeedToRemoveCardPlayer = currPlayer;
+                    return newTurnResult;
                 }
                 this.NextPlayerTurn(nextUserTurn);
             }
 
-            return new TurnResult(null, null, null);
+            return newTurnResult;
         }
 
         public Player GetCurrentPlayerTurn()
@@ -343,27 +356,32 @@ namespace property_dealer_API.Core
             );
         }
 
+        public List<Player> GetPendingActionPlayers()
+        {
+            return this._dialogManager.GetPendingPlayers();
+        }
+
+        public TurnResult GetCurrentPendingAction()
+        {
+            var currActionContext = this._dialogManager.GetCurrentActionContext();
+
+            return new TurnResult(currActionContext);
+        }
+
         // This method gets the players list and initializes the hands from the draw cards function in deck manager.
         private void InitializePlayerHands()
         {
-            Console.WriteLine("INITIALIZING ALL PLAYERS HANDS");
-
             var playerList = this._playerManager.GetAllPlayers();
             foreach (var player in playerList)
             {
                 this._playerHandManager.AddPlayerHand(player.UserId);
-                this._debugManager.ProcessCommand(
-                    DebugOptionsEnum.SpawnFullSet,
-                    new DebugContext { UserId = player.UserId }
-                );
+                this.SetupStartDebugCommands(player);
             }
         }
 
         // Adding cards to all player hands.
         private void AssignHands()
         {
-            Console.WriteLine("ASSIGNING CARDS TO ALL PLAYERS");
-
             var playerList = this._playerManager.GetAllPlayers();
 
             for (int i = 0; i < playerList.Count; i++)
@@ -393,6 +411,22 @@ namespace property_dealer_API.Core
             }
 
             return cardRemoved;
+        }
+
+        private void SetupStartDebugCommands(Player player)
+        {
+            this._debugManager.ProcessCommand(
+                DebugOptionsEnum.SpawnFullSet,
+                new DebugContext { UserId = player.UserId }
+            );
+            this._debugManager.ProcessCommand(
+                DebugOptionsEnum.ChangeHandLimit,
+                new DebugContext { UserId = player.UserId, NewHandLimit = 999 }
+            );
+            this._debugManager.ProcessCommand(
+                DebugOptionsEnum.SpawnAllCommandCard,
+                new DebugContext { UserId = player.UserId }
+            );
         }
     }
 }

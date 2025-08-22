@@ -1,6 +1,6 @@
-﻿using property_dealer_API.Application.Exceptions;
+﻿using System.Collections.Concurrent;
+using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Models.Cards;
-using System.Collections.Concurrent;
 
 namespace property_dealer_API.Core.Logic.DecksManager
 {
@@ -10,14 +10,10 @@ namespace property_dealer_API.Core.Logic.DecksManager
         private ConcurrentStack<Card> _discardPile = new ConcurrentStack<Card>();
         private readonly object _discardPileLock = new object();
 
-        public DeckManager()
-        {
-        }
+        public DeckManager() { }
 
         public void PopulateInitialDeck(List<Card> initialDeck)
         {
-            Console.WriteLine("POPULATING INITIAL DECK");
-
             initialDeck.Shuffle();
 
             foreach (var card in initialDeck)
@@ -31,7 +27,9 @@ namespace property_dealer_API.Core.Logic.DecksManager
         {
             if (this._drawPile == null || this._discardPile == null)
             {
-                throw new InvalidOperationException("The draw pile or discard pile has not been initialized.");
+                throw new InvalidOperationException(
+                    "The draw pile or discard pile has not been initialized."
+                );
             }
 
             return this._drawPile.Concat(this._discardPile).ToList();
@@ -48,14 +46,12 @@ namespace property_dealer_API.Core.Logic.DecksManager
                     continue;
                 }
 
-                Console.WriteLine("RESHUFFLING DECK");
                 this.ReshuffleIfNeeded();
 
                 if (this._drawPile.TryPop(out Card? afterReshuffle))
                 {
                     cardList.Add(afterReshuffle);
                 }
-
             }
 
             return cardList;
@@ -80,14 +76,16 @@ namespace property_dealer_API.Core.Logic.DecksManager
 
                 // Atomically swap the current discard pile with a new empty one.
                 // This prevents the "lost card" race condition.
-                var cardsToReshuffle = Interlocked.Exchange(ref this._discardPile, new ConcurrentStack<Card>());
+                var cardsToReshuffle = Interlocked.Exchange(
+                    ref this._discardPile,
+                    new ConcurrentStack<Card>()
+                );
 
                 var shuffledDiscards = cardsToReshuffle.ToList();
                 shuffledDiscards.Shuffle();
 
                 // PushRange is a thread-safe way to add multiple items.
                 this._drawPile.PushRange(shuffledDiscards.ToArray());
-
             }
         }
 

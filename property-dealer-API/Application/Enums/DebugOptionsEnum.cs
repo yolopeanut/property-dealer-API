@@ -3,6 +3,7 @@
     public enum DebugOptionsEnum
     {
         SpawnFullSet,
+        SpawnAllCommandCard,
         SpawnCard,
         DeleteCard,
         ClearPendingContext,
@@ -11,5 +12,7 @@
         ClearHand,
         GetDiscardPile,
         GetAllOtherPlayerHands,
+        DisableHandLimit,
+        ChangeHandLimit,
     }
 }

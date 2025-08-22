@@ -7,5 +7,8 @@ namespace property_dealer_API.Core.Logic.DialogsManager
     {
         DialogProcessingResult ProcessPendingResponses(ActionContext actionContext);
         DialogProcessingResult RegisterActionResponse(Player player, ActionContext actionContext);
+        void ClearPendingAction();
+        List<Player> GetPendingPlayers();
+        ActionContext GetCurrentActionContext();
     }
 }

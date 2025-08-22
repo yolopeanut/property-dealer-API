@@ -6,7 +6,6 @@ using property_dealer_API.Core.Logic.PendingActionsManager;
 
 namespace property_dealer_API.Core.Logic.DialogsManager
 {
-
     public class DialogManager : IDialogManager
     {
         private readonly IActionExecutionManager _actionExecutionManager;
@@ -14,7 +13,8 @@ namespace property_dealer_API.Core.Logic.DialogsManager
 
         public DialogManager(
             IActionExecutionManager actionExecutionManager,
-            IPendingActionManager pendingActionManager)
+            IPendingActionManager pendingActionManager
+        )
         {
             this._actionExecutionManager = actionExecutionManager;
             this._pendingActionManager = pendingActionManager;
@@ -22,7 +22,11 @@ namespace property_dealer_API.Core.Logic.DialogsManager
 
         public DialogProcessingResult ProcessPendingResponses(ActionContext actionContext)
         {
-            DialogProcessingResult dialogProcessingResult = new() { ShouldClearPendingAction = false, ActionContext = actionContext };
+            DialogProcessingResult dialogProcessingResult = new()
+            {
+                ShouldClearPendingAction = false,
+                ActionContext = actionContext,
+            };
 
             var newActionContexts = new List<ActionContext>();
             var pendingAction = this._pendingActionManager.CurrPendingAction;
@@ -37,7 +41,11 @@ namespace property_dealer_API.Core.Logic.DialogsManager
             foreach (var (player, context) in allResponses)
             {
                 var newActionContext = context.Clone();
-                this._actionExecutionManager.HandleDialogResponse(player, newActionContext);
+                var actionResult = this._actionExecutionManager.HandleDialogResponse(
+                    player,
+                    newActionContext
+                );
+                dialogProcessingResult.ActionResult = actionResult;
                 newActionContexts.Add(newActionContext);
             }
 
@@ -51,9 +59,15 @@ namespace property_dealer_API.Core.Logic.DialogsManager
             return dialogProcessingResult;
         }
 
-        public DialogProcessingResult RegisterActionResponse(Player player, ActionContext actionContext)
+        public DialogProcessingResult RegisterActionResponse(
+            Player player,
+            ActionContext actionContext
+        )
         {
-            var shouldProcess = this._pendingActionManager.AddResponseToQueue(player, actionContext);
+            var shouldProcess = this._pendingActionManager.AddResponseToQueue(
+                player,
+                actionContext
+            );
 
             if (shouldProcess)
             {
@@ -66,9 +80,26 @@ namespace property_dealer_API.Core.Logic.DialogsManager
 
                 return result;
             }
-            return new DialogProcessingResult { ShouldClearPendingAction = false, ActionContext = actionContext };
+            return new DialogProcessingResult
+            {
+                ShouldClearPendingAction = false,
+                ActionContext = actionContext,
+            };
+        }
+
+        public void ClearPendingAction()
+        {
+            this._pendingActionManager.ClearPendingAction();
+        }
+
+        public List<Player> GetPendingPlayers()
+        {
+            return this._pendingActionManager.GetRemainingResponders();
+        }
+
+        public ActionContext GetCurrentActionContext()
+        {
+            return this._pendingActionManager.GetCurrentActionContext();
         }
     }
-
-
 }
