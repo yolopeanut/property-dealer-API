@@ -27,13 +27,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution
             switch (card)
             {
                 case CommandCard commandCard:
-                    actionHandler = _actionHandlerResolver.GetHandler(commandCard.Command);
+                    actionHandler = this._actionHandlerResolver.GetHandler(commandCard.Command);
                     break;
                 case SystemWildCard wildCard:
-                    actionHandler = _actionHandlerResolver.GetHandler(ActionTypes.SystemWildCard);
+                    actionHandler = this._actionHandlerResolver.GetHandler(
+                        ActionTypes.SystemWildCard
+                    );
                     break;
                 case TributeCard tributeCard:
-                    actionHandler = _actionHandlerResolver.GetHandler(ActionTypes.Tribute);
+                    actionHandler = this._actionHandlerResolver.GetHandler(ActionTypes.Tribute);
                     break;
                 //case TributeWildCard tributeWildCard:
                 //    actionHandler = _actionHandlerResolver.GetHandler(ActionTypes.TributeWildCard);
@@ -49,7 +51,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution
         public ActionResult? HandleDialogResponse(Player responder, ActionContext actionContext)
         {
             IActionHandler actionHandler;
-            actionHandler = _actionHandlerResolver.GetHandler(actionContext.ActionType);
+            actionHandler = this._actionHandlerResolver.GetHandler(actionContext.ActionType);
             return actionHandler.ProcessResponse(responder, actionContext);
         }
     }

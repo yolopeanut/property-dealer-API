@@ -1,6 +1,5 @@
 ﻿using property_dealer_API.Application.Enums;
 using property_dealer_API.Core;
-using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 using TypedSignalR.Client;
 

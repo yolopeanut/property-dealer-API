@@ -280,11 +280,11 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
 
         public void ValidateEndOfTurnCardLimit(List<Card> playerHand)
         {
-            if (playerHand.Count > MAX_CARDS_IN_PLAYER_HAND)
+            if (playerHand.Count > this.MAX_CARDS_IN_PLAYER_HAND)
             {
-                var excessCards = playerHand.Count - MAX_CARDS_IN_PLAYER_HAND;
+                var excessCards = playerHand.Count - this.MAX_CARDS_IN_PLAYER_HAND;
                 throw new InvalidOperationException(
-                    $"You must discard {excessCards} card(s) to end your turn. Hand limit is {MAX_CARDS_IN_PLAYER_HAND} cards."
+                    $"You must discard {excessCards} card(s) to end your turn. Hand limit is {this.MAX_CARDS_IN_PLAYER_HAND} cards."
                 );
             }
         }

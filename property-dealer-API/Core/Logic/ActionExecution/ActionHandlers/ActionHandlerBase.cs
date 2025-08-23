@@ -28,11 +28,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IActionExecutor actionExecutor
         )
         {
-            PlayerManager = playerManager;
-            PlayerHandManager = playerHandManager;
-            RulesManager = rulesManager;
-            PendingActionManager = pendingActionManager;
-            ActionExecutor = actionExecutor;
+            this.PlayerManager = playerManager;
+            this.PlayerHandManager = playerHandManager;
+            this.RulesManager = rulesManager;
+            this.PendingActionManager = pendingActionManager;
+            this.ActionExecutor = actionExecutor;
         }
 
         protected ActionContext CreateActionContext(
@@ -76,16 +76,16 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             Player? target
         )
         {
-            var allPlayers = PlayerManager.GetAllPlayers();
+            var allPlayers = this.PlayerManager.GetAllPlayers();
             currentContext.DialogToOpen = nextDialog;
-            currentContext.DialogTargetList = RulesManager.IdentifyWhoSeesDialog(
+            currentContext.DialogTargetList = this.RulesManager.IdentifyWhoSeesDialog(
                 initiator,
                 target,
                 allPlayers,
                 nextDialog
             );
 
-            var pendingAction = PendingActionManager.CurrPendingAction;
+            var pendingAction = this.PendingActionManager.CurrPendingAction;
             pendingAction.CurrentActionContext = currentContext;
             if (pendingAction != null)
             {
@@ -97,7 +97,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         protected virtual void CompleteAction()
         {
-            PendingActionManager.IncrementProcessedActions();
+            this.PendingActionManager.IncrementProcessedActions();
         }
 
         protected virtual ActionResult? HandleShieldsUp(

@@ -6,7 +6,6 @@ using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Hubs.GameLobby;
 using property_dealer_API.Hubs.GamePlay.Service;
-using property_dealer_API.Models.Cards;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Hubs.GamePlay
@@ -386,7 +385,7 @@ namespace property_dealer_API.Hubs.GamePlay
             // Fail silently, expected to fail when running. Will be called oninit
             catch (Exception e)
             {
-                await this.ExceptionHandler(e);
+                //await this.ExceptionHandler(e);
             }
         }
         #endregion

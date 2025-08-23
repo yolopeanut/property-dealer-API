@@ -16,20 +16,33 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers
         {
             return actionType switch
             {
-                ActionTypes.HostileTakeover => _serviceProvider.GetRequiredService<HostileTakeoverHandler>(),
-                ActionTypes.ForcedTrade => _serviceProvider.GetRequiredService<ForcedTradeHandler>(),
-                ActionTypes.ExploreNewSector => _serviceProvider.GetRequiredService<ExploreNewSectorHandler>(),
+                ActionTypes.HostileTakeover =>
+                    this._serviceProvider.GetRequiredService<HostileTakeoverHandler>(),
+                ActionTypes.ForcedTrade =>
+                    this._serviceProvider.GetRequiredService<ForcedTradeHandler>(),
+                ActionTypes.ExploreNewSector =>
+                    this._serviceProvider.GetRequiredService<ExploreNewSectorHandler>(),
                 //ActionTypes.ShieldsUp => _serviceProvider.GetRequiredService<ShieldsUpHandler>(),
-                ActionTypes.PirateRaid => _serviceProvider.GetRequiredService<PirateRaidHandler>(),
-                ActionTypes.BountyHunter => _serviceProvider.GetRequiredService<BountyHunterHandler>(),
-                ActionTypes.TradeDividend => _serviceProvider.GetRequiredService<TradeDividendHandler>(),
-                ActionTypes.SpaceStation => _serviceProvider.GetRequiredService<SpaceStationHandler>(),
-                ActionTypes.Starbase => _serviceProvider.GetRequiredService<StarbaseHandler>(),
-                ActionTypes.TradeEmbargo => _serviceProvider.GetRequiredService<TradeEmbargoHandler>(),
-                ActionTypes.SystemWildCard => _serviceProvider.GetRequiredService<SystemWildCardHandler>(),
-                ActionTypes.TributeWildCard => _serviceProvider.GetRequiredService<WildCardTributeHandler>(),
-                ActionTypes.Tribute => _serviceProvider.GetRequiredService<TributeCardHandler>(),
-                _ => throw new InvalidOperationException($"No handler found for action type: {actionType}")
+                ActionTypes.PirateRaid =>
+                    this._serviceProvider.GetRequiredService<PirateRaidHandler>(),
+                ActionTypes.BountyHunter =>
+                    this._serviceProvider.GetRequiredService<BountyHunterHandler>(),
+                ActionTypes.TradeDividend =>
+                    this._serviceProvider.GetRequiredService<TradeDividendHandler>(),
+                ActionTypes.SpaceStation =>
+                    this._serviceProvider.GetRequiredService<SpaceStationHandler>(),
+                ActionTypes.Starbase => this._serviceProvider.GetRequiredService<StarbaseHandler>(),
+                ActionTypes.TradeEmbargo =>
+                    this._serviceProvider.GetRequiredService<TradeEmbargoHandler>(),
+                ActionTypes.SystemWildCard =>
+                    this._serviceProvider.GetRequiredService<SystemWildCardHandler>(),
+                ActionTypes.TributeWildCard =>
+                    this._serviceProvider.GetRequiredService<WildCardTributeHandler>(),
+                ActionTypes.Tribute =>
+                    this._serviceProvider.GetRequiredService<TributeCardHandler>(),
+                _ => throw new InvalidOperationException(
+                    $"No handler found for action type: {actionType}"
+                ),
             };
         }
     }

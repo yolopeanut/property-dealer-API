@@ -1,6 +1,5 @@
 ﻿using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Enums;
-using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
@@ -303,9 +302,9 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
 
             return actionType switch
             {
-                ActionTypes.Tribute => CreateTributeCard(),
-                ActionTypes.SystemWildCard => CreateSystemWildCard(),
-                _ => CreateCommandCard(actionType),
+                ActionTypes.Tribute => this.CreateTributeCard(),
+                ActionTypes.SystemWildCard => this.CreateSystemWildCard(),
+                _ => this.CreateCommandCard(actionType),
             };
         }
 
@@ -316,7 +315,7 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
 
             foreach (var actionType in actionTypeValues)
             {
-                cards.Add(CreateActionTypeCard((int)actionType));
+                cards.Add(this.CreateActionTypeCard((int)actionType));
             }
 
             return cards;
@@ -334,7 +333,7 @@ namespace property_dealer_API.Core.Logic.DebuggingManager
 
             for (int i = 0; i < cardCount; i++)
             {
-                var card = CreateStandardSystemCard(
+                var card = this.CreateStandardSystemCard(
                     color: color,
                     name: $"{color} Property {i + 1}",
                     value: 2,

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using property_dealer_API.Application.Exceptions;
 
 namespace property_dealer_API.Core.Logic.TurnManager
 {

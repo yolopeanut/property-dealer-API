@@ -18,12 +18,12 @@ namespace property_dealer_API.Core.Factories
 
         public GameDetailsFactory(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
+            this._serviceProvider = serviceProvider;
         }
 
         public GameDetails CreateGameDetails(string roomId, string roomName, GameConfig config)
         {
-            var scope = _serviceProvider.CreateScope();
+            var scope = this._serviceProvider.CreateScope();
             var scopedProvider = scope.ServiceProvider;
 
             try
@@ -35,9 +35,11 @@ namespace property_dealer_API.Core.Factories
                 var gameStateMapper = scopedProvider.GetRequiredService<IGameStateMapper>();
                 var rulesManager = scopedProvider.GetRequiredService<IGameRuleManager>();
                 var debugManager = scopedProvider.GetRequiredService<IDebugManager>();
-                var turnExecutionManager = scopedProvider.GetRequiredService<ITurnExecutionManager>();
+                var turnExecutionManager =
+                    scopedProvider.GetRequiredService<ITurnExecutionManager>();
                 var dialogManager = scopedProvider.GetRequiredService<IDialogManager>();
-                var actionHandlerResolver = scopedProvider.GetRequiredService<IActionHandlerResolver>();
+                var actionHandlerResolver =
+                    scopedProvider.GetRequiredService<IActionHandlerResolver>();
                 var turnManager = scopedProvider.GetRequiredService<ITurnManager>();
 
                 return new GameDetails(
@@ -54,7 +56,7 @@ namespace property_dealer_API.Core.Factories
                     turnExecutionManager,
                     dialogManager,
                     scope
-                    );
+                );
             }
             catch
             {

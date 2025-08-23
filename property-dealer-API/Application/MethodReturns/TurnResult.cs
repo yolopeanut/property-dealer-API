@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
-using property_dealer_API.Core;
+﻿using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 
 namespace property_dealer_API.Application.MethodReturns

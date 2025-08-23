@@ -35,8 +35,8 @@ builder.Services.Configure<KestrelServerOptions>(options =>
     options.AllowSynchronousIO = true;
 });
 
-
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -57,15 +57,18 @@ builder.Services.AddSingleton<IGameDetailsFactory, GameDetailsFactory>();
 // Scoped manager services for gameplay
 builder.Services.AddScoped<IDeckManager, DeckManager>();
 builder.Services.AddScoped<IReadOnlyDeckManager>(provider =>
-    provider.GetRequiredService<IDeckManager>());
+    provider.GetRequiredService<IDeckManager>()
+);
 
 builder.Services.AddScoped<IPlayerManager, PlayerManager>();
 builder.Services.AddScoped<IReadOnlyPlayerManager>(provider =>
-    provider.GetRequiredService<IPlayerManager>());
+    provider.GetRequiredService<IPlayerManager>()
+);
 
 builder.Services.AddScoped<IPlayerHandManager, PlayersHandManager>();
 builder.Services.AddScoped<IReadOnlyPlayerHandManager>(provider =>
-    provider.GetRequiredService<IPlayerHandManager>());
+    provider.GetRequiredService<IPlayerHandManager>()
+);
 
 builder.Services.AddScoped<IGameStateMapper, GameStateMapper>();
 builder.Services.AddScoped<IGameRuleManager, GameRuleManager>();
@@ -90,21 +93,30 @@ builder.Services.AddTransient<SpaceStationHandler>();
 builder.Services.AddTransient<StarbaseHandler>();
 
 builder.Services.AddTransient<TradeEmbargoHandler>();
+
 //builder.Services.AddTransient<ShieldsUpHandler>();
 builder.Services.AddTransient<SystemWildCardHandler>();
 builder.Services.AddTransient<TributeCardHandler>();
 builder.Services.AddTransient<WildCardTributeHandler>();
 
-builder.Services.AddCors((o) =>
-{
-    o.AddPolicy("property-dealer-policy",
-        policy => policy
-            .WithOrigins("http://localhost:4200", "https://localhost:4200", "http://192.168.192.19:4200")
-            .AllowAnyHeader()
-            .AllowCredentials()
-    );
-});
-
+builder.Services.AddCors(
+    (o) =>
+    {
+        o.AddPolicy(
+            "property-dealer-policy",
+            policy =>
+                policy
+                    .WithOrigins(
+                        "http://localhost:4200",
+                        "https://localhost:4200",
+                        "http://192.168.192.19:4200"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+        );
+    }
+);
 
 var app = builder.Build();
 
@@ -125,7 +137,7 @@ app.MapHub<GameLobbyHub>("/gamelobby");
 app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
 
-app.Urls.Add("http://*:5200");
+//app.Urls.Add("http://*:5200");
 //app.Urls.Add("https://*:7200");
 
 app.Run();

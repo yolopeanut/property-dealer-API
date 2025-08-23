@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
-using property_dealer_API.Application.DTOs.Responses;
+﻿using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Models.Enums.Cards;
 
 namespace property_dealer_API.Application.MethodReturns
@@ -15,7 +14,7 @@ namespace property_dealer_API.Application.MethodReturns
 
         public override string ToString()
         {
-            return $"ActionInitiatingPlayerId: {ActionInitiatingPlayerId}, AffectedPlayerId: {AffectedPlayerId}, ActionType: {ActionType}, TakenPropertySet:{TakenPropertySet}, TakenCard:{TakenCard}, GivenCard:{GivenCard}";
+            return $"ActionInitiatingPlayerId: {this.ActionInitiatingPlayerId}, AffectedPlayerId: {this.AffectedPlayerId}, ActionType: {this.ActionType}, TakenPropertySet:{this.TakenPropertySet}, TakenCard:{this.TakenCard}, GivenCard:{this.GivenCard}";
         }
     }
 }
