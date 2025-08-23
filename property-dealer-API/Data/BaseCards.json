@@ -301,7 +301,7 @@
         "type": "ShieldsUp",
         "name": "Shields Up",
         "value": 4,
-        "count": 10,
+        "count": 2,
         "description": "Cancel any command card played against you."
       },
       {
@@ -323,14 +323,14 @@
         "name": "Bounty Hunter",
         "value": 3,
         "count": 3,
-        "description": "Force any one player to pay you 5M Credits."
+        "description": "Force any one player to pay you 5T Credits."
       },
       {
         "type": "TradeDividend",
         "name": "Trade Dividend",
         "value": 2,
         "count": 3,
-        "description": "All players must pay you 2M Credits."
+        "description": "All players must pay you 2T Credits."
       },
       {
         "type": "ExploreNewSector",
@@ -344,14 +344,14 @@
         "name": "Space Station",
         "value": 3,
         "count": 2,
-        "description": "Add 3M Credits to the tribute value of a completed system set. Can only be played on a full set."
+        "description": "Add 3T Credits to the tribute value of a completed system set. Can only be played on a full set."
       },
       {
         "type": "Starbase",
         "name": "Starbase",
         "value": 4,
         "count": 2,
-        "description": "Add 4M Credits to the tribute value of a completed system set. Requires a Space Station to be on the set first."
+        "description": "Add 4T Credits to the tribute value of a completed system set. Requires a Space Station to be on the set first."
       },
       {
         "type": "TradeEmbargo",

@@ -22,12 +22,19 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create a complete property set (3/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 3, 3); // Complete set
+                PropertyCardColoursEnum.Red,
+                3,
+                3
+            ); // Complete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateHostileTakeoverTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateHostileTakeoverTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
             Assert.Null(exception);
         }
 
@@ -36,14 +43,24 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create incomplete property set (2/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 2, 3); // Incomplete set
+                PropertyCardColoursEnum.Red,
+                2,
+                3
+            ); // Incomplete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateHostileTakeoverTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateHostileTakeoverTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
-            Assert.Contains("HostileTakeover can only be used on completed property sets", exception.Message);
+            Assert.Contains(
+                "HostileTakeover can only be used on completed property sets",
+                exception.Message
+            );
             Assert.Contains("Red set has 2/3 properties", exception.Message);
         }
 
@@ -56,7 +73,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidateHostileTakeoverTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateHostileTakeoverTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
             Assert.Contains("player doesn't own any properties of this color", exception.Message);
         }
@@ -70,12 +91,19 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create incomplete property set (2/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 2, 3); // Incomplete set
+                PropertyCardColoursEnum.Red,
+                2,
+                3
+            ); // Incomplete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidatePirateRaidTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidatePirateRaidTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
             Assert.Null(exception);
         }
 
@@ -84,12 +112,19 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create complete property set (3/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 3, 3); // Complete set
+                PropertyCardColoursEnum.Red,
+                3,
+                3
+            ); // Complete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Assert.Throws<CompletePropertySetException>(() =>
-                this._gameRuleManager.ValidatePirateRaidTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidatePirateRaidTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
             Assert.Equal(PropertyCardColoursEnum.Red, exception.Color);
         }
@@ -103,7 +138,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidatePirateRaidTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidatePirateRaidTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
             Assert.Equal("PirateRaid", exception.ActionType);
             Assert.Equal(PropertyCardColoursEnum.Red, exception.TargetColor);
@@ -118,12 +157,19 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create incomplete property set (2/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 2, 3); // Incomplete set
+                PropertyCardColoursEnum.Red,
+                2,
+                3
+            ); // Incomplete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateForcedTradeTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateForcedTradeTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
             Assert.Null(exception);
         }
 
@@ -132,14 +178,24 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create complete property set (3/3 Red properties)
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 3, 3); // Complete set
+                PropertyCardColoursEnum.Red,
+                3,
+                3
+            ); // Complete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateForcedTradeTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateForcedTradeTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
-            Assert.Contains("Forced Trade cannot target completed property sets", exception.Message);
+            Assert.Contains(
+                "Forced Trade cannot target completed property sets",
+                exception.Message
+            );
             Assert.Contains("Red", exception.Message);
         }
 
@@ -152,7 +208,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidateForcedTradeTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateForcedTradeTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
             Assert.Contains("player doesn't own any properties of this color", exception.Message);
         }
@@ -166,12 +226,16 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create complete property set (3/3 Red properties)
             var playerTableHand = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 3, 3); // Complete set
+                PropertyCardColoursEnum.Red,
+                3,
+                3
+            ); // Complete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor)
+            );
             Assert.Null(exception);
         }
 
@@ -180,14 +244,21 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create incomplete property set (2/3 Red properties)
             var playerTableHand = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 2, 3); // Incomplete set
+                PropertyCardColoursEnum.Red,
+                2,
+                3
+            ); // Incomplete set
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor)
+            );
 
-            Assert.Contains("SpaceStation can only be used on completed property sets", exception.Message);
+            Assert.Contains(
+                "SpaceStation can only be used on completed property sets",
+                exception.Message
+            );
             Assert.Contains("Red set has 2/3 properties", exception.Message);
         }
 
@@ -200,7 +271,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateSpaceStationPlacement(playerTableHand, targetColor)
+            );
 
             Assert.Contains("player doesn't own any properties of this color", exception.Message);
         }
@@ -214,13 +286,40 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create complete property set (2/2 Cyan properties)
             var playerTableHand = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Cyan, 2, 2); // Complete set
+                PropertyCardColoursEnum.Cyan,
+                2,
+                2
+            ); // Complete set
+            var spaceStationCommandCard = CardTestHelpers.CreateCommandCard(
+                ActionTypes.SpaceStation
+            );
+            playerTableHand.Add(spaceStationCommandCard);
+
             var targetColor = PropertyCardColoursEnum.Cyan;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor)
+            );
             Assert.Null(exception);
+        }
+
+        [Fact]
+        public void ValidateStarbasePlacement_MissingSpaceStationFirst_ThrowException()
+        {
+            // Arrange - Create complete property set (2/2 Cyan properties)
+            var playerTableHand = CardTestHelpers.CreatePropertyCardSet(
+                PropertyCardColoursEnum.Cyan,
+                2,
+                2
+            ); // Complete set
+            var targetColor = PropertyCardColoursEnum.Cyan;
+
+            // Act & Assert
+            var exception = Record.Exception(() =>
+                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor)
+            );
+            Assert.Contains("Cannot place card without SpaceStation", exception.Message);
         }
 
         [Fact]
@@ -228,14 +327,21 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange - Create incomplete property set (1/2 Cyan properties)
             var playerTableHand = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Cyan, 1, 2); // Incomplete set
+                PropertyCardColoursEnum.Cyan,
+                1,
+                2
+            ); // Incomplete set
             var targetColor = PropertyCardColoursEnum.Cyan;
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor)
+            );
 
-            Assert.Contains("Starbase can only be used on completed property sets", exception.Message);
+            Assert.Contains(
+                "Starbase can only be used on completed property sets",
+                exception.Message
+            );
             Assert.Contains("Cyan set has 1/2 properties", exception.Message);
         }
 
@@ -248,7 +354,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor));
+                this._gameRuleManager.ValidateStarbasePlacement(playerTableHand, targetColor)
+            );
 
             Assert.Contains("player doesn't own any properties of this color", exception.Message);
         }
@@ -262,12 +369,19 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         {
             // Arrange
             var targetPlayerSelectedPropertySet = CardTestHelpers.CreatePropertyCardSet(
-                PropertyCardColoursEnum.Red, 2, 3); // Has Red properties
+                PropertyCardColoursEnum.Red,
+                2,
+                3
+            ); // Has Red properties
             var targetColor = PropertyCardColoursEnum.Red;
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateTradeEmbargoTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateTradeEmbargoTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
             Assert.Null(exception);
         }
 
@@ -280,7 +394,11 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Assert.Throws<InvalidTargetException>(() =>
-                this._gameRuleManager.ValidateTradeEmbargoTarget(targetPlayerSelectedPropertySet, targetColor));
+                this._gameRuleManager.ValidateTradeEmbargoTarget(
+                    targetPlayerSelectedPropertySet,
+                    targetColor
+                )
+            );
 
             Assert.Equal("TradeEmbargo", exception.ActionType);
             Assert.Equal(PropertyCardColoursEnum.Red, exception.TargetColor);
@@ -301,7 +419,8 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
 
             // Act & Assert
             var exception = Record.Exception(() =>
-                this._gameRuleManager.ValidateEndOfTurnCardLimit(playerHand));
+                this._gameRuleManager.ValidateEndOfTurnCardLimit(playerHand)
+            );
             Assert.Null(exception);
         }
 
@@ -309,16 +428,23 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
         [InlineData(8, 1)]
         [InlineData(10, 3)]
         [InlineData(15, 8)]
-        public void ValidateEndOfTurnCardLimit_ExceedsLimit_ThrowsInvalidOperationException(int cardCount, int expectedExcess)
+        public void ValidateEndOfTurnCardLimit_ExceedsLimit_ThrowsInvalidOperationException(
+            int cardCount,
+            int expectedExcess
+        )
         {
             // Arrange
             var playerHand = this.CreateTestCards(cardCount);
 
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                this._gameRuleManager.ValidateEndOfTurnCardLimit(playerHand));
+                this._gameRuleManager.ValidateEndOfTurnCardLimit(playerHand)
+            );
 
-            Assert.Contains($"You must discard {expectedExcess} card(s) to end your turn", exception.Message);
+            Assert.Contains(
+                $"You must discard {expectedExcess} card(s) to end your turn",
+                exception.Message
+            );
             Assert.Contains("Hand limit is 7 cards", exception.Message);
         }
 
@@ -331,7 +457,14 @@ namespace PropertyDealer.API.Tests.Core.Logic.GameRuleManagerTesting
             var cards = new List<Card>();
             for (int i = 0; i < count; i++)
             {
-                cards.Add(CardTestHelpers.CreateCommandCard(ActionTypes.ExploreNewSector, $"Card {i}", 2, "Test card"));
+                cards.Add(
+                    CardTestHelpers.CreateCommandCard(
+                        ActionTypes.ExploreNewSector,
+                        $"Card {i}",
+                        2,
+                        "Test card"
+                    )
+                );
             }
             return cards;
         }
