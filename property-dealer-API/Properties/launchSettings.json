@@ -1,15 +1,5 @@
 {
   "profiles": {
-    "http": {
-      "commandName": "Project",
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5041"
-    },
     "https": {
       "commandName": "Project",
       "launchBrowser": true,
@@ -18,7 +8,23 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7095;http://localhost:5041"
+      "publishAllPorts": false,
+      "useSSL": true,
+      "httpPort": 5210,
+      "httpssPort": 5211
+    },
+    "http": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "publishAllPorts": false,
+      "useSSL": true,
+      "httpPort": 5210,
+      "httpssPort": 5211
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -46,7 +52,10 @@
       "launchBrowser": false,
       "launchUrl": "swagger",
       "nativeDebugging": true,
-      "applicationUrl": "http://localhost:5200"
+      "publishAllPorts": false,
+      "useSSL": true,
+      "httpPort": 5210,
+      "httpssPort": 5211
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json",
