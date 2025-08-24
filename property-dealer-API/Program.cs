@@ -110,7 +110,8 @@ builder.Services.AddCors(
                     .WithOrigins(
                         "http://localhost:4200",
                         "https://localhost:4200",
-                        "http://192.168.192.19:4200"
+                        "http://192.168.192.19:4200",
+                        "https://galaxy-monopolizer.brandon-tan.work"
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()
@@ -145,7 +146,8 @@ app.MapHub<GameLobbyHub>("/gamelobby");
 app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
 
-//app.Urls.Add("http://*:5200");
+app.Urls.Add("http://*:5210");
+
 //app.Urls.Add("http://*:80");
 //app.Urls.Add("https://*:7200");
 
