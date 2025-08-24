@@ -74,8 +74,7 @@ namespace property_dealer_API.Hubs.GameWaitingRoom
             // 5. Notify the group that a player has joined
             try
             {
-                var player = this._waitingRoomService.GetPlayerByUserId(gameRoomId, userId);
-                await this.Clients.Group(gameRoomId).PlayerJoined(player.PlayerName);
+                await this.GetAllPlayerList(gameRoomId);
             }
             catch (GameNotFoundException)
             {
