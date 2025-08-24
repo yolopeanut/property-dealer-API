@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
@@ -119,6 +120,13 @@ builder.Services.AddCors(
 );
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(
+    new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    }
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

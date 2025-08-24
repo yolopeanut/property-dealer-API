@@ -8,7 +8,6 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "publishAllPorts": false,
       "useSSL": true,
       "httpPort": 5210,
       "httpssPort": 5211
