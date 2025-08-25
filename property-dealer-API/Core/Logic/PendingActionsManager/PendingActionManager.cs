@@ -27,7 +27,7 @@ namespace property_dealer_API.Core.Logic.PendingActionsManager
             {
                 if (this._currPendingAction == null)
                 {
-                    throw new PendingActionNotFoundException(null);
+                    //throw new PendingActionNotFoundException(null);
                 }
 
                 return this._currPendingAction;
