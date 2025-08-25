@@ -1,30 +1,63 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
+# --- SOLUTION-SPECIFIC IGNORES ---
+# Exclude entire projects that are not needed in the final image.
+# This is the most effective way to remove test projects.
+PropertyDealer.API.Tests/
+
+
+# --- BUILD ARTIFACTS & CACHES ---
+# These are generated inside the container during the 'dotnet build' and
+# 'dotnet publish' steps. Excluding them ensures a clean, reproducible build.
 **/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
 **/obj
+**/node_modules
+
+
+# --- LOCAL DEVELOPMENT & SECRETS ---
+# These files contain settings, secrets, or launch profiles that are
+# specific to a developer's machine and should never be in a production image.
+**/appsettings.Development.json
+**/Properties/launchSettings.json
 **/secrets.dev.yaml
+**/.env
+secrets.json
+*.*proj.user
+*.suo
+
+
+# --- IDE / EDITOR CONFIGURATION ---
+# These folders contain user-specific settings, state, and cache for IDEs.
+.vs/
+.vscode/
+.idea/
+**/.settings
+**/.classpath
+**/.project
+
+
+# --- SOURCE CONTROL ---
+# The entire git history is not needed inside the container.
+.git/
+.gitignore
+.gitattributes
+
+
+# --- DEPLOYMENT & ORCHESTRATION ---
+# These files define how to build or deploy the container, but they do
+# not belong inside the application image itself.
+**/Dockerfile*
+.dockerignore
+**/docker-compose*
+**/charts/
 **/values.dev.yaml
-LICENSE
+**/azds.yaml
+
+
+# --- DOCUMENTATION & MISCELLANEOUS ---
+# General files that add no value to the running application.
 README.md
-!**/.gitignore
-!.git/HEAD
-!.git/config
-!.git/packed-refs
-!.git/refs/heads/**
+LICENSE
+*.md
+
+# OS-generated files
+.DS_Store
+Thumbs.db
