@@ -90,22 +90,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             Boolean _ = true
         )
         {
-            // The player must have submitted cards, either as payment or as a 'Shields Up'.
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
-                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
-                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
-                {
-                    throw new ActionContextParameterNullException(
-                        currentContext,
-                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
-                    );
-                }
-
-                return null;
-            }
-
             // Check if the response was a "Shields Up" card.
             // This assumes a shield play consists of submitting just the single shield card.
             if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
@@ -130,6 +114,22 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 {
                     throw new CardNotFoundException("Shields up was not found in players deck!");
                 }
+            }
+
+            // The player must have submitted cards, either as payment or as a 'Shields Up'.
+            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
+            {
+                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
+                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
+                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
+                {
+                    throw new ActionContextParameterNullException(
+                        currentContext,
+                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
+                    );
+                }
+
+                return null;
             }
 
             // If it wasn't a shield, it's a payment.

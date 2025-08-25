@@ -109,21 +109,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             Boolean _ = true
         )
         {
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
-                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
-                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
-                {
-                    throw new ActionContextParameterNullException(
-                        currentContext,
-                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
-                    );
-                }
-
-                return null;
-            }
-
             // Check if the response was a "Shields Up" card.
             // This assumes a shield play consists of submitting just the single shield card.
             if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
@@ -144,6 +129,21 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 {
                     throw new CardNotFoundException("Shields up was not found in players deck!");
                 }
+            }
+
+            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
+            {
+                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
+                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
+                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
+                {
+                    throw new ActionContextParameterNullException(
+                        currentContext,
+                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
+                    );
+                }
+
+                return null;
             }
 
             // The 'responder' is the player paying. The initiator is receiving the payment.

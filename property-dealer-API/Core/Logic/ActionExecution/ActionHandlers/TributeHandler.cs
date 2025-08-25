@@ -146,6 +146,18 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         private ActionResult? ProcessPaymentResponse(ActionContext currentContext, Player responder)
         {
+            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
+            {
+                var targetPlayer = base.PlayerManager.GetPlayerByUserId(responder.UserId);
+                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
+                if (!base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+                {
+                    throw new CardNotFoundException("Shields up was not found in players deck!");
+                }
+
+                return base.HandleShieldsUp(responder, currentContext, null);
+            }
+
             if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
             {
                 var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
@@ -159,18 +171,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 }
                 base.CompleteAction();
                 return null;
-            }
-
-            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
-            {
-                var targetPlayer = base.PlayerManager.GetPlayerByUserId(responder.UserId);
-                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-                if (!base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                {
-                    throw new CardNotFoundException("Shields up was not found in players deck!");
-                }
-
-                return base.HandleShieldsUp(responder, currentContext, null);
             }
 
             base.ActionExecutor.ExecutePayment(
