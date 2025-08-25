@@ -11,7 +11,10 @@ namespace property_dealer_API.Core.Logic.GameStateMapper
         private readonly IReadOnlyPlayerHandManager _handManager;
         private readonly IReadOnlyPlayerManager _playermanager;
 
-        public GameStateMapper(IReadOnlyPlayerHandManager handManager, IReadOnlyPlayerManager playerManager)
+        public GameStateMapper(
+            IReadOnlyPlayerHandManager handManager,
+            IReadOnlyPlayerManager playerManager
+        )
         {
             this._handManager = handManager;
             this._playermanager = playerManager;
@@ -24,28 +27,30 @@ namespace property_dealer_API.Core.Logic.GameStateMapper
             List<TableHands> allHands = new();
             List<PropertyCardGroup> cardsDtoGroup;
 
-            // Using process all table hands safely function to get all table hands with locking and change to DTO.
-            // I know its overkill for a turn based game like this, but i wanted to implement it to learn.
-            this._handManager.ProcessAllTableHandsSafely((userId, tableHand, moneyHand) =>
-            {
-                cardsDtoGroup = new List<PropertyCardGroup>();
+            this._handManager.ProcessAllTableHandsSafely(
+                (userId, tableHand, moneyHand) =>
+                {
+                    cardsDtoGroup = new List<PropertyCardGroup>();
 
-                var tableHandDto = tableHand.Select(
-                    cardGroups => new PropertyCardGroup(
-                        cardGroups.Key,
-                        cardGroups.Value.Select(card => card.ToDto())
-                            .ToList()
-                        )
-                     ).ToList();
+                    var tableHandDto = tableHand
+                        .Select(cardGroups => new PropertyCardGroup(
+                            cardGroups.Key,
+                            cardGroups.Value.Select(card => card.ToDto()).ToList()
+                        ))
+                        .ToList();
 
-                var moneyHandDto = moneyHand.Select(card => card.ToDto()).ToList();
+                    var moneyHandDto = moneyHand.Select(card => card.ToDto()).ToList();
 
-                var player = allPlayer.Find(player => player.UserId == userId);
+                    var player = allPlayer.Find(player => player.UserId == userId);
 
-                if (player == null) { throw new PlayerNotFoundException(userId); }
+                    if (player == null)
+                    {
+                        throw new PlayerNotFoundException(userId);
+                    }
 
-                allHands.Add(new TableHands(player, tableHandDto, moneyHandDto));
-            });
+                    allHands.Add(new TableHands(player, tableHandDto, moneyHandDto));
+                }
+            );
 
             return allHands;
         }
