@@ -76,7 +76,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                         currentContext
                     );
                     this.ProcessPropertySetSelection(currentContext);
-                    // DO NOT complete the action here, as it transitions to the payment step for others.
                     break;
 
                 case DialogTypeEnum.PayValue:

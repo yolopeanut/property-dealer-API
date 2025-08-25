@@ -235,20 +235,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
 
             this.CalculateTributeAmount(currentContext);
-
-            if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-            {
-                base.BuildShieldsUpContext(currentContext, initiator, targetPlayer);
-            }
-            else
-            {
-                base.SetNextDialog(
-                    currentContext,
-                    DialogTypeEnum.PayValue,
-                    initiator,
-                    targetPlayer
-                );
-            }
+            base.SetNextDialog(currentContext, DialogTypeEnum.PayValue, initiator, targetPlayer);
         }
 
         private ActionResult? ProcessPaymentResponse(
