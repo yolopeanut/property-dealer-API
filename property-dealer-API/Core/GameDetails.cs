@@ -374,7 +374,7 @@ namespace property_dealer_API.Core
             foreach (var player in playerList)
             {
                 this._playerHandManager.AddPlayerHand(player.UserId);
-                //this.SetupStartDebugCommands(player);
+                this.SetupStartDebugCommands(player);
             }
         }
 
