@@ -16,7 +16,7 @@ namespace property_dealer_API.Hubs.GamePlay
         Task PlayerHand(string userId, List<CardDto> playerHand);
         Task LatestDiscardPileCard(CardDto discardedCard);
         Task OpenCommandDialog(ActionContext actionContext);
-        Task CurrentPlayerTurn(Player player);
+        Task CurrentPlayerTurn(Player player, int numTurnsLeft);
         Task DisposeExtraCards(Player player);
         Task PlayerWon(Player? player);
         Task NotifyActionResult(ActionResult actionResult);

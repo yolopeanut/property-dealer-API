@@ -124,7 +124,7 @@ namespace property_dealer_API.Hubs.GamePlay.Service
             return card;
         }
 
-        public Player GetCurrentPlayerTurn(string gameRoomId)
+        public (Player player, int numTurnsLeft) GetCurrentPlayerTurn(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
             return gameInstance.GetCurrentPlayerTurn();

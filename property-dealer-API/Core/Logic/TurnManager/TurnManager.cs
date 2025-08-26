@@ -78,5 +78,10 @@ namespace property_dealer_API.Core.Logic.TurnManager
         {
             return this.CurrUserActionCount;
         }
+
+        public int GetRemainingActionCounts()
+        {
+            return MaxNumAction - this.CurrUserActionCount;
+        }
     }
 }

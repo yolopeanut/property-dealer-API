@@ -118,6 +118,19 @@ namespace property_dealer_API.Core
             );
         }
 
+        public List<Player> GetPlayers()
+        {
+            return this._playerManager.GetAllPlayers();
+        }
+
+        public void SetNewGamePlayers(List<Player> players)
+        {
+            foreach (var player in players)
+            {
+                this._playerManager.AddPlayerToDict(player);
+            }
+        }
+
         public void StartGame(List<Card> initialDeck)
         {
             this._deckManager.PopulateInitialDeck(initialDeck); // Populating initial decks
@@ -263,10 +276,12 @@ namespace property_dealer_API.Core
             return newTurnResult;
         }
 
-        public Player GetCurrentPlayerTurn()
+        public (Player player, int numTurnsLeft) GetCurrentPlayerTurn()
         {
             string currUserTurn = this._turnManager.GetCurrentUserTurn();
-            return this._playerManager.GetPlayerByUserId(currUserTurn);
+            Player player = this._playerManager.GetPlayerByUserId(currUserTurn);
+            int numTurnsLeft = this._turnManager.GetRemainingActionCounts();
+            return (player, numTurnsLeft);
         }
 
         public List<TableHands> GetAllPlayerHands()

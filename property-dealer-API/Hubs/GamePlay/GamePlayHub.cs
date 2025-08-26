@@ -223,9 +223,10 @@ namespace property_dealer_API.Hubs.GamePlay
         {
             try
             {
-                await this
-                    .Clients.Group(gameRoomId)
-                    .CurrentPlayerTurn(this._gamePlayService.GetCurrentPlayerTurn(gameRoomId));
+                (Player player, int numTurnsLeft) = this._gamePlayService.GetCurrentPlayerTurn(
+                    gameRoomId
+                );
+                await this.Clients.Group(gameRoomId).CurrentPlayerTurn(player, numTurnsLeft);
             }
             catch (Exception e)
             {

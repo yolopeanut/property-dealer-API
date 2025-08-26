@@ -68,8 +68,11 @@ namespace property_dealer_API.Application.Services.GameManagement
         public void RemakeGame(string roomId)
         {
             var gameDetails = this.GetGameDetails(roomId);
+            var players = gameDetails.GetPlayers();
             this.RemoveGame(roomId);
             this.CreateNewGame(roomId, gameDetails.RoomName, gameDetails.Config);
+            var newGame = this.GetGameDetails(roomId);
+            newGame.SetNewGamePlayers(players);
         }
     }
 }

@@ -9,5 +9,6 @@
         string? IncrementUserActionCount();
         string PrematurelyEndCurrentUserTurn();
         int GetCurrentUserActionCount();
+        int GetRemainingActionCounts();
     }
 }
