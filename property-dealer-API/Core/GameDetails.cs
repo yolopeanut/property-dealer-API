@@ -330,7 +330,7 @@ namespace property_dealer_API.Core
 
         public TurnResult EndPlayerTurnEarlier(string userId)
         {
-            if (this.GetCurrentPlayerTurn().UserId == userId)
+            if (this.GetCurrentPlayerTurn().player.UserId == userId)
             {
                 try
                 {
