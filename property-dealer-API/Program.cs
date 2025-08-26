@@ -168,7 +168,7 @@ app.MapHub<GameLobbyHub>("/gamelobby");
 app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
 
-//app.Urls.Add("http://*:5001");
+app.Urls.Add("http://*:5210");
 //app.Urls.Add("http://*:80");
 //app.Urls.Add("http://*:7200");
 
