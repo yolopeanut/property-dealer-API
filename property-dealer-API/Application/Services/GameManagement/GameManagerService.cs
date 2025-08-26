@@ -1,9 +1,9 @@
-﻿using property_dealer_API.Application.DTOs.Responses;
+﻿using System.Collections.Concurrent;
+using property_dealer_API.Application.DTOs.Responses;
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Core;
 using property_dealer_API.Core.Entities;
 using property_dealer_API.Core.Factories;
-using System.Collections.Concurrent;
 
 namespace property_dealer_API.Application.Services.GameManagement
 {
@@ -20,15 +20,13 @@ namespace property_dealer_API.Application.Services.GameManagement
         // Geting game list summary
         public IEnumerable<GameListSummaryResponse> GetGameListSummary()
         {
-            var summaries = this._gamesDictConcurrent.Select(
-                item => new GameListSummaryResponse(
-                    item.Key,
-                    item.Value.RoomName,
-                    item.Value.PublicPlayerManager.CountPlayers(),
-                    Convert.ToInt16(item.Value.Config.MaxNumPlayers),
-                    item.Value.GameState
-                )
-            );
+            var summaries = this._gamesDictConcurrent.Select(item => new GameListSummaryResponse(
+                item.Key,
+                item.Value.RoomName,
+                item.Value.PublicPlayerManager.CountPlayers(),
+                Convert.ToInt16(item.Value.Config.MaxNumPlayers),
+                item.Value.GameState
+            ));
 
             return summaries;
         }
@@ -65,6 +63,13 @@ namespace property_dealer_API.Application.Services.GameManagement
         public void RemoveGame(string roomId)
         {
             this._gamesDictConcurrent.TryRemove(roomId, out GameDetails? _);
+        }
+
+        public void RemakeGame(string roomId)
+        {
+            var gameDetails = this.GetGameDetails(roomId);
+            this.RemoveGame(roomId);
+            this.CreateNewGame(roomId, gameDetails.RoomName, gameDetails.Config);
         }
     }
 }

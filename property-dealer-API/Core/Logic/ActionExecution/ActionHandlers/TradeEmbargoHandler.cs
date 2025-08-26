@@ -2,6 +2,11 @@
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.OwnHandSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PaymentStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PlayerSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PropertySelectStep;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
@@ -13,6 +18,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
     public class TradeEmbargoHandler : ActionHandlerBase, IActionHandler
     {
+        private readonly PaymentActionStep _paymentStep;
+        private readonly PlayerSelectionStep _playerSelectionStep;
+        private readonly RentChargePropertySetStep _propertySetStep;
+        private readonly OwnHandSelectionStep _ownHandStep;
+        private readonly IActionStepService _stepService;
+
         public ActionTypes ActionType => ActionTypes.TradeEmbargo;
 
         public TradeEmbargoHandler(
@@ -20,7 +31,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor
+            IActionExecutor actionExecutor,
+            PaymentActionStep paymentStep,
+            PlayerSelectionStep playerSelectionStep,
+            RentChargePropertySetStep propertySetStep,
+            OwnHandSelectionStep ownHandStep,
+            IActionStepService stepService
         )
             : base(
                 playerManager,
@@ -28,7 +44,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 rulesManager,
                 pendingActionManager,
                 actionExecutor
-            ) { }
+            )
+        {
+            this._paymentStep = paymentStep;
+            this._playerSelectionStep = playerSelectionStep;
+            this._propertySetStep = propertySetStep;
+            this._ownHandStep = ownHandStep;
+            this._stepService = stepService;
+        }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -45,6 +68,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 InitiatorUserId = initiator.UserId,
                 ActionType = commandCard.Command,
             };
+
             var newActionContext = base.CreateActionContext(
                 card.CardGuid.ToString(),
                 DialogTypeEnum.OwnHandSelection,
@@ -60,7 +84,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 
         public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
-            // The flow you specified
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.OwnHandSelection:
@@ -68,54 +91,49 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                         throw new InvalidOperationException(
                             "Only the action initiator can select a rent card."
                         );
-                    this.ProcessRentCardSelection(currentContext);
-                    break;
+                    return this._ownHandStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService,
+                        DialogTypeEnum.PropertySetSelection
+                    );
+
                 case DialogTypeEnum.PropertySetSelection:
                     if (responder.UserId != currentContext.ActionInitiatingPlayerId)
                         throw new InvalidOperationException(
                             "Only the action initiator can select a property set."
                         );
-
-                    this.ValidateRentTarget(
-                        currentContext.ActionInitiatingPlayerId,
-                        currentContext
+                    return this._propertySetStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService,
+                        DialogTypeEnum.PlayerSelection
                     );
-                    this.ProcessPropertySetSelection(currentContext);
-                    break;
+
                 case DialogTypeEnum.PlayerSelection:
-                    if (responder.UserId != currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException(
-                            "Only the action initiator can select a player."
-                        );
-                    this.ProcessPlayerSelection(currentContext);
-                    break;
+                    this._playerSelectionStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService,
+                        DialogTypeEnum.PayValue
+                    );
+                    this._stepService.CalculateTributeAmount(currentContext);
+                    return null;
+
                 case DialogTypeEnum.PayValue:
-                    if (responder.UserId == currentContext.ActionInitiatingPlayerId)
-                        throw new InvalidOperationException(
-                            "The action initiator cannot pay themselves rent."
-                        );
-                    this.ProcessPaymentAndCompleteAction(currentContext, responder);
+                    var processResult = this._paymentStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
                     this.RemoveTributeCardFromPlayerHand(currentContext);
-                    break;
-                // Shields up is already part of pay value dialog on the UI
+                    return processResult;
+
                 default:
                     throw new InvalidOperationException(
                         $"Invalid state for TradeEmbargo action: {currentContext.DialogToOpen}"
                     );
             }
-
-            return null;
-        }
-
-        private ActionResult? ProcessPaymentAndCompleteAction(
-            ActionContext currentContext,
-            Player responder,
-            Boolean _ = true
-        )
-        {
-            this.ProcessPaymentResponse(currentContext, responder);
-            base.CompleteAction();
-            return null;
         }
 
         private void RemoveTributeCardFromPlayerHand(ActionContext currentContext)
@@ -135,181 +153,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 currentContext.ActionInitiatingPlayerId,
                 currentContext.SupportingCardIdToRemove.First()
             );
-        }
-
-        private void ProcessRentCardSelection(ActionContext currentContext)
-        {
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A rent card must be selected."
-                );
-
-            var rentCardId = currentContext.OwnTargetCardId.First();
-            var rentCard = base.PlayerHandManager.GetCardFromPlayerHandById(
-                currentContext.ActionInitiatingPlayerId,
-                rentCardId
-            );
-            if (rentCard is not TributeCard)
-            {
-                throw new CardMismatchException(
-                    currentContext.ActionInitiatingPlayerId,
-                    rentCardId
-                );
-            }
-
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-            base.SetNextDialog(
-                currentContext,
-                DialogTypeEnum.PropertySetSelection,
-                initiator,
-                null
-            );
-        }
-
-        private void ValidateRentTarget(string actionInitiatingPlayer, ActionContext currentContext)
-        {
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A rent card must be selected."
-                );
-
-            if (!currentContext.TargetSetColor.HasValue)
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "Cannot have null target set color during tribute action!"
-                );
-
-            var tributeCardId = currentContext.OwnTargetCardId.First();
-            var targetColor = currentContext.TargetSetColor.Value;
-
-            try
-            {
-                var tributeCard = base.PlayerHandManager.GetCardFromPlayerHandById(
-                    currentContext.ActionInitiatingPlayerId,
-                    tributeCardId
-                );
-                base.RulesManager.ValidateTributeCardTarget(targetColor, tributeCard);
-                var targetPlayerHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
-                    actionInitiatingPlayer,
-                    targetColor
-                );
-            }
-            catch (Exception)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot charge rent for {targetColor} properties because the target player doesn't own any {targetColor} properties."
-                );
-            }
-        }
-
-        private void ProcessPropertySetSelection(ActionContext currentContext)
-        {
-            if (!currentContext.TargetSetColor.HasValue)
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A property set must be selected."
-                );
-
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-            base.SetNextDialog(currentContext, DialogTypeEnum.PlayerSelection, initiator, null);
-        }
-
-        private void ProcessPlayerSelection(ActionContext currentContext)
-        {
-            if (string.IsNullOrEmpty(currentContext.TargetPlayerId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A target player must be selected."
-                );
-
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-            var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId);
-            var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-
-            this.CalculateTributeAmount(currentContext);
-            base.SetNextDialog(currentContext, DialogTypeEnum.PayValue, initiator, targetPlayer);
-        }
-
-        private ActionResult? ProcessPaymentResponse(
-            ActionContext currentContext,
-            Player responder,
-            Boolean _ = true
-        )
-        {
-            // Check if the response was a "Shields Up" card.
-            // This assumes a shield play consists of submitting just the single shield card.
-            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
-            {
-                var targetPlayer = base.PlayerManager.GetPlayerByUserId(
-                    currentContext.TargetPlayerId!
-                );
-                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-                var initiator = base.PlayerManager.GetPlayerByUserId(
-                    currentContext.ActionInitiatingPlayerId
-                );
-
-                if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                {
-                    return base.HandleShieldsUp(
-                        responder,
-                        currentContext,
-                        this.ProcessPaymentResponse
-                    );
-                }
-                else
-                {
-                    throw new CardNotFoundException("Shields up was not found in players deck!");
-                }
-            }
-
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
-                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
-                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
-                {
-                    throw new ActionContextParameterNullException(
-                        currentContext,
-                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
-                    );
-                }
-
-                return null;
-            }
-
-            base.ActionExecutor.ExecutePayment(
-                currentContext.ActionInitiatingPlayerId,
-                responder.UserId,
-                currentContext.OwnTargetCardId
-            );
-
-            return null;
-        }
-
-        private void CalculateTributeAmount(ActionContext currentContext)
-        {
-            if (currentContext.OwnTargetCardId?.Count > 0 && currentContext.TargetSetColor.HasValue)
-            {
-                var playerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
-                    currentContext.ActionInitiatingPlayerId,
-                    currentContext.TargetSetColor.Value
-                );
-
-                // Calculate the base rent amount and then double it
-                var baseRentAmount = base.RulesManager.CalculateRentAmount(
-                    currentContext.TargetSetColor.Value,
-                    playerTableHand
-                );
-                currentContext.PaymentAmount = baseRentAmount * 2; // Double the rent for Trade Embargo
-            }
         }
     }
 }
