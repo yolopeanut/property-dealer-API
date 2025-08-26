@@ -2,6 +2,8 @@
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PlayerSelectStep;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
@@ -13,6 +15,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
     public class PirateRaidHandler : ActionHandlerBase, IActionHandler
     {
+        private readonly PlayerSelectionStep _playerSelectionStep;
+        private readonly PirateRaidTableHandStep _pirateRaidTableHandStep;
+        private readonly PirateRaidWildcardStep _pirateRaidWildcardStep;
+        private readonly IActionStepService _stepService;
+
         public ActionTypes ActionType => ActionTypes.PirateRaid;
 
         public PirateRaidHandler(
@@ -20,7 +27,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor
+            IActionExecutor actionExecutor,
+            IActionStepService stepService,
+            PlayerSelectionStep playerSelectionStep,
+            PirateRaidTableHandStep pirateRaidTableHandStep,
+            PirateRaidWildcardStep pirateRaidWildcardStep
         )
             : base(
                 playerManager,
@@ -28,7 +39,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 rulesManager,
                 pendingActionManager,
                 actionExecutor
-            ) { }
+            )
+        {
+            this._playerSelectionStep = playerSelectionStep;
+            this._stepService = stepService;
+            this._pirateRaidTableHandStep = pirateRaidTableHandStep;
+            this._pirateRaidWildcardStep = pirateRaidWildcardStep;
+        }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -75,22 +92,39 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PlayerSelection:
-                    this.ProcessPlayerSelection(currentContext);
-                    break;
-
-                case DialogTypeEnum.TableHandSelector:
-                    return this.ProcessTableHandSelection(currentContext, responder);
-
-                case DialogTypeEnum.ShieldsUp:
-                    return base.HandleShieldsUp(
+                    this._playerSelectionStep.ProcessStep(
                         responder,
                         currentContext,
-                        this.ProcessTableHandSelection
+                        _stepService,
+                        DialogTypeEnum.TableHandSelector
                     );
                     break;
 
+                case DialogTypeEnum.TableHandSelector:
+                    return this._pirateRaidTableHandStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
+
+                case DialogTypeEnum.ShieldsUp:
+                    return this._stepService.HandleShieldsUp(
+                        responder,
+                        currentContext,
+                        (context, player, _) =>
+                            this._pirateRaidTableHandStep.ProcessStep(
+                                player,
+                                context,
+                                this._stepService
+                            )
+                    );
+
                 case DialogTypeEnum.WildcardColor:
-                    return this.ProcessWildcardColorSelection(currentContext, responder);
+                    return this._pirateRaidWildcardStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
 
                 default:
                     throw new InvalidOperationException(
@@ -99,217 +133,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             }
 
             return null;
-        }
-
-        private void ProcessPlayerSelection(ActionContext currentContext)
-        {
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-            var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId!);
-            base.SetNextDialog(
-                currentContext,
-                DialogTypeEnum.TableHandSelector,
-                initiator,
-                targetPlayer
-            );
-        }
-
-        private ActionResult? ProcessTableHandSelection(
-            ActionContext currentContext,
-            Player responder,
-            Boolean includeShieldsUpChecking = true
-        )
-        {
-            var pendingAction = base.PendingActionManager.CurrPendingAction;
-            if (pendingAction == null)
-                throw new InvalidOperationException("No pending action found.");
-
-            if (string.IsNullOrEmpty(currentContext.TargetPlayerId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetPlayerId cannot be null for TableHandSelector."
-                );
-            if (currentContext.TargetCardId == null || !currentContext.TargetCardId.Any())
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    $"TargetCardId was found null in {pendingAction.ActionType}!"
-                );
-            var initiatorId = currentContext.ActionInitiatingPlayerId;
-            var initiator = base.PlayerManager.GetPlayerByUserId(initiatorId);
-
-            var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId);
-            var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-            var (targetCard, targetCardPropertyGroup) = base.PlayerHandManager.GetCardInTableHand(
-                targetPlayer.UserId,
-                currentContext.TargetCardId
-            );
-
-            this.ValidateActionPrerequisites(pendingAction, targetPlayer, targetCard);
-
-            bool specialConditionHandled = false;
-            if (includeShieldsUpChecking)
-            {
-                specialConditionHandled = this.TryHandleSpecialConditions(
-                    currentContext,
-                    responder,
-                    targetPlayer,
-                    targetCard,
-                    targetPlayerHand
-                );
-            }
-
-            if (!specialConditionHandled)
-            {
-                this.ExecuteNormalAction(currentContext, targetCardPropertyGroup);
-                base.CompleteAction();
-
-                if (currentContext.DialogResponse == CommandResponseEnum.RejectShieldsUp)
-                {
-                    return null;
-                }
-
-                return new ActionResult
-                {
-                    ActionInitiatingPlayerId = currentContext.ActionInitiatingPlayerId,
-                    AffectedPlayerId = targetPlayer.UserId,
-                    ActionType = currentContext.ActionType,
-                    TakenCard = targetCard.ToDto(),
-                };
-            }
-            return null;
-        }
-
-        private ActionResult? ProcessWildcardColorSelection(
-            ActionContext currentContext,
-            Player responder
-        )
-        {
-            if (!currentContext.TargetSetColor.HasValue)
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A color must be selected for the wildcard property."
-                );
-            if (String.IsNullOrEmpty(currentContext.TargetPlayerId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetPlayerId is null for wildcard property selection."
-                );
-            if (String.IsNullOrEmpty(currentContext.TargetCardId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetCardId must be selected for the wildcard property."
-                );
-
-            string initiatorId = currentContext.ActionInitiatingPlayerId;
-
-            string targetId = currentContext.TargetPlayerId;
-            string targetCardId = currentContext.TargetCardId;
-            var (cardFromTarget, _) = base.PlayerHandManager.GetCardInTableHand(
-                targetId,
-                targetCardId
-            );
-
-            PropertyCardColoursEnum targetCardColor;
-            if (cardFromTarget is SystemWildCard && responder.UserId == initiatorId)
-            {
-                targetCardColor = currentContext.TargetSetColor.Value;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    "Could not resolve wildcard trade logic. The responder may not match the wildcard recipient."
-                );
-            }
-
-            base.ActionExecutor.MovePropertyBetweenTableHands(
-                initiatorId: currentContext.ActionInitiatingPlayerId,
-                targetId: currentContext.TargetPlayerId,
-                cardIdToTake: currentContext.TargetCardId,
-                colorForTakenCard: targetCardColor
-            );
-
-            base.CompleteAction();
-
-            if (currentContext.DialogResponse == CommandResponseEnum.RejectShieldsUp)
-            {
-                return null;
-            }
-            return new ActionResult
-            {
-                ActionInitiatingPlayerId = currentContext.ActionInitiatingPlayerId,
-                AffectedPlayerId = targetId,
-                ActionType = currentContext.ActionType,
-                TakenCard = cardFromTarget.ToDto(),
-            };
-        }
-
-        private void ValidateActionPrerequisites(
-            PendingAction pendingAction,
-            Player targetPlayer,
-            Card targetCard
-        )
-        {
-            if (targetCard is not StandardSystemCard systemCard)
-                return;
-
-            var targetPlayerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
-                targetPlayer.UserId,
-                systemCard.CardColoursEnum
-            );
-
-            base.RulesManager.ValidatePirateRaidTarget(
-                targetPlayerTableHand,
-                systemCard.CardColoursEnum
-            );
-        }
-
-        private bool TryHandleSpecialConditions(
-            ActionContext currentContext,
-            Player initiator,
-            Player targetPlayer,
-            Card targetCard,
-            List<Card> targetPlayerHand
-        )
-        {
-            if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-            {
-                base.BuildShieldsUpContext(currentContext, initiator, targetPlayer);
-                return true;
-            }
-
-            if (base.RulesManager.IsCardSystemWildCard(targetCard))
-            {
-                this.BuildWildCardMovementContext(currentContext, initiator); // Initiator benefits
-                return true;
-            }
-            return false; // No special conditions were met
-        }
-
-        private void ExecuteNormalAction(
-            ActionContext currentContext,
-            PropertyCardColoursEnum targetCardPropertyGroup
-        )
-        {
-            if (currentContext.TargetCardId == null || !currentContext.TargetCardId.Any())
-            {
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetCardId is null for normal execution."
-                );
-            }
-
-            base.ActionExecutor.MovePropertyBetweenTableHands(
-                initiatorId: currentContext.ActionInitiatingPlayerId,
-                targetId: currentContext.TargetPlayerId!, // Already checked in table hand step
-                cardIdToTake: currentContext.TargetCardId,
-                colorForTakenCard: targetCardPropertyGroup
-            );
-        }
-
-        private void BuildWildCardMovementContext(ActionContext context, Player beneficiary)
-        {
-            base.SetNextDialog(context, DialogTypeEnum.WildcardColor, beneficiary, null); // Wildcard choice is seen by the beneficiary
         }
     }
 }

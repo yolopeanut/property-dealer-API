@@ -6,6 +6,14 @@ using property_dealer_API.Core.Factories;
 using property_dealer_API.Core.Logic.ActionExecution;
 using property_dealer_API.Core.Logic.ActionExecution.ActionHandlerResolvers;
 using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.OwnHandSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PaymentStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PlayerSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PropertySelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.Service;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.TableHandSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.WildCardSelectStep;
 using property_dealer_API.Core.Logic.DebuggingManager;
 using property_dealer_API.Core.Logic.DecksManager;
 using property_dealer_API.Core.Logic.DialogsManager;
@@ -83,6 +91,19 @@ builder.Services.AddScoped<IDebugManager, DebugManager>();
 
 builder.Services.AddScoped<IActionHandlerResolver, ActionHandlerResolver>();
 
+builder.Services.AddScoped<IActionStepService, ActionStepService>();
+builder.Services.AddTransient<PaymentActionStep>();
+builder.Services.AddTransient<PlayerSelectionStep>();
+builder.Services.AddTransient<PirateRaidTableHandStep>();
+builder.Services.AddTransient<PirateRaidWildcardStep>();
+builder.Services.AddTransient<ForcedTradeWildcardColorSelectionStep>();
+builder.Services.AddTransient<ForcedTradeTableHandSelectionStep>();
+builder.Services.AddTransient<HostileTakeoverPropertySetStep>();
+builder.Services.AddTransient<RentChargePropertySetStep>();
+builder.Services.AddTransient<OwnHandSelectionStep>();
+builder.Services.AddTransient<BuildingPlacementStep>();
+builder.Services.AddTransient<WildCardColorSelectionStep>();
+
 builder.Services.AddTransient<HostileTakeoverHandler>();
 builder.Services.AddTransient<ForcedTradeHandler>();
 builder.Services.AddTransient<PirateRaidHandler>();
@@ -139,17 +160,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("property-dealer-policy");
-app.UseHttpsRedirection();
+
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GameLobbyHub>("/gamelobby");
 app.MapHub<WaitingRoomHub>("/waiting-room");
 app.MapHub<GamePlayHub>("/gameplay");
 
-app.Urls.Add("http://*:5210");
+//app.Urls.Add("http://*:5001");
 
 //app.Urls.Add("http://*:80");
-//app.Urls.Add("https://*:7200");
+app.Urls.Add("http://*:7200");
 
 app.Run();
 

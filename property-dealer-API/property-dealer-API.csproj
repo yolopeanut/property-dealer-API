@@ -15,10 +15,7 @@
     <None Remove="Controllers\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference
-      Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
-      Version="1.22.1-Preview.1"
-    />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1-Preview.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="TypedSignalR.Client.DevTools" Version="1.2.4" />
   </ItemGroup>

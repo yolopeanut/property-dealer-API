@@ -4,6 +4,7 @@ using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.Services.CardManagement;
 using property_dealer_API.Application.Services.GameManagement;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Models.Enums;
 
 namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 {
@@ -12,7 +13,10 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         private readonly IGameManagerService _gameManagerService;
         private readonly ICardFactoryService _cardFactoryService;
 
-        public WaitingRoomService(IGameManagerService gameManagerService, ICardFactoryService cardFactoryService)
+        public WaitingRoomService(
+            IGameManagerService gameManagerService,
+            ICardFactoryService cardFactoryService
+        )
         {
             this._gameManagerService = gameManagerService;
             this._cardFactoryService = cardFactoryService;
@@ -20,12 +24,16 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
 
         public List<Player> GetAllPlayers(string gameRoomId)
         {
-            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetAllPlayers();
+            return this
+                ._gameManagerService.GetGameDetails(gameRoomId)
+                .PublicPlayerManager.GetAllPlayers();
         }
 
         public Player GetPlayerByUserId(string gameRoomId, string userId)
         {
-            return this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+            return this
+                ._gameManagerService.GetGameDetails(gameRoomId)
+                .PublicPlayerManager.GetPlayerByUserId(userId);
         }
 
         public string RemovePlayerFromGame(string gameRoomId, string userId)
@@ -65,7 +73,8 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         {
             try
             {
-                this._gameManagerService.GetGameDetails(gameRoomId).PublicPlayerManager.GetPlayerByUserId(userId);
+                this._gameManagerService.GetGameDetails(gameRoomId)
+                    .PublicPlayerManager.GetPlayerByUserId(userId);
                 return true;
             }
             catch (GameNotFoundException)
@@ -81,7 +90,10 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         public void StartGame(string gameRoomId)
         {
             var gameInstance = this._gameManagerService.GetGameDetails(gameRoomId);
-
+            if (gameInstance.GameState == GameStateEnum.GameOver)
+            {
+                this._gameManagerService.RemakeGame(gameRoomId);
+            }
             // Call game instance to start game and pass over the initial deck
             var initialDeck = this._cardFactoryService.StartCardFactory();
             gameInstance.StartGame(initialDeck);
@@ -91,7 +103,5 @@ namespace property_dealer_API.Hubs.GameWaitingRoom.Service
         {
             return this._gameManagerService.GetGameListSummary(); // We'll need to add this to GameManagerService too
         }
-
-
     }
 }

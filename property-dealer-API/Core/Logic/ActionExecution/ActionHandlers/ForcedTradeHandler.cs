@@ -2,6 +2,9 @@
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PlayerSelectStep;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.TableHandSelectStep;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
@@ -13,6 +16,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
     public class ForcedTradeHandler : ActionHandlerBase, IActionHandler
     {
+        private readonly PlayerSelectionStep _playerSelectionStep;
+        private readonly ForcedTradeTableHandSelectionStep _tableHandSelectionStep;
+        private readonly ForcedTradeWildcardColorSelectionStep _forcedTradeWildcardColorSelectionStep;
+        private readonly IActionStepService _stepService;
+
         public ActionTypes ActionType => ActionTypes.ForcedTrade;
 
         public ForcedTradeHandler(
@@ -20,7 +28,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor
+            IActionExecutor actionExecutor,
+            PlayerSelectionStep playerSelectionStep,
+            ForcedTradeTableHandSelectionStep tableHandSelectionStep,
+            ForcedTradeWildcardColorSelectionStep forcedTradeWildcardColorSelectionStep,
+            IActionStepService stepService
         )
             : base(
                 playerManager,
@@ -28,11 +40,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 rulesManager,
                 pendingActionManager,
                 actionExecutor
-            ) { }
+            )
+        {
+            this._playerSelectionStep = playerSelectionStep;
+            this._tableHandSelectionStep = tableHandSelectionStep;
+            this._forcedTradeWildcardColorSelectionStep = forcedTradeWildcardColorSelectionStep;
+            this._stepService = stepService;
+        }
 
-        /// <summary>
-        /// Validates the action and sets up the initial dialog for selecting a player to trade with.
-        /// </summary>
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
             if (
@@ -57,15 +72,10 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 pendingAction
             );
 
-            // The first step is always PlayerSelection for this action.
             base.SetNextDialog(newActionContext, DialogTypeEnum.PlayerSelection, initiator, null);
-
             return newActionContext;
         }
 
-        /// <summary>
-        /// Manages the multi-step process of a Forced Trade action.
-        /// </summary>
         public ActionResult? ProcessResponse(Player responder, ActionContext currentContext)
         {
             var isNotActionInitiatingPlayer =
@@ -80,320 +90,47 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 );
             }
 
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PlayerSelection:
-                    this.ProcessPlayerSelection(currentContext);
-                    break;
-
-                case DialogTypeEnum.TableHandSelector:
-                    return this.ProcessTableHandSelection(currentContext, responder);
-
-                case DialogTypeEnum.ShieldsUp:
-                    return base.HandleShieldsUp(
+                    return this._playerSelectionStep.ProcessStep(
                         responder,
                         currentContext,
-                        this.ProcessTableHandSelection
+                        this._stepService,
+                        DialogTypeEnum.TableHandSelector
+                    );
+
+                case DialogTypeEnum.TableHandSelector:
+                    return this._tableHandSelectionStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
+
+                case DialogTypeEnum.ShieldsUp:
+                    return this._stepService.HandleShieldsUp(
+                        responder,
+                        currentContext,
+                        (context, player, _) =>
+                            this._tableHandSelectionStep.ProcessStep(
+                                player,
+                                context,
+                                this._stepService
+                            )
                     );
 
                 case DialogTypeEnum.WildcardColor:
-                    return this.ProcessWildcardColorSelection(currentContext, responder);
+                    return this._forcedTradeWildcardColorSelectionStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
 
                 default:
                     throw new InvalidOperationException(
                         $"Invalid state for ForcedTrade action: {currentContext.DialogToOpen}"
                     );
             }
-
-            return null;
-        }
-
-        private void ProcessPlayerSelection(ActionContext currentContext)
-        {
-            var initiator = base.PlayerManager.GetPlayerByUserId(
-                currentContext.ActionInitiatingPlayerId
-            );
-            var targetPlayer = base.PlayerManager.GetPlayerByUserId(currentContext.TargetPlayerId!);
-            base.SetNextDialog(
-                currentContext,
-                DialogTypeEnum.TableHandSelector,
-                initiator,
-                targetPlayer
-            );
-        }
-
-        private ActionResult? ProcessTableHandSelection(
-            ActionContext currentContext,
-            Player responder,
-            Boolean includeShieldsUpChecking = true
-        )
-        {
-            var pendingAction = base.PendingActionManager.CurrPendingAction;
-            if (pendingAction == null)
-                throw new InvalidOperationException("No pending action found.");
-
-            if (string.IsNullOrEmpty(currentContext.TargetPlayerId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetPlayerId cannot be null for TableHandSelector."
-                );
-            if (currentContext.TargetCardId == null || !currentContext.TargetCardId.Any())
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    $"TargetCardId was found null in {pendingAction.ActionType}!"
-                );
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    $"OwnTargetCardId was found null in {pendingAction.ActionType}!"
-                );
-
-            var initiatorId = currentContext.ActionInitiatingPlayerId;
-            var initiator = base.PlayerManager.GetPlayerByUserId(initiatorId);
-            string initiatorCardId = currentContext.OwnTargetCardId.First();
-            var (cardFromInitiator, initiatorCardPropertyColorGroup) =
-                base.PlayerHandManager.GetCardInTableHand(initiatorId, initiatorCardId);
-
-            string targetId = currentContext.TargetPlayerId;
-            string targetCardId = currentContext.TargetCardId;
-            var targetPlayer = base.PlayerManager.GetPlayerByUserId(targetId);
-            var (cardFromTarget, targetCardPropertyColorGroup) =
-                base.PlayerHandManager.GetCardInTableHand(targetId, targetCardId);
-            var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-
-            this.ValidateActionPrerequisites(pendingAction, targetPlayer, cardFromTarget);
-            bool specialConditionHandled = false;
-
-            if (includeShieldsUpChecking)
-            {
-                specialConditionHandled = this.TryHandleSpecialConditions(
-                    currentContext,
-                    responder,
-                    targetPlayer,
-                    cardFromTarget,
-                    targetPlayerHand
-                );
-            }
-
-            if (!specialConditionHandled)
-            {
-                this.ExecuteNormalAction(
-                    currentContext,
-                    targetPlayer,
-                    targetCardPropertyColorGroup,
-                    initiatorCardPropertyColorGroup
-                );
-                base.CompleteAction();
-
-                if (currentContext.DialogResponse == CommandResponseEnum.RejectShieldsUp)
-                {
-                    return null;
-                }
-
-                return new ActionResult
-                {
-                    ActionInitiatingPlayerId = currentContext.ActionInitiatingPlayerId,
-                    AffectedPlayerId = targetPlayer.UserId,
-                    ActionType = currentContext.ActionType,
-                    TakenCard = cardFromTarget.ToDto(),
-                    GivenCard = cardFromInitiator.ToDto(),
-                };
-            }
-            return null;
-        }
-
-        private ActionResult? ProcessWildcardColorSelection(
-            ActionContext currentContext,
-            Player responder
-        )
-        {
-            if (!currentContext.TargetSetColor.HasValue)
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "A color must be selected for the wildcard property."
-                );
-            if (String.IsNullOrEmpty(currentContext.TargetPlayerId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetPlayerId is null for wildcard property selection."
-                );
-            if (currentContext.OwnTargetCardId == null)
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "OwnTargetCardId is null for wildcard property."
-                );
-            if (String.IsNullOrEmpty(currentContext.TargetCardId))
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetCardId must be selected for the wildcard property."
-                );
-
-            string initiatorId = currentContext.ActionInitiatingPlayerId;
-            string initiatorCardId = currentContext.OwnTargetCardId.First();
-            var (cardFromInitiator, _) = base.PlayerHandManager.GetCardInTableHand(
-                initiatorId,
-                initiatorCardId
-            );
-
-            string targetId = currentContext.TargetPlayerId;
-            string targetCardId = currentContext.TargetCardId;
-            var (cardFromTarget, _) = base.PlayerHandManager.GetCardInTableHand(
-                targetId,
-                targetCardId
-            );
-
-            PropertyCardColoursEnum propertyGroupFromInitiator;
-            PropertyCardColoursEnum propertyGroupFromTarget;
-
-            // Determine destination colors based on which card is the wildcard and who is receiving it.
-            if (cardFromTarget is SystemWildCard && responder.UserId == initiatorId)
-            {
-                propertyGroupFromTarget = currentContext.TargetSetColor.Value;
-                propertyGroupFromInitiator = (
-                    (StandardSystemCard)cardFromInitiator
-                ).CardColoursEnum;
-            }
-            else if (cardFromInitiator is SystemWildCard && responder.UserId == targetId)
-            {
-                propertyGroupFromInitiator = currentContext.TargetSetColor.Value;
-                propertyGroupFromTarget = ((StandardSystemCard)cardFromTarget).CardColoursEnum;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    "Could not resolve wildcard trade logic. The responder may not match the wildcard recipient."
-                );
-            }
-
-            base.ActionExecutor.MovePropertyBetweenTableHands(
-                initiatorId: currentContext.ActionInitiatingPlayerId,
-                targetId: currentContext.TargetPlayerId,
-                cardIdToTake: currentContext.TargetCardId,
-                colorForTakenCard: propertyGroupFromTarget,
-                cardIdToGive: currentContext.OwnTargetCardId.First(),
-                colorForGivenCard: propertyGroupFromInitiator
-            );
-            base.CompleteAction();
-
-            if (currentContext.DialogResponse == CommandResponseEnum.RejectShieldsUp)
-            {
-                return null;
-            }
-
-            return new ActionResult
-            {
-                ActionInitiatingPlayerId = currentContext.ActionInitiatingPlayerId,
-                AffectedPlayerId = targetId,
-                ActionType = currentContext.ActionType,
-                TakenCard = cardFromTarget.ToDto(),
-                GivenCard = cardFromInitiator.ToDto(),
-            };
-        }
-
-        private void ValidateActionPrerequisites(
-            PendingAction pendingAction,
-            Player targetPlayer,
-            Card targetCard
-        )
-        {
-            if (targetCard is not StandardSystemCard systemCard)
-                return;
-
-            var targetPlayerTableHand = base.PlayerHandManager.GetPropertyGroupInPlayerTableHand(
-                targetPlayer.UserId,
-                systemCard.CardColoursEnum
-            );
-
-            if (pendingAction.ActionType == ActionTypes.ForcedTrade)
-            {
-                base.RulesManager.ValidateForcedTradeTarget(
-                    targetPlayerTableHand,
-                    systemCard.CardColoursEnum
-                );
-            }
-        }
-
-        private bool TryHandleSpecialConditions(
-            ActionContext currentContext,
-            Player initiator,
-            Player targetPlayer,
-            Card targetCard,
-            List<Card> targetPlayerHand
-        )
-        {
-            if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-            {
-                base.BuildShieldsUpContext(currentContext, initiator, targetPlayer);
-                return true;
-            }
-
-            if (base.RulesManager.IsCardSystemWildCard(targetCard))
-            {
-                this.BuildWildCardMovementContext(currentContext, initiator); // Initiator benefits
-                return true;
-            }
-
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "OwnTargetCardId null when handling forced trade!"
-                );
-            }
-
-            var (ownTargetCard, _) = base.PlayerHandManager.GetCardInTableHand(
-                currentContext.ActionInitiatingPlayerId,
-                currentContext.OwnTargetCardId.First()
-            );
-            if (base.RulesManager.IsCardSystemWildCard(ownTargetCard))
-            {
-                this.BuildWildCardMovementContext(currentContext, targetPlayer); // Target player benefits
-                return true;
-            }
-
-            return false; // No special conditions were met
-        }
-
-        private void ExecuteNormalAction(
-            ActionContext currentContext,
-            Player targetPlayer,
-            PropertyCardColoursEnum colorForTakenCard,
-            PropertyCardColoursEnum colorForGivenCard
-        )
-        {
-            if (currentContext.TargetCardId == null || !currentContext.TargetCardId.Any())
-            {
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "TargetCardId is null for normal execution."
-                );
-            }
-
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                throw new ActionContextParameterNullException(
-                    currentContext,
-                    "OwnTargetCardId is null for ForcedTrade execution."
-                );
-            }
-
-            base.ActionExecutor.MovePropertyBetweenTableHands(
-                initiatorId: currentContext.ActionInitiatingPlayerId,
-                targetId: targetPlayer.UserId,
-                cardIdToTake: currentContext.TargetCardId,
-                colorForTakenCard: colorForTakenCard,
-                cardIdToGive: currentContext.OwnTargetCardId.First(),
-                colorForGivenCard: colorForGivenCard
-            );
-        }
-
-        private void BuildWildCardMovementContext(ActionContext context, Player beneficiary)
-        {
-            base.SetNextDialog(context, DialogTypeEnum.WildcardColor, beneficiary, null); // Wildcard choice is seen by the beneficiary
         }
     }
 }

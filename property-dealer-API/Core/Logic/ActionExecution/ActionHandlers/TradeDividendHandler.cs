@@ -2,6 +2,8 @@
 using property_dealer_API.Application.Exceptions;
 using property_dealer_API.Application.MethodReturns;
 using property_dealer_API.Core.Entities;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps;
+using property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSteps.PaymentStep;
 using property_dealer_API.Core.Logic.GameRulesManager;
 using property_dealer_API.Core.Logic.PendingActionsManager;
 using property_dealer_API.Core.Logic.PlayerHandsManager;
@@ -13,6 +15,8 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
 {
     public class TradeDividendHandler : ActionHandlerBase, IActionHandler
     {
+        private readonly PaymentActionStep _paymentStep;
+        private readonly IActionStepService _stepService;
         public ActionTypes ActionType => ActionTypes.TradeDividend;
 
         public TradeDividendHandler(
@@ -20,7 +24,9 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             IPlayerHandManager playerHandManager,
             IGameRuleManager rulesManager,
             IPendingActionManager pendingActionManager,
-            IActionExecutor actionExecutor
+            IActionExecutor actionExecutor,
+            PaymentActionStep paymentStep,
+            IActionStepService stepService
         )
             : base(
                 playerManager,
@@ -28,7 +34,11 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
                 rulesManager,
                 pendingActionManager,
                 actionExecutor
-            ) { }
+            )
+        {
+            this._paymentStep = paymentStep;
+            this._stepService = stepService;
+        }
 
         public ActionContext? Initialize(Player initiator, Card card, List<Player> allPlayers)
         {
@@ -71,76 +81,16 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers
             switch (currentContext.DialogToOpen)
             {
                 case DialogTypeEnum.PayValue:
-                    this.ProcessPaymentResponse(currentContext, responder);
-                    base.CompleteAction();
-                    break;
-
+                    return this._paymentStep.ProcessStep(
+                        responder,
+                        currentContext,
+                        this._stepService
+                    );
                 default:
                     throw new InvalidOperationException(
                         $"Invalid state for TradeDividend action: {currentContext.DialogToOpen}"
                     );
             }
-
-            return null;
-        }
-
-        private ActionResult? ProcessPaymentResponse(
-            ActionContext currentContext,
-            Player responder,
-            Boolean _ = true
-        )
-        {
-            // Check if the response was a "Shields Up" card.
-            // This assumes a shield play consists of submitting just the single shield card.
-            if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
-            {
-                var targetPlayer = base.PlayerManager.GetPlayerByUserId(
-                    currentContext.TargetPlayerId!
-                );
-                var targetPlayerHand = base.PlayerHandManager.GetPlayerHand(targetPlayer.UserId);
-                var initiator = base.PlayerManager.GetPlayerByUserId(
-                    currentContext.ActionInitiatingPlayerId
-                );
-
-                if (base.RulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
-                {
-                    return base.HandleShieldsUp(
-                        responder,
-                        currentContext,
-                        this.ProcessPaymentResponse
-                    );
-                }
-                else
-                {
-                    throw new CardNotFoundException("Shields up was not found in players deck!");
-                }
-            }
-
-            // The player must have submitted cards, either as payment or as a 'Shields Up'.
-            if (currentContext.OwnTargetCardId == null || !currentContext.OwnTargetCardId.Any())
-            {
-                var playerHand = base.PlayerHandManager.GetPlayerTableHand(responder.UserId);
-                var moneyHand = base.PlayerHandManager.GetPlayerMoneyHand(responder.UserId);
-                if (!base.RulesManager.IsPlayerBroke(playerHand, moneyHand))
-                {
-                    throw new ActionContextParameterNullException(
-                        currentContext,
-                        $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
-                    );
-                }
-
-                return null;
-            }
-
-            // If it wasn't a shield, it's a payment.
-            // The initiator receives payment from the responder.
-            base.ActionExecutor.ExecutePayment(
-                currentContext.ActionInitiatingPlayerId,
-                responder.UserId,
-                currentContext.OwnTargetCardId
-            );
-
-            return null;
         }
     }
 }
