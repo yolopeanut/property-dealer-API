@@ -67,8 +67,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
 
             this.ValidateActionPrerequisites(targetPlayer, targetCard);
 
+            var hasShieldsUpCard = this._rulesManager.DoesPlayerHaveShieldsUp(
+                targetPlayer,
+                targetPlayerHand
+            );
+            var hasNotRejectedShieldsUp = !this._rulesManager.IsShieldsUpRejectedFromVictim(
+                currentContext
+            );
             // Check for shields up
-            if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+            if (hasShieldsUpCard && hasNotRejectedShieldsUp)
             {
                 stepService.BuildShieldsUpContext(currentContext, responder, targetPlayer);
                 return null;

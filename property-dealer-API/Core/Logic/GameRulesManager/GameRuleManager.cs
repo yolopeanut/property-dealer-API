@@ -359,6 +359,20 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             return false;
         }
 
+        public bool IsShieldsUpRejectedFromVictim(ActionContext currentContext)
+        {
+            if (!currentContext.DialogResponse.HasValue)
+                throw new ActionContextParameterNullException(
+                    currentContext,
+                    $"DialogResponse was found to be null!"
+                );
+            if (currentContext.DialogResponse.Value == CommandResponseEnum.RejectShieldsUp)
+            {
+                return true;
+            }
+            return false;
+        }
+
         #endregion
 
         #region Calculations

@@ -45,7 +45,12 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
             {
                 var targetPlayer = this._playerManager.GetPlayerByUserId(responder.UserId);
                 var targetPlayerHand = this._playerHandManager.GetPlayerHand(targetPlayer.UserId);
-                if (!this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+                var hasShieldsUpCard = this._rulesManager.DoesPlayerHaveShieldsUp(
+                    targetPlayer,
+                    targetPlayerHand
+                );
+
+                if (!hasShieldsUpCard)
                 {
                     throw new CardNotFoundException("Shields up was not found in players deck!");
                 }

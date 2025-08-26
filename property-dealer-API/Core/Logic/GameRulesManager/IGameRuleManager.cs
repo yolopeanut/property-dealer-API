@@ -86,6 +86,7 @@ namespace property_dealer_API.Core.Logic.GameRulesManager
             PropertyCardColoursEnum color
         );
         bool IsCardSystemWildCard(Card targetCard);
+        bool IsShieldsUpRejectedFromVictim(ActionContext currentContext);
 
         // ===== CALCULATIONS =====
         int CalculateRentAmount(

@@ -41,16 +41,6 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
             DialogTypeEnum? nextDialog = null
         )
         {
-            return this.ProcessTableHandSelection(currentContext, responder, stepService, true);
-        }
-
-        private ActionResult? ProcessTableHandSelection(
-            ActionContext currentContext,
-            Player responder,
-            IActionStepService stepService,
-            Boolean includeShieldsUpChecking = true
-        )
-        {
             var pendingAction = this._pendingActionManager.CurrPendingAction;
             if (pendingAction == null)
                 throw new InvalidOperationException("No pending action found.");
@@ -87,17 +77,14 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
             this.ValidateActionPrerequisites(pendingAction, targetPlayer, cardFromTarget);
             bool specialConditionHandled = false;
 
-            if (includeShieldsUpChecking)
-            {
-                specialConditionHandled = this.TryHandleSpecialConditions(
-                    currentContext,
-                    responder,
-                    targetPlayer,
-                    cardFromTarget,
-                    targetPlayerHand,
-                    stepService
-                );
-            }
+            specialConditionHandled = this.TryHandleSpecialConditions(
+                currentContext,
+                responder,
+                targetPlayer,
+                cardFromTarget,
+                targetPlayerHand,
+                stepService
+            );
 
             if (!specialConditionHandled)
             {
@@ -158,7 +145,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
             IActionStepService stepService
         )
         {
-            if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+            var hasShieldsUpCard = this._rulesManager.DoesPlayerHaveShieldsUp(
+                targetPlayer,
+                targetPlayerHand
+            );
+            var hasNotRejectedShieldsUp = !this._rulesManager.IsShieldsUpRejectedFromVictim(
+                currentContext
+            );
+            // Check for shields up
+            if (hasShieldsUpCard && hasNotRejectedShieldsUp)
             {
                 stepService.BuildShieldsUpContext(currentContext, responder, targetPlayer);
                 return true;

@@ -68,8 +68,15 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
                 currentContext.ActionInitiatingPlayerId
             );
 
+            var hasShieldsUpCard = this._rulesManager.DoesPlayerHaveShieldsUp(
+                targetPlayer,
+                targetPlayerHand
+            );
+            var hasNotRejectedShieldsUp = !this._rulesManager.IsShieldsUpRejectedFromVictim(
+                currentContext
+            );
             // Check for shields up
-            if (this._rulesManager.DoesPlayerHaveShieldsUp(targetPlayer, targetPlayerHand))
+            if (hasShieldsUpCard && hasNotRejectedShieldsUp)
             {
                 stepService.BuildShieldsUpContext(currentContext, initiator, targetPlayer);
                 return null;

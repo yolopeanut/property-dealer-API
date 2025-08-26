@@ -40,7 +40,13 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
             if (currentContext.DialogResponse == CommandResponseEnum.ShieldsUp)
             {
                 var responderHand = this._playerHandManager.GetPlayerHand(responder.UserId);
-                if (this._rulesManager.DoesPlayerHaveShieldsUp(responder, responderHand))
+
+                var hasShieldsUpCard = this._rulesManager.DoesPlayerHaveShieldsUp(
+                    responder,
+                    responderHand
+                );
+
+                if (hasShieldsUpCard)
                 {
                     return stepService.HandleShieldsUp(
                         responder,
@@ -66,7 +72,7 @@ namespace property_dealer_API.Core.Logic.ActionExecution.ActionHandlers.ActionSt
                         $"A response (payment or shield) must be provided for {currentContext.ActionType}!"
                     );
                 }
-
+                stepService.CompleteAction();
                 return null;
             }
 
