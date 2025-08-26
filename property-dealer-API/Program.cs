@@ -161,7 +161,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("property-dealer-policy");
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GameLobbyHub>("/gamelobby");
